@@ -1,4 +1,6 @@
 import config
+import datetime
+from dateutil.relativedelta import relativedelta
 from os.path import expanduser
 from github import Github
 
@@ -47,7 +49,7 @@ def get_pullrequest(uname, repo_name):
     try:
         #get repository object for given user/organization and repository name
         repo = uname.get_repo(repo_name)
-
+        
         #get list of open pull requests for a given repository
         pull_requests = repo.get_pulls()
 
@@ -55,17 +57,35 @@ def get_pullrequest(uname, repo_name):
             user = pr.user.login
             title = pr.title
             url = pr.html_url
-            days = str(pr.created_at.date())
+            time = find_duration(pr.created_at)
             if(pr.comments == 0): 
                 comments = ""
             elif(pr.comments == 1): 
                 comments = ", with 1 comment"
             else:
                 comments = ", with  " + str(pr.comments) + " comments "
-
-            print "@" + user + " filed '" + title + "' " + url + " on " + days + comments
+            
+            print "@" + user + " filed '" + title + "' " + url + " since" + time + comments
 
     except Exception as e:
         print "Invalid repository: " + str(uname.login) + "/" + repo_name
+
+def find_duration(created_at):
+    #find the time difference between now and pull request filed
+    diff = relativedelta(datetime.datetime.now(), created_at)
+    time_list = ["year", "month", "day", "hour", "minute"]
+    time_dict = {"year": diff.years, "month": diff.months, "day": diff.days, "hour": diff.hours, "minute": diff.minutes}
+    for k,v in time_dict.items():
+        if v == 0:
+            if k in time_list:
+                time_list[time_list.index(k)] = ""
+        elif v == 1:
+            if k in time_list:
+                time_list[time_list.index(k)] = " " + str(v) + " " + k
+        else:
+            if k in time_list:
+                time_list[time_list.index(k)] = " " + str(v) + " " + k + "s"
+
+    return "%s%s%s%s%s" % (time_list[0], time_list[1], time_list[2], time_list[3], time_list[4])
 
 main()
