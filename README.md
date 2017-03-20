@@ -6,7 +6,7 @@ Dependencies:
 Sudo pip install PyGithub
 
 Make a config.py to store your creds. e.g,
-	github = {'uname': 'username', 'pwd': 'python'}
+	github = {'token': 'OAuthtoken_generated_from_github'}
 
 Make ~/.pull-requests. e.g,
 	user_name

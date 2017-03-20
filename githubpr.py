@@ -5,7 +5,7 @@ from os.path import expanduser
 from github import Github
 
 # get authenticated github object
-g = Github(config.github['uname'], config.github['pwd'])
+g = Github(config.github['token'])
 
 def main(state, val):
     home = expanduser('~')
