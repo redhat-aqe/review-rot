@@ -1,19 +1,22 @@
+review-rot
+
 # list-pull-requests
-Currently the module includes listing pull reuqests for github.
+Currently the tool includes listing pull reuqests for github and gitlab.
+
+Sample I/P:
+create '~/.pull-requests.yaml' with the content from sampleinput.yaml
 
 Dependencies:
 
 Sudo pip install PyGithub
-
-Make a config.py to store your creds. e.g,
-	github = {'token': 'OAuthtoken_generated_from_github'}
-
-Make ~/.pull-requests. e.g,
-	user_name
-	organization_name
-	user_name/repository_name 
-	organization_name/repository_name
+pip install --upgrade python-gitlab
 
 Run:
-python githubpr.py
+python reviewrot.py
 
+TODO:
+-Error handling
+-Setup.py
+-Logging
+-Pagure.io, gerrit
+-Tests

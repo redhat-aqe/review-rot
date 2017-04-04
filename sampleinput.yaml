@@ -1,0 +1,14 @@
+creds:
+  github:
+    token: my_token
+  gitlab:
+    token: my_token
+    host: my_hostname
+git:
+   - github:
+     - user_name/repo_name
+     - user_name
+   - gitlab:
+     - group_name
+     - group_name/repo_name
+~                  

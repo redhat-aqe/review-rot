@@ -1,6 +1,8 @@
+"""
 from distutils.core import setup
-setup(name='list-pull-requests',
+setup(name='crs',
       version='1.0',
-      py_modules=['list-pull-requests'],
+      py_modules=['crs'],
       install_requires=['PyGithub']
       )
+"""
