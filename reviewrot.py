@@ -1,3 +1,4 @@
+import argparse
 import yaml
 import logging
 import logging.config
@@ -8,11 +9,12 @@ def main(fltr, value):
     """
     starts execution
     """
+    #TODO: Implement StreamHandler
     # logging.config.fileConfig('log.conf')
     log = logging.getLogger(__name__)
     home = expanduser('~')
     # read input from home directory for pull requests
-    with open(home + '/.pull-requests.yaml', 'r') as f:
+    with open(home + '/.config.yaml', 'r') as f:
             config = yaml.load(f)
     
     #print config
@@ -20,11 +22,12 @@ def main(fltr, value):
         git = item.keys()[0].lower()
         # get git service
         git_service = get_git_service(git)
-        for request in item.values()[0]:
-            # get username and repository name to further request pull requests
-            res = get_user_repo_name(request)
-            # get pull requests for specified username and repository name
-            git_service.request_reviews(user_name=res["user_name"], repo_name= res["repo_name"], fltr= fltr, value=value)
+        if item.values()[0] is not None:
+            for request in item.values()[0]:
+                # get username and repository name to further request pull requests
+                res = get_user_repo_name(request)
+                # get pull requests for specified username and repository name
+                git_service.request_reviews(user_name=res["user_name"], repo_name= res["repo_name"], fltr= fltr, value=value)
 
 def get_user_repo_name(request):
     if '/' in request:
@@ -42,8 +45,6 @@ def get_user_repo_name(request):
         repo_name = None
         return {"user_name": user_name, "repo_name": repo_name}
     
-
 if __name__ == '__main__':
-    #TODO: Substitue name for state other than status
-    #TODO: Find a way so that no need to pass
+    #TODO: Implement argparse
     main(fltr=None, value=None)

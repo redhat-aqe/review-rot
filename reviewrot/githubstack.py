@@ -14,7 +14,7 @@ class GithubService(BaseService):
 
         home = expanduser('~')        
         # get authenticated github object
-        with open(home + '/.pull-requests.yaml', 'r') as f:
+        with open(home + '/.config.yaml', 'r') as f:
             config = yaml.load(f)
         self.g = Github(config['creds']['github']['token'])
         self.log = logging.getLogger(__name__)
@@ -32,7 +32,7 @@ class GithubService(BaseService):
 
             else:
                 # list pull requests for specified username and repository name
-                self.get_reviews(uname, repo_name, fltr, value)
+                self.get_reviews(uname=uname, repo_name=repo_name, fltr=fltr, value=value)
         else:
             # get pull requests for all repositories for specified user/organization 
             try:
@@ -47,7 +47,7 @@ class GithubService(BaseService):
                 repo_list = uname.get_repos()
                 # list pull requests for all repositories for specified user/organization
                 for repo in repo_list:
-                    self.get_reviews(fltr, value, uname, repo_name=repo.name, fltr=fltr, value=value)
+                    self.get_reviews(uname=uname, repo_name=repo.name, fltr=fltr, value=value)
 
     def get_reviews(self, uname, repo_name, fltr=None, value=None):    
         try:

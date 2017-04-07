@@ -15,7 +15,7 @@ class GitlabService(BaseService):
 
         home = expanduser('~')
         # get authenticated gitlab object
-        with open(home + '/.pull-requests.yaml', 'r') as f:
+        with open(home + '/.config.yaml', 'r') as f:
             config = yaml.load(f)
         self.gl = gitlab.Gitlab(config['creds']['gitlab']['host'], config['creds']['gitlab']['token'])
         self.gl.auth()

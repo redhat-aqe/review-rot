@@ -8,9 +8,9 @@ def get_git_service(git):
         return GithubService()
     elif git == "gitlab":
         return GitlabService()
-    """
     elif git == "pagure":
         return PagureService()
+    """
     elif git == "gerrit":
         return GerritService()
     """
