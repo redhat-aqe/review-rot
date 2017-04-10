@@ -22,14 +22,14 @@ class GitlabService(BaseService):
         self.log = logging.getLogger(__name__)
 
 
-    def request_reviews(self, user_name, repo_name=None, fltr=None, value=None):
+    def request_reviews(self, user_name, repo_name=None, fltr=None, value=None, duration=None):
 
         # if Repository name is explicitely provided 
         if repo_name is not None:
             # get project object for given repo_name(project name)
             project = self.gl.projects.get(user_name + '/' + repo_name)
             # list merge requests for specified username and project name
-            self.get_reviews(uname=user_name, project=project, fltr=fltr, value=value)
+            self.get_reviews(uname=user_name, project=project, fltr=fltr, value=value, duration=duration)
 
         else:
             # get merge requests for all projects for specified group 
@@ -39,13 +39,13 @@ class GitlabService(BaseService):
                 for group in groups:
                     projects = self.gl.group_projects.list(group_id=group.id)
                     for project in projects:
-                        self.get_reviews(uname=user_name, project=project, fltr=fltr, value=value)
+                        self.get_reviews(uname=user_name, project=project, fltr=fltr, value=value, duration=duration)
 
             except Exception as e:
                 print e
                 #self.log.info("Invalid user group: " + user_name)
 
-    def get_reviews(self, uname, project, fltr=None, value=None):
+    def get_reviews(self, uname, project, fltr=None, value=None, duration=None):
         try:
             # get list of open merge requests for a given repository(project)
             merge_requests = project.mergerequests.list(project_id=project.id, state='opened')
@@ -56,11 +56,11 @@ class GitlabService(BaseService):
                     mr_date = datetime.datetime.strptime(mr.created_at, '%Y-%m-%dT%H:%M:%SZ')
                 # find the relative time difference between now and merge request filed
                 rel_diff = relativedelta(datetime.datetime.now(), mr_date)
-                if fltr is not None and value is not None:
+                if fltr is not None and value is not None and duration is not None:
                     # find the absolute time difference between now and merge request filed
                     abs_diff = datetime.datetime.now() - mr_date
                     # check for older/newer requests
-                    result = self.check_request_state(abs_diff, rel_diff, fltr, value)
+                    result = self.check_request_state(abs_diff, rel_diff, fltr=fltr, value=value, duration=duration)
                     if result == True:
                         continue
                 # format time
@@ -80,8 +80,8 @@ class GitlabService(BaseService):
             #self.log.info("Invalid repository: " + str(uname.login) + "/" + repo_name)
             #print ("Invalid repository: " + str(uname.login) + "/" + repo_name)
 
-    def check_request_state(self, abs_diff, rel_diff, fltr, value):
-        return super(GitlabService, self).check_request_state(abs_diff, rel_diff, fltr, value)
+    def check_request_state(self, abs_diff, rel_diff, fltr, value, duration):
+        return super(GitlabService, self).check_request_state(abs_diff, rel_diff, fltr, value, duration)
 
     def find_duration(self, rel_diff):
         return super(GitlabService, self).find_duration(rel_diff)

@@ -18,3 +18,4 @@ python reviewrot.py
 -Logging-StreamHandler  
 -Add support for gerrit 
 -Tests  
+-Fix created date lag error

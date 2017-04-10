@@ -20,7 +20,7 @@ class PagureService(BaseService):
         self.header = None
 
     
-    def request_reviews(self, user_name, repo_name=None, fltr=None, value=None):
+    def request_reviews(self, user_name, repo_name=None, fltr=None, value=None, duration=None):
         if repo_name is not None:
             namespace = user_name
             request_url = "{}/api/0/{}/{}/pull-requests".format(self.instance, namespace, repo_name)
@@ -44,11 +44,11 @@ class PagureService(BaseService):
                     date = datetime.datetime.strptime(created_date, '%Y-%m-%d %H:%M:%S')
             # find the relative time difference between now and merge request filed
             rel_diff = relativedelta(datetime.datetime.now(), date)
-            if fltr is not None and value is not None:
+            if fltr is not None and value is not None and duration is not None:
                 # find the absolute time difference between now and merge request filed
                 abs_diff = datetime.datetime.now() - date
                 # check for older/newer requests
-                result = self.check_request_state(abs_diff, rel_diff, fltr, value)
+                result = self.check_request_state(abs_diff, rel_diff, fltr=fltr, value=value, duration=duration)
                 if result == True:
                     continue
             # format time
@@ -92,8 +92,8 @@ class PagureService(BaseService):
                 print ("Invalid request")
         return output
     
-    def check_request_state(self, abs_diff, rel_diff, fltr, value):
-        return super(PagureService, self).check_request_state(abs_diff, rel_diff, fltr, value)
+    def check_request_state(self, abs_diff, rel_diff, fltr, value, duration):
+        return super(PagureService, self).check_request_state(abs_diff, rel_diff, fltr, value, duration)
 
     def find_duration(self, rel_diff):
         return super(PagureService, self).find_duration(rel_diff)

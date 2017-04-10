@@ -5,7 +5,7 @@ import logging.config
 from reviewrot import get_git_service
 from os.path import expanduser
 
-def main(fltr, value):
+def main(fltr, value, duration):
     """
     starts execution
     """
@@ -27,7 +27,7 @@ def main(fltr, value):
                 # get username and repository name to further request pull requests
                 res = get_user_repo_name(request)
                 # get pull requests for specified username and repository name
-                git_service.request_reviews(user_name=res["user_name"], repo_name= res["repo_name"], fltr= fltr, value=value)
+                git_service.request_reviews(user_name=res["user_name"], repo_name= res["repo_name"], fltr= fltr, value=value, duration=duration)
 
 def get_user_repo_name(request):
     if '/' in request:
@@ -47,4 +47,4 @@ def get_user_repo_name(request):
     
 if __name__ == '__main__':
     #TODO: Implement argparse
-    main(fltr=None, value=None)
+    main(fltr=None, value=None, duration=None)

@@ -19,7 +19,7 @@ class GithubService(BaseService):
         self.g = Github(config['creds']['github']['token'])
         self.log = logging.getLogger(__name__)
     
-    def request_reviews(self, user_name, repo_name=None, fltr=None, value=None):
+    def request_reviews(self, user_name, repo_name=None, fltr=None, value=None, duration=None):
         # if Repository name is explicitely provided 
         if repo_name is not None:
             try:
@@ -32,7 +32,7 @@ class GithubService(BaseService):
 
             else:
                 # list pull requests for specified username and repository name
-                self.get_reviews(uname=uname, repo_name=repo_name, fltr=fltr, value=value)
+                self.get_reviews(uname=uname, repo_name=repo_name, fltr=fltr, value=value, duration=duration)
         else:
             # get pull requests for all repositories for specified user/organization 
             try:
@@ -47,9 +47,9 @@ class GithubService(BaseService):
                 repo_list = uname.get_repos()
                 # list pull requests for all repositories for specified user/organization
                 for repo in repo_list:
-                    self.get_reviews(uname=uname, repo_name=repo.name, fltr=fltr, value=value)
+                    self.get_reviews(uname=uname, repo_name=repo.name, fltr=fltr, value=value, duration=duration)
 
-    def get_reviews(self, uname, repo_name, fltr=None, value=None):    
+    def get_reviews(self, uname, repo_name, fltr=None, value=None, duration=None):    
         try:
             # get repository object for given user/organization and repository name
             repo = uname.get_repo(repo_name)
@@ -58,11 +58,11 @@ class GithubService(BaseService):
             for pr in pull_requests:
                 # find the relative time difference between now and pull request filed
                 rel_diff = relativedelta(datetime.datetime.now(), pr.created_at)
-                if fltr is not None and value is not None:
+                if fltr is not None and value is not None and duration is not None:
                     # find the absolute time difference between now and pull request filed
                     abs_diff = datetime.datetime.now() - pr.created_at
                     # check for older/newer requests
-                    result = self.check_request_state(abs_diff, rel_diff, fltr, value)
+                    result = self.check_request_state(abs_diff, rel_diff, fltr, value, duration)
                     if result == True:
                         continue
                 # format time
@@ -81,8 +81,8 @@ class GithubService(BaseService):
             #self.log.info("Invalid repository: " + str(uname.login) + "/" + repo_name)
             #print ("Invalid repository: " + str(uname.login) + "/" + repo_name)
 
-    def check_request_state(self, abs_diff, rel_diff, fltr, value):
-        return super(GithubService, self).check_request_state(abs_diff, rel_diff, fltr, value)
+    def check_request_state(self, abs_diff, rel_diff, fltr, value, duration):
+        return super(GithubService, self).check_request_state(abs_diff, rel_diff, fltr, value, duration)
 
     def find_duration(self, rel_diff):
         return super(GithubService, self).find_duration(rel_diff)

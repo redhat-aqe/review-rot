@@ -22,37 +22,37 @@ class BaseService(object):
 
         return "%s%s%s%s%s" % (time_list[0], time_list[1], time_list[2], time_list[3], time_list[4])
 
-    def check_request_state(self, abs_diff, rel_diff, fltr, value):
-        if 'y' in value:
-            if fltr == 'older' and rel_diff.years < int(value.strip('y')):
+    def check_request_state(self, abs_diff, rel_diff, fltr, value, duration):
+        if duration == 'y':
+            if fltr == 'older' and rel_diff.years < value:
                 return True
-            elif fltr == 'newer' and rel_diff.years > int(value.strip('y')):
+            elif fltr == 'newer' and rel_diff.years > value:
                 return True
-        if 'm' in value:
+        if duration == 'm':
             # find the absolute time difference in months
             abs_month = (rel_diff.years*12) + rel_diff.months
-            if fltr == 'older' and abs_month < int(value.strip('m')):
+            if fltr == 'older' and abs_month < value:
                 return True
-            elif fltr == 'newer' and abs_month > int(value.strip('m')):
+            elif fltr == 'newer' and abs_month > value:
                 return True
-        if 'd' in value:
-            if fltr == 'older' and abs_diff.days < int(value.strip('d')):
+        if duration == 'd':
+            if fltr == 'older' and abs_diff.days < value:
                 return True
-            elif fltr == 'newer' and abs_diff.days > int(value.strip('d')):
+            elif fltr == 'newer' and abs_diff.days > value:
                 return True
-        if 'h' in value:
+        if duration == 'h':
             # find the absolute time difference in hours
             abs_hour = (abs_diff.total_seconds)/3600
-            if fltr == 'older' and diff.years < int(value.strip('h')):
+            if fltr == 'older' and diff.years < value:
                 return True
-            elif fltr == 'newer' and abs_hour > int(value.strip('h')):
+            elif fltr == 'newer' and abs_hour > value:
                 return True
-        if 'min' in value:
+        if duration == 'min':
             # find the absolute time difference in minutes
             abs_min = ((abs_diff.total_seconds)/60)
-            if fltre == 'older' and abs_min < int(value.strip('min')):
+            if fltre == 'older' and abs_min < value:
                 return True
-            elif fltr == 'newer' and abs_min > int(value.strip('min')):
+            elif fltr == 'newer' and abs_min > value:
                 return True
         return False
 
