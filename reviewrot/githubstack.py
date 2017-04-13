@@ -13,7 +13,7 @@ class GithubService(BaseService):
     This class represents Github. The reference can be found here:
     https://developer.github.com/v3/
     """
-    def request_reviews(self, user_name=None, repo_name=None, fltr=None,
+    def request_reviews(self, user_name, repo_name=None, state_=None,
                         value=None, duration=None, token=None, host=None):
         """
         Creates a github object.
@@ -25,7 +25,7 @@ class GithubService(BaseService):
             user_name (str): Github username or organization name
             repo_name (str): Github repository name for specified
                              username or organization
-            fltr (str): The filter(state) for pull requests, e.g, older
+            state_ (str): The filter state for pull requests, e.g, older
                         or newer
             value (int): The value in terms of duration for requests
                       to be older or newer than
@@ -45,12 +45,14 @@ class GithubService(BaseService):
             log.debug('Invalid username/organizaton: %s', user_name)
             log.debug(e)
             raise Exception('Invalid username/organizaton: %s' % user_name)
-
+        response = []
         # if Repository name is explicitely provided
         if repo_name is not None:
             # get pull requests for specified username and repo name
-            self.get_reviews(uname=uname, repo_name=repo_name, fltr=fltr,
-                             value=value, duration=duration)
+            res = self.get_reviews(uname=uname, repo_name=repo_name,
+                                   state_=state_, value=value,
+                                   duration=duration)
+            response.append(res)
         else:
             # get all of the respositories for specified user/organization
             repo_list = uname.get_repos()
@@ -61,11 +63,13 @@ class GithubService(BaseService):
             user/organization
             """
             for repo in repo_list:
-                self.get_reviews(uname=uname, repo_name=repo.name,
-                                 fltr=fltr, value=value,
-                                 duration=duration)
+                res = self.get_reviews(uname=uname, repo_name=repo.name,
+                                       state_=state_, value=value,
+                                       duration=duration)
+                response.append(res)
+        return response
 
-    def get_reviews(self, uname, repo_name, fltr=None,
+    def get_reviews(self, uname, repo_name, state_=None,
                     value=None, duration=None):
         """
         Fetches pull requests for specified username and repo name.
@@ -75,7 +79,7 @@ class GithubService(BaseService):
             user_name (str): Github username or organization name
             repo_name (str): Github repository name for specified
                              username or organization
-            fltr (str): The filter(state) for pull requests, e.g, older
+            state_ (str): The filter(state) for pull requests, e.g, older
                         or newer
             value (int): The value in terms of duration for requests
                          to be older or newer than
@@ -100,6 +104,7 @@ class GithubService(BaseService):
         if len(list(pull_requests)) == 0:
             log.debug('No open pull requests found for %s/%s ',
                       uname.login, repo_name)
+        result = []
         for pr in pull_requests:
             """
             find the relative time difference between now
@@ -107,7 +112,7 @@ class GithubService(BaseService):
             """
             rel_diff = relativedelta(datetime.datetime.now(),
                                      pr.created_at)
-            if (fltr is not None and value is not None and
+            if (state_ is not None and value is not None and
                     duration is not None):
                 """
                 find the absolute time difference between now and
@@ -119,11 +124,11 @@ class GithubService(BaseService):
                 interval
                 """
                 result = self.check_request_state(abs_diff, rel_diff,
-                                                  fltr, value, duration)
+                                                  state_, value, duration)
                 # skip the request if it doesn't match the specified criteria
                 if not result:
                     log.debug("pull request '%s' is not %s than specified"
-                              " time interval", pr.title, fltr)
+                              " time interval", pr.title, state_)
                     continue
             # format the time interval pull request has been filed since
             time = self.format_duration(rel_diff)
@@ -134,7 +139,7 @@ class GithubService(BaseService):
             elif(pr.comments > 1):
                 comments.append('%s %s %s' % (', with', str(pr.comments),
                                               'comments'))
-            comments = ''.join(comments)
+            comments = ' '.join(comments)
             # format and print the resultant pull request string
             res = GithubReviewRot(user=pr.user.login,
                                   title=pr.title,
@@ -142,11 +147,13 @@ class GithubService(BaseService):
                                   time=time,
                                   comments=comments)
             log.info(res)
+            result.append(res)
+        return result
 
-    def check_request_state(self, abs_diff, rel_diff, fltr, value, duration):
+    def check_request_state(self, abs_diff, rel_diff, state_, value, duration):
         return super(GithubService,
                      self).check_request_state(abs_diff, rel_diff,
-                                               fltr, value, duration)
+                                               state_, value, duration)
 
     def format_duration(self, rel_diff):
         return super(GithubService, self).format_duration(rel_diff)

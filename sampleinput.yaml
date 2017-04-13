@@ -17,5 +17,4 @@
   host: None
   repos:
     - repo_name
-    - namespace/repo_name
-~                  
+    - namespace/repo_name                  

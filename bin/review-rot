@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 import os
 import logging
 import argparse
@@ -6,17 +8,18 @@ from os.path import expanduser
 from reviewrot import get_git_service
 
 
-def main(fltr, value, duration):
+def main(state_, value, duration):
     """
     Reads input configuration file.
     Calls appropriate git service with suitable inputs.
 
-    fltr (str): The filter(state) for review requests, e.g, older or newer
+    state_ (str): The filter(state) for review requests, e.g, older or newer
     value (int): The value in terms of duration for requests
                  to be older or newer than
     duration (str): The duration in terms of period(year,month,hour,minute)
                     for requests to be older or newer than.
     """
+    log = logging.getLogger('review-rot')
     home = expanduser('~')
 
     path_to_config = os.path.join(home, '.reviewrot.yaml')
@@ -28,6 +31,10 @@ def main(fltr, value, duration):
         config = yaml.load(f)
 
     for item in config:
+        if not item.has_key('type'):
+            log.debug('git service type not found for %s', item)
+            raise KeyError('git service not found for %s' % item)
+
         # get git service
         git_service = get_git_service(item['type'])
         """
@@ -46,9 +53,17 @@ def main(fltr, value, duration):
                 get pull requests for specified git service, username
                 and repository name
                 """
+                if not item.has_key('token'):
+                    log.debug('token not found for %s', item['type'])
+                    raise KeyError("token not found for %s. Please provide 'None' "
+                                   "if not applicable"  % item['type'])
+                if not item.has_key('host'):
+                    log.debug('host not found for %s', item['type'])
+                    raise KeyError("host not found for %s. Please provide 'None' "
+                                   "if not applicable"  % item['type'])
                 git_service.request_reviews(user_name=res['user_name'],
                                             repo_name=res['repo_name'],
-                                            fltr=fltr,
+                                            state_=state_,
                                             value=value,
                                             duration=duration,
                                             token=item['token'],
@@ -94,7 +109,8 @@ if __name__ == '__main__':
                         choices=['y', 'm', 'd', 'h', 'min'],
                         help='Pull requests duration in terms of y=years,'
                              'm=months, d=days, h=hours, min=minutes')
-    parser.add_argument('--debug', action='store_true')
+    parser.add_argument('--debug', action='store_true',
+                        help='Display debug logs on console')
     args = parser.parse_args()
     options = []
     for k, v in vars(args).items():
@@ -111,4 +127,4 @@ if __name__ == '__main__':
     else:
         logging.basicConfig(level=logging.INFO)
 
-    main(fltr=args.state, value=args.value, duration=args.duration)
+    main(state_=args.state, value=args.value, duration=args.duration)

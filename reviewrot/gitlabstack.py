@@ -14,7 +14,7 @@ class GitlabService(BaseService):
     This class represents Gitlab. The reference can be found here:
      https://docs.gitlab.com/ee/api/
     """
-    def request_reviews(self, user_name, repo_name=None, fltr=None,
+    def request_reviews(self, user_name, repo_name=None, state_=None,
                         value=None, duration=None, token=None, host=None):
         """
         Creates a gitlab object.
@@ -26,7 +26,7 @@ class GitlabService(BaseService):
             user_name (str): Gitlab namespace
             repo_name (str): Gitlab project name for specified
                           namespace
-            fltr (str): The filter(state) for pull requests, e.g, older
+            state_ (str): The state for pull requests, e.g, older
                         or newer
             value (int): The value in terms of duration for requests
                          to be older or newer than
@@ -39,7 +39,7 @@ class GitlabService(BaseService):
         gl = gitlab.Gitlab(host, token)
         gl.auth()
         log.debug('Gitlab instance created: %s', gl)
-
+        response = []
         # if Repository name is explicitely provided
         if repo_name is not None:
             try:
@@ -52,8 +52,9 @@ class GitlabService(BaseService):
                 raise Exception('Project %s not found for user %s'
                                 % (repo_name, user_name))
             # get merge requests for specified username and project name
-            self.get_reviews(uname=user_name, project=project, fltr=fltr,
-                             value=value, duration=duration)
+            res = self.get_reviews(uname=user_name, project=project,
+                                   state_=state_, value=value,
+                                   duration=duration)
 
         else:
             # get user object
@@ -69,11 +70,13 @@ class GitlabService(BaseService):
                     log.debug("No projects found for user/group name %s",
                               user_name)
                 for project in projects:
-                        self.get_reviews(uname=user_name, project=project,
-                                         fltr=fltr, value=value,
-                                         duration=duration)
+                    res = self.get_reviews(uname=user_name, project=project,
+                                           state_=state_, value=value,
+                                           duration=duration)
+                    response.append(res)
+        return response
 
-    def get_reviews(self, uname, project, fltr=None,
+    def get_reviews(self, uname, project, state_=None,
                     value=None, duration=None):
         """
         Fetches merge requests for specified username(groupname)
@@ -84,7 +87,7 @@ class GitlabService(BaseService):
             user_name (str): Gitlab namespace
             repo_name (str): Gitlab project name for specified
                              namespace
-            fltr (str): The filter(state) for pull requests, e.g, older
+            state_ (str): The state for pull requests, e.g, older
                         or newer
             value (str): The value in terms of duration for requests
                          to be older or newer than
@@ -113,7 +116,7 @@ class GitlabService(BaseService):
             and merge request filed
             """
             rel_diff = relativedelta(datetime.datetime.now(), mr_date)
-            if (fltr is not None and value is not None and
+            if (state_ is not None and value is not None and
                     duration is not None):
                 """
                 find the absolute time difference between
@@ -125,12 +128,12 @@ class GitlabService(BaseService):
                 interval
                 """
                 result = self.check_request_state(abs_diff, rel_diff,
-                                                  fltr=fltr, value=value,
+                                                  state_=state_, value=value,
                                                   duration=duration)
                 # skip the request if it doesn't match the specified criteria
                 if not result:
                     log.debug("merge request '%s' is not %s than specified"
-                              " time interval", mr.title, fltr)
+                              " time interval", mr.title, state_)
                     continue
             # format the time interval pull request has been filed since
             time = self.format_duration(rel_diff)
@@ -142,7 +145,7 @@ class GitlabService(BaseService):
                 comments.append('%s %s %s' % (', with',
                                               str(mr.user_notes_count),
                                               'comments'))
-            comments = ''.join(comments)
+            comments = ' '.join(comments)
             # format and print the resultant pull request string
             res = GitlabReviewRot(user=str(mr.author.username),
                                   title=str(mr.title),
@@ -150,11 +153,12 @@ class GitlabService(BaseService):
                                   time=time,
                                   comments=comments)
             log.info(res)
+            return res
 
-    def check_request_state(self, abs_diff, rel_diff, fltr, value, duration):
+    def check_request_state(self, abs_diff, rel_diff, state_, value, duration):
         return super(GitlabService,
                      self).check_request_state(abs_diff, rel_diff,
-                                               fltr, value, duration)
+                                               state_, value, duration)
 
     def format_duration(self, rel_diff):
         return super(GitlabService, self).format_duration(rel_diff)

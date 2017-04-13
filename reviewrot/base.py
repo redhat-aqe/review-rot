@@ -30,7 +30,7 @@ class BaseService(object):
 
         return ' '.join(result)
 
-    def check_request_state(self, abs_diff, rel_diff, fltr, value, duration):
+    def check_request_state(self, abs_diff, rel_diff, state_, value, duration):
         """
         Checks if the review request is older or newer than specified
         time interval.
@@ -41,7 +41,7 @@ class BaseService(object):
             rel_diff (str): relative time difference between now and
                             review request filed
 
-            fltr (str): The filter(state) for pull requests, e.g, older
+            state_ (str): state for pull requests, e.g, older
                         or newer
             value (int): The value in terms of duration for requests
                       to be older or newer than
@@ -53,35 +53,35 @@ class BaseService(object):
             specified time interval, False otherwise
         """
         if duration == 'y':
-            if fltr == 'older' and rel_diff.years < value:
+            if state_ == 'older' and rel_diff.years < value:
                 return False
-            elif fltr == 'newer' and rel_diff.years > value:
+            elif state_ == 'newer' and rel_diff.years > value:
                 return False
         if duration == 'm':
             # find the absolute time difference in months
             abs_month = (rel_diff.years*12) + rel_diff.months
-            if fltr == 'older' and abs_month < value:
+            if state_ == 'older' and abs_month < value:
                 return False
-            elif fltr == 'newer' and abs_month > value:
+            elif state_ == 'newer' and abs_month > value:
                 return False
         if duration == 'd':
-            if fltr == 'older' and abs_diff.days < value:
+            if state_ == 'older' and abs_diff.days < value:
                 return False
-            elif fltr == 'newer' and abs_diff.days > value:
+            elif state_ == 'newer' and abs_diff.days > value:
                 return False
         if duration == 'h':
             # find the absolute time difference in hours
             abs_hour = abs_diff.total_seconds()/3600
-            if fltr == 'older' and abs_hour < value:
+            if state_ == 'older' and abs_hour < value:
                 return False
-            elif fltr == 'newer' and abs_hour > value:
+            elif state_ == 'newer' and abs_hour > value:
                 return False
         if duration == 'min':
             # find the absolute time difference in minutes
             abs_min = abs_diff.total_seconds()/60
-            if fltr == 'older' and abs_min < value:
+            if state_ == 'older' and abs_min < value:
                 return False
-            elif fltr == 'newer' and abs_min > value:
+            elif state_ == 'newer' and abs_min > value:
                 return False
         return True
 
@@ -96,6 +96,6 @@ class BaseReviewRot(object):
         self.comments = comments
 
     def __str__(self):
-        return ("@%s filed '%s' %s since%s%s" % (self.user, self.title,
-                                                 self.url, self.time,
-                                                 self.comments))
+        return ("@%s filed '%s' %s since %s%s" % (self.user, self.title,
+                                                  self.url, self.time,
+                                                  self.comments))

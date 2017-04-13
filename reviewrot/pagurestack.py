@@ -14,8 +14,8 @@ class PagureService(BaseService):
         self.instance = "https://pagure.io"
         self.header = None
 
-    def request_reviews(self, user_name, repo_name=None, fltr=None, value=None,
-                        duration=None, host=None, token=None):
+    def request_reviews(self, user_name, repo_name=None, state_=None,
+                        value=None, duration=None, host=None, token=None):
         """
         Fetches merge requests by making API calls for specified
         username(namespace) and repo(project) name.
@@ -25,7 +25,7 @@ class PagureService(BaseService):
             user_name (str): Pagure username or organization name
             repo_name (str): Pagure repository name for specified
                              username or organization
-            fltr (str): The filter(state) for pull requests, e.g, older
+            state_ (str): The filter(state) for pull requests, e.g, older
                         or newer
             value (int): The value in terms of duration for requests
                          to be older or newer than
@@ -56,7 +56,7 @@ class PagureService(BaseService):
                       'pagure.io',  repo_name)
         log.debug('Calling API with request_url: %s', request_url)
         response = self._call_api(url=request_url)
-
+        res_ = []
         for res in response['requests']:
             # if namespace exists in response
             try:
@@ -82,7 +82,7 @@ class PagureService(BaseService):
             and merge request filed
             """
             rel_diff = relativedelta(datetime.datetime.now(), date)
-            if (fltr is not None and value is not None and
+            if (state_ is not None and value is not None and
                     duration is not None):
                 """
                 find the absolute time difference between now
@@ -94,12 +94,12 @@ class PagureService(BaseService):
                 interval
                 """
                 result = self.check_request_state(abs_diff, rel_diff,
-                                                  fltr=fltr, value=value,
+                                                  state_=state_, value=value,
                                                   duration=duration)
                 # skip the request if it doesn't match the specified criteria
                 if not result:
                     log.debug("pull request '%s' is not %s than specified"
-                              " time interval", res['title'], fltr)
+                              " time interval", res['title'], state_)
                     continue
             # format the time interval pull request has been filed since
             time = self.format_duration(rel_diff)
@@ -111,7 +111,7 @@ class PagureService(BaseService):
                 comments.append('%s %s %s' % (', with',
                                               str(len(res['comments'])),
                                               'comments'))
-            comments = ''.join(comments)
+            comments = ' '.join(comments)
             # format and print the resultant pull request string
             res = PagureReviewRot(user=str(res['user']['name']),
                                   title=str(res['title']),
@@ -119,6 +119,8 @@ class PagureService(BaseService):
                                   time=time,
                                   comments=comments)
             log.info(res)
+            res_.append(res)
+        return res_
 
     def _call_api(self, url, method='GET'):
         """
@@ -154,10 +156,10 @@ class PagureService(BaseService):
                 raise Exception(output['error'])
         return output
 
-    def check_request_state(self, abs_diff, rel_diff, fltr, value, duration):
+    def check_request_state(self, abs_diff, rel_diff, state_, value, duration):
         return super(PagureService,
                      self).check_request_state(abs_diff, rel_diff,
-                                               fltr, value, duration)
+                                               state_, value, duration)
 
     def format_duration(self, rel_diff):
         return super(PagureService, self).format_duration(rel_diff)
