@@ -38,6 +38,5 @@ optional arguments:
 ```
 
 ## TODO:
--Add support for gerrit   
--Tests  
+-Add support for gerrit  
 -Fix created date lag error  
