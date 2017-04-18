@@ -1,0 +1,20 @@
+- type: github
+  token: my_github_token
+  host: null
+  repos:
+     - user_name
+     - user_name/repo_name
+
+- type: gitlab
+  token: my_gitlab_token
+  host: my_host_server
+  repos:
+      - group_name/project_name
+      - group_name
+
+- type: pagure
+  token: my_pagure_token
+  host: null
+  repos:
+    - repo_name
+    - namespace/repo_name                  
