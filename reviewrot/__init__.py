@@ -1,4 +1,6 @@
 from reviewrot.githubstack import GithubService
+from reviewrot.gitlabstack import GitlabService
+
 
 def get_git_service(git):
     """
@@ -12,5 +14,7 @@ def get_git_service(git):
     """
     if git == "github":
         return GithubService()
+    elif git == "gitlab":
+        return GitlabService()
     else:
         raise ValueError('requested git service %s is not valid' % (git))
