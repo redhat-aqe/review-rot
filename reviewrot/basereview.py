@@ -100,7 +100,7 @@ class BaseService(object):
         return True
 
 
-class BaseReviewRot(object):
+class BaseReview(object):
     def __init__(self, user=None, title=None, url=None,
                  time=None, comments=None):
         self.user = user
