@@ -117,10 +117,10 @@ class PagureService(BaseService):
             comments = ' '.join(comments)
             # format and print the resultant pull request string
             res = PagureReview(user=res['user']['name'],
-                                  title=res['title'],
-                                  url=url,
-                                  time=time,
-                                  comments=comments)
+                               title=res['title'],
+                               url=url,
+                               time=time,
+                               comments=comments)
             log.info(res)
             res_.append(res)
         return res_
@@ -147,7 +147,7 @@ class PagureService(BaseService):
         output = None
         try:
             output = req.json()
-        except Exception:
+        except Exception as err:
             log.exception('Error while decoding JSON: {0}')
             raise Exception('Error while decoding JSON: {0}'.format(err))
         if req.status_code != 200:
