@@ -127,17 +127,15 @@ class GithubService(BaseService):
                 check if pull request is older/newer than specified time
                 interval
                 """
-                result = super(GithubService,
-                               self).check_request_state(abs_diff, rel_diff,
-                                                         state_, value,
-                                                         duration)
+                result = self.check_request_state(abs_diff, rel_diff,
+                                                  state_, value, duration)
                 # skip the request if it doesn't match the specified criteria
                 if not result:
                     log.debug("pull request '%s' is not %s than specified"
                               " time interval", pr.title, state_)
                     continue
             # format the time interval pull request has been filed since
-            time = super(GithubService, self).format_duration(rel_diff)
+            time = self.format_duration(rel_diff)
             # fetch and format comments for pull request
             comments = []
             if(pr.comments == 1):
