@@ -2,7 +2,6 @@ import os
 import logging
 import gitlab
 import datetime
-from dateutil.relativedelta import relativedelta
 from basereview import BaseService, BaseReview
 from gitlab.exceptions import GitlabGetError
 
@@ -59,6 +58,9 @@ class GitlabService(BaseService):
             res = self.get_reviews(uname=user_name, project=project,
                                    state_=state_, value=value,
                                    duration=duration)
+            # append incase of a non empty result
+            if res:
+                response.append(res)
 
         else:
             # get user object
@@ -77,6 +79,8 @@ class GitlabService(BaseService):
                     res = self.get_reviews(uname=user_name, project=project,
                                            state_=state_, value=value,
                                            duration=duration)
+                # append incase of a non empty result
+                if res:
                     response.append(res)
         return response
 
@@ -109,7 +113,7 @@ class GitlabService(BaseService):
         # get list of open merge requests for a given repository(project)
         merge_requests = project.mergerequests.list(project_id=project.id,
                                                     state='opened')
-        if not merge_requests == 0:
+        if not merge_requests:
             log.debug('No open merge requests found for %s/%s ',
                       uname, project.name)
         res_ = []
@@ -120,47 +124,20 @@ class GitlabService(BaseService):
             except ValueError:
                 mr_date = datetime.datetime.strptime(
                     mr.created_at, '%Y-%m-%dT%H:%M:%SZ')
-            """
-            find the relative time difference between now and
-            pull request filed to retrieve relative information
-            """
-            rel_diff = relativedelta(datetime.datetime.now(),
-                                     mr_date)
-            """
-            find the absolute time difference between now and
-            pull request filed to retrieve absolute information
-            """
-            abs_diff = datetime.datetime.now() - mr_date
-            if (state_ is not None and value is not None and
-                    duration is not None):
-                """
-                check if pull request is older/newer than specified time
-                interval
-                """
-                result = self.check_request_state(abs_diff, rel_diff, state_,
-                                                  value, duration)
-                # skip the request if it doesn't match the specified criteria
-                if not result:
-                    log.debug("merge request '%s' is not %s than specified"
-                              " time interval", mr.title, state_)
-                    continue
-            # format the time interval pull request has been filed since
-            time = self.format_duration(rel_diff)
-            # fetch and format comments for pull request
-            comments = []
-            if(mr.user_notes_count == 1):
-                comments.append('%s' % ', with 1 comment')
-            elif(mr.user_notes_count > 1):
-                comments.append('%s %s %s' % (', with',
-                                              mr.user_notes_count,
-                                              'comments'))
-            comments = ' '.join(comments)
-            # format and print the resultant pull request string
-            res = GitlabReview(user=str(mr.author.username),
-                               title=str(mr.title),
-                               url=str(mr.web_url),
-                               time=time,
-                               comments=comments)
+            resp = self.format_reviews(username=mr.author.username,
+                                       title=mr.title, url=mr.web_url,
+                                       comments=mr.user_notes_count,
+                                       created_at=mr_date, state_=state_,
+                                       value=value, duration=duration)
+            if resp is False:
+                log.debug("merge request '%s' is not %s than specified"
+                          " time interval", mr.title, state_)
+                continue
+            res = GitlabReview(user=resp['user'],
+                               title=resp['title'],
+                               url=resp['url'],
+                               time=resp['time'],
+                               comments=resp['comments'])
             log.info(res)
             res_.append(res)
         return res_
