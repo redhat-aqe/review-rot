@@ -13,6 +13,6 @@ setup(name='review-rot',
       license='GNU GENERAL PUBLIC LICENSE Version 3',
       url='https://github.com/nirzari/review-rot',
       packages=find_packages(),
-      install_requires=['PyGithub'],
+      install_requires=['PyGithub', 'python-gitlab'],
       scripts=['bin/review-rot']
       )
