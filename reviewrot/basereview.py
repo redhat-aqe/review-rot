@@ -115,11 +115,7 @@ class BaseService(object):
         return True
 
 
-<<<<<<< 5a55812d964174b20c510e4819c4469427259c8d
 class BaseReview(object):
-=======
-class BaseReviewRot(object):
->>>>>>> Added basic structure and script for reviewrot
     def __init__(self, user=None, title=None, url=None,
                  time=None, comments=None):
         self.user = user

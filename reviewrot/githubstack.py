@@ -18,6 +18,7 @@ class GithubService(BaseService):
         Requests pull requests for specified username and repo name.
         If repo name is not provided then requests pull requests
         for all repos for specified username/organization.
+
         Args:
             user_name (str): Github username or organization name
             repo_name (str): Github repository name for specified
@@ -78,6 +79,7 @@ class GithubService(BaseService):
         """
         Fetches pull requests for specified username and repo name.
         Formats the pull requests details and print it on console.
+
         Args:
             user_name (str): Github username or organization name
             repo_name (str): Github repository name for specified
