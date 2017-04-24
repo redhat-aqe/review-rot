@@ -1,7 +1,40 @@
 from collections import OrderedDict
+import datetime
+from dateutil.relativedelta import relativedelta
 
 
 class BaseService(object):
+
+    def format_reviews(self, username, title, url, comments, created_at,
+                       state_, value, duration):
+        """
+        find the relative time difference between now and
+        review request filed to retrieve relative information
+        """
+        rel_diff = relativedelta(datetime.datetime.now(),
+                                 created_at)
+        """
+        find the absolute time difference between now and
+        review request filed to retrieve absolute information
+        """
+        abs_diff = datetime.datetime.now() - created_at
+        if (state_ is not None and value is not None and
+                duration is not None):
+            """
+            check if review request is older/newer than specified time
+            interval
+            """
+            result = self.check_request_state(abs_diff, rel_diff,
+                                              state_, value, duration)
+            # skip the request if it doesn't match the specified criteria
+            if not result:
+                return False
+        # format the time interval review request has been filed since
+        time = self.format_duration(rel_diff)
+        # format and print the resultant review request string
+        res = {'user': username, 'title': title, 'url': url,
+               'time': time, 'comments': comments}
+        return res
 
     def format_duration(self, rel_diff):
         """
@@ -44,7 +77,7 @@ class BaseService(object):
                                   review request filed (used to retrieve and
                                   calculate absolute information e.g, month,
                                   year)
-            state_ (str): state for pull requests, e.g, older
+            state_ (str): state for review requests, e.g, older
                           or newer
             value (int): The value in terms of duration for requests
                          to be older or newer than
@@ -62,7 +95,7 @@ class BaseService(object):
             value of absolute and relative year is same."""
             if state_ == 'older' and rel_diff.years < value:
                 return False
-            elif state_ == 'newer' and rel_diff.years > value:
+            elif state_ == 'newer' and rel_diff.years >= value:
                 return False
         elif duration == 'm':
             """ use rel_diff to calculate absolute time difference
@@ -70,14 +103,14 @@ class BaseService(object):
             abs_month = (rel_diff.years*12) + rel_diff.months
             if state_ == 'older' and abs_month < value:
                 return False
-            elif state_ == 'newer' and abs_month > value:
+            elif state_ == 'newer' and abs_month >= value:
                 return False
         elif duration == 'd':
             """ use abs_diff to retrieve absolute time difference
             in days """
             if state_ == 'older' and abs_diff.days < value:
                 return False
-            elif state_ == 'newer' and abs_diff.days > value:
+            elif state_ == 'newer' and abs_diff.days >= value:
                 return False
         elif duration == 'h':
             """ use abs_diff to calculate absolute time difference
@@ -85,7 +118,7 @@ class BaseService(object):
             abs_hour = abs_diff.total_seconds()/3600
             if state_ == 'older' and abs_hour < value:
                 return False
-            elif state_ == 'newer' and abs_hour > value:
+            elif state_ == 'newer' and abs_hour >= value:
                 return False
         elif duration == 'min':
             """ use abs_diff to calculate absolute time difference
@@ -93,7 +126,7 @@ class BaseService(object):
             abs_min = abs_diff.total_seconds()/60
             if state_ == 'older' and abs_min < value:
                 return False
-            elif state_ == 'newer' and abs_min > value:
+            elif state_ == 'newer' and abs_min >= value:
                 return False
         else:
             raise ValueError("Invalid duration type: %s" % duration)
@@ -110,6 +143,12 @@ class BaseReview(object):
         self.comments = comments
 
     def __str__(self):
-        return ("@%s filed '%s' %s since %s%s" % (self.user, self.title,
-                                                  self.url, self.time,
-                                                  self.comments))
+        if(self.comments == 1):
+            return ("@%s filed '%s' %s since %s with %s comment" % (
+                self.user, self.title, self.url, self.time, self.comments))
+        elif(self.comments > 1):
+            return ("@%s filed '%s' %s since %s with %s comments" % (
+                self.user, self.title, self.url, self.time, self.comments))
+        else:
+            return ("@%s filed '%s' %s since %s" % (self.user, self.title,
+                                                    self.url, self.time))
