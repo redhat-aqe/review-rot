@@ -1,6 +1,4 @@
 import logging
-import datetime
-from dateutil.relativedelta import relativedelta
 from basereview import BaseService, BaseReview
 from github import Github
 from github.GithubException import UnknownObjectException
@@ -55,7 +53,9 @@ class GithubService(BaseService):
             res = self.get_reviews(uname=uname, repo_name=repo_name,
                                    state_=state_, value=value,
                                    duration=duration)
-            response.append(res)
+            # append incase of a non empty result
+            if res:
+                response.append(res)
         else:
             # get all of the respositories for specified user/organization
             repo_list = uname.get_repos()
@@ -69,7 +69,9 @@ class GithubService(BaseService):
                 res = self.get_reviews(uname=uname, repo_name=repo.name,
                                        state_=state_, value=value,
                                        duration=duration)
-                response.append(res)
+                # append incase of a non empty result
+                if res:
+                    response.append(res)
         return response
 
     def get_reviews(self, uname, repo_name, state_=None,
@@ -110,46 +112,23 @@ class GithubService(BaseService):
                       uname.login, repo_name)
         res_ = []
         for pr in pull_requests:
-            """
-            find the relative time difference between now and
-            pull request filed to retrieve relative information
-            """
-            rel_diff = relativedelta(datetime.datetime.now(),
-                                     pr.created_at)
-            """
-            find the absolute time difference between now and
-            pull request filed to retrieve absolute information
-            """
-            abs_diff = datetime.datetime.now() - pr.created_at
-            if (state_ is not None and value is not None and
-                    duration is not None):
-                """
-                check if pull request is older/newer than specified time
-                interval
-                """
-                result = self.check_request_state(abs_diff, rel_diff,
-                                                  state_, value, duration)
-                # skip the request if it doesn't match the specified criteria
-                if not result:
-                    log.debug("pull request '%s' is not %s than specified"
-                              " time interval", pr.title, state_)
-                    continue
+            """ check if review request is older/newer than specified time
+            interval"""
+            result = self.check_request_state(pr.created_at,
+                                              state_, value, duration)
+
+            if result is False:
+                # skip the current pull request
+                log.debug("review request '%s' is not %s than specified"
+                          " time interval", pr.title, state_)
+                continue
             # format the time interval pull request has been filed since
-            time = self.format_duration(rel_diff)
-            # fetch and format comments for pull request
-            comments = []
-            if(pr.comments == 1):
-                comments.append('%s' % ', with 1 comment')
-            elif(pr.comments > 1):
-                comments.append('%s %s %s' % (', with', pr.comments,
-                                              'comments'))
-            comments = ' '.join(comments)
-            # format and print the resultant pull request string
+            time = self.format_duration(created_at=pr.created_at)
             res = GithubReview(user=pr.user.login,
                                title=pr.title,
                                url=pr.html_url,
                                time=time,
-                               comments=comments)
+                               comments=pr.comments)
             log.info(res)
             res_.append(res)
         return res_
