@@ -15,6 +15,8 @@ setup(name='review-rot',
       packages=find_packages(),
       install_requires=[
           'PyGithub',
+          'PyYAML',
+          'dateutils',
       ],
       scripts=['bin/review-rot']
       )
