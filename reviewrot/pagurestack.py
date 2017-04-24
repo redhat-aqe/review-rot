@@ -2,7 +2,6 @@ import os
 import logging
 import datetime
 import requests
-from dateutil.relativedelta import relativedelta
 from basereview import BaseService, BaseReview
 
 log = logging.getLogger(__name__)
@@ -80,47 +79,20 @@ class PagureService(BaseService):
             except ValueError:
                 date = datetime.datetime.strptime(created_date,
                                                   '%Y-%m-%d %H:%M:%S')
-            """
-            find the relative time difference between now and
-            pull request filed to retrieve relative information
-            """
-            rel_diff = relativedelta(datetime.datetime.now(),
-                                     date)
-            """
-            find the absolute time difference between now and
-            pull request filed to retrieve absolute information
-            """
-            abs_diff = datetime.datetime.now() - date
-            if (state_ is not None and value is not None and
-                    duration is not None):
-                """
-                check if pull request is older/newer than specified time
-                interval
-                """
-                result = self.check_request_state(abs_diff, rel_diff, state_,
-                                                  value, duration)
-                # skip the request if it doesn't match the specified criteria
-                if not result:
-                    log.debug("pull request '%s' is not %s than specified"
-                              " time interval", res['title'], state_)
-                    continue
-            # format the time interval pull request has been filed since
-            time = self.format_duration(rel_diff)
-            # fetch and format comments for pull request
-            comments = []
-            if(len(res['comments']) == 1):
-                comments.append('%s' % ', with 1 comment')
-            elif(len(res['comments']) > 1):
-                comments.append('%s %s %s' % (', with',
-                                              len(res['comments']),
-                                              'comments'))
-            comments = ' '.join(comments)
-            # format and print the resultant pull request string
-            res = PagureReview(user=res['user']['name'],
-                               title=res['title'],
-                               url=url,
-                               time=time,
-                               comments=comments)
+            resp = self.format_reviews(username=res['user']['name'],
+                                       title=res['title'], url=url,
+                                       comments=len(res['comments']),
+                                       created_at=date, state_=state_,
+                                       value=value, duration=duration)
+            if resp is False:
+                log.debug("pull request '%s' is not %s than specified"
+                          " time interval", res['title'], state_)
+                continue
+            res = PagureReview(user=resp['user'],
+                               title=resp['title'],
+                               url=resp['url'],
+                               time=resp['time'],
+                               comments=resp['comments'])
             log.info(res)
             res_.append(res)
         return res_
