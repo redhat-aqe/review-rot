@@ -18,7 +18,7 @@ class BaseService(object):
         find the relative time difference between now and
         review request filed to retrieve relative information
         """
-        rel_diff = relativedelta(datetime.datetime.now(),
+        rel_diff = relativedelta(datetime.datetime.utcnow(),
                                  created_at)
 
         time_dict = OrderedDict([
@@ -62,13 +62,13 @@ class BaseService(object):
             find the relative time difference between now and
             review request filed to retrieve relative information
             """
-            rel_diff = relativedelta(datetime.datetime.now(),
+            rel_diff = relativedelta(datetime.datetime.utcnow(),
                                      created_at)
             """
             find the absolute time difference between now and
             review request filed to retrieve absolute information
             """
-            abs_diff = datetime.datetime.now() - created_at
+            abs_diff = datetime.datetime.utcnow() - created_at
 
             if state_ not in ('older', 'newer'):
                 raise ValueError('Invalid state value: %s' % state_)
