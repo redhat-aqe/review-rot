@@ -123,9 +123,6 @@ class PagureService(BaseService):
             log.exception('Error while decoding JSON: {0}'.format(err))
             raise
         if req.status_code != 200:
-            if output is None:
-                log.debug('No output returned by %s', req.url)
-                raise Exception('No output returned by %s' % req.url)
             if 'error_code' in output:
                 log.debug(output['error'])
                 raise Exception(output['error'])
