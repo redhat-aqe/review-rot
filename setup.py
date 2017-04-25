@@ -17,6 +17,7 @@ setup(name='review-rot',
           'PyGithub',
           'PyYAML',
           'dateutils',
+          'python-gitlab'
       ],
       scripts=['bin/review-rot']
       )
