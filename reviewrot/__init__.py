@@ -1,5 +1,6 @@
 from reviewrot.githubstack import GithubService
 from reviewrot.gitlabstack import GitlabService
+from reviewrot.pagurestack import PagureService
 
 
 def get_git_service(git):
@@ -16,5 +17,7 @@ def get_git_service(git):
         return GithubService()
     elif git == "gitlab":
         return GitlabService()
+    elif git == "pagure":
+        return PagureService()
     else:
         raise ValueError('requested git service %s is not valid' % (git))
