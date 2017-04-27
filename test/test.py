@@ -7,6 +7,7 @@ from unittest import TestCase
 from reviewrot.githubstack import GithubService
 from reviewrot.gitlabstack import GitlabService
 from reviewrot.pagurestack import PagureService
+from reviewrot import get_git_service
 from github.GithubException import BadCredentialsException
 from gitlab.exceptions import GitlabConnectionError
 
@@ -20,8 +21,7 @@ class GithubTest(TestCase):
             self.config = yaml.load(f)
 
     def test_object_create(self):
-        isinstance_ = isinstance(GithubService(), GithubService)
-        self.assertEqual(isinstance_, True)
+        self.assertTrue(isinstance((get_git_service('github')), GithubService))
 
     def test_request_review_token(self):
         github = GithubService()
@@ -46,10 +46,7 @@ class GithubTest(TestCase):
         res = GithubService().request_reviews(user_name=self.config['user_name'],
                                               token=self.config['token'],
                                               repo_name=self.config['repo_name'])
-        msg = self.config['msg']
-        result = []
-        result.append(msg)
-        self.assertTrue(result, res)
+        self.assertEqual([self.config['msg']], res)
 
     @mock.patch('github.Github.get_user', side_effect=test_mock.mock_get_user_)
     @mock.patch('github.NamedUser.NamedUser.get_repos', side_effect=test_mock.mock_get_repos)
@@ -59,10 +56,7 @@ class GithubTest(TestCase):
                                           mock_github_get_reviews, mock_get_repos):
         res = GithubService().request_reviews(user_name=self.config['user_name'],
                                               token=self.config['token'])
-        msg = self.config['msg']
-        result = []
-        result.append(msg)
-        self.assertTrue(result, res)
+        self.assertEqual([self.config['msg']], res)
 
     @mock.patch('github.NamedUser.NamedUser.get_repo', side_effect=test_mock.mock_get_repo)
     def test_get_reviews_get_repo_not_found(self, mock_get_repo):
@@ -80,7 +74,7 @@ class GithubTest(TestCase):
         uname = test_mock.mock_get_user_(self.config['user_name'])
         res = GithubService().get_reviews(uname=uname,
                                           repo_name=self.config['repo_name'])
-        self.assertTrue(res == [])
+        self.assertEqual(res, [])
 
 
 class GitlabTest(TestCase):
@@ -89,8 +83,7 @@ class GitlabTest(TestCase):
             self.config = yaml.load(f)
 
     def test_github_object_create(self):
-        isinstance_ = isinstance(GitlabService(), GitlabService)
-        self.assertEqual(isinstance_, True)
+        self.assertTrue(isinstance((get_git_service('gitlab')), GitlabService))
 
     def test_request_reviews__token(self):
         github = GitlabService()
@@ -132,10 +125,7 @@ class GitlabTest(TestCase):
                                               repo_name=self.config['repo_name'],
                                               token=self.config['token'],
                                               host=self.config['host'])
-        msg = self.config['msg']
-        result = []
-        result.append(msg)
-        self.assertTrue(result, res)
+        self.assertEqual([self.config['msg']], res)
 
 
 class PagureTest(TestCase):
@@ -144,8 +134,7 @@ class PagureTest(TestCase):
             self.config = yaml.load(f)
 
     def test_pagure_object_create(self):
-        isinstance_ = isinstance(PagureService(), PagureService)
-        self.assertEqual(isinstance_, True)
+        self.assertTrue(isinstance((get_git_service('pagure')), PagureService))
 
     def test_request_review_incorrect_project_with_repo(self):
         pagure = PagureService()

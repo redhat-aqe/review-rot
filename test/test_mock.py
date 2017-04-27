@@ -6,23 +6,26 @@ from gitlab.exceptions import GitlabGetError
 
 
 with open('test_githubtest.yaml', 'r') as f:
-    config = yaml.load(f)
+    github_config = yaml.load(f)
 
+with open('test_gitlabtest.yaml', 'r') as f:
+    gitlab_config = yaml.load(f)
 
 # github
 
+
 def mock_get_user(user_name):
-    raise UnknownObjectException('args', 'kwargs')
+    raise UnknownObjectException('param1', 'param2')
 
 
 def mock_get_user_(user_name):
-    res = github.NamedUser.NamedUser('args', 'kwargs',
-                                     {'login': user_name}, 'kwargs**')
+    res = github.NamedUser.NamedUser('param1', 'param2',
+                                     {'login': user_name}, 'param3')
     return res
 
 
 def mock_get_repos():
-    repo = github.Repository.Repository('args', 'args*', 'kwargs', 'kwargs*')
+    repo = github.Repository.Repository('param1', 'param2', 'param3', 'param4')
     res = []
     res.append(repo)
     return res
@@ -30,7 +33,7 @@ def mock_get_repos():
 
 def mock_github_get_reviews(uname, repo_name, state_=None,
                             value=None, duration=None):
-    msg = config['msg']
+    msg = github_config['msg']
     return msg
 
 
@@ -39,7 +42,8 @@ def mock_get_repo(repo_name):
 
 
 def mock_get_repo_(repo_name):
-    repo = github.Repository.Repository('args', 'args*', 'kwargs', 'kwargs*')
+    repo = github.Repository.Repository('param1', 'param2',
+                                        'param3', 'param4')
     return repo
 
 
@@ -54,7 +58,7 @@ def mock_projects_get(user_name, repo_name):
 
 
 def mock_projects_get_(user_name, repo_name):
-    return gitlab.Project({'args': 'args*'})
+    return gitlab.Project({'key': 'value'})
 
 
 def mock_auth():
@@ -67,5 +71,5 @@ def mock_groups_search(user_name):
 
 def mock_gitlab_get_reviews(uname, project, state_=None,
                             value=None, duration=None):
-    msg = config['msg']
+    msg = gitlab_config['msg']
     return msg
