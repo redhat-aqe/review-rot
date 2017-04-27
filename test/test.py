@@ -15,27 +15,27 @@ logging.disable(logging.CRITICAL)
 
 
 class GithubTest(TestCase):
+    def setUp(self):
+        with open('test_githubtest.yaml', 'r') as f:
+            self.config = yaml.load(f)
+
     def test_object_create(self):
         isinstance_ = isinstance(GithubService(), GithubService)
         self.assertEqual(isinstance_, True)
 
     def test_request_review_token(self):
-        with open('test_githubtest.yaml', 'r') as f:
-            config = yaml.load(f)
         github = GithubService()
         with self.assertRaises(BadCredentialsException) as context:
-            github.request_reviews(user_name=config['user_name'],
-                                   token=config['token'])
+            github.request_reviews(user_name=self.config['user_name'],
+                                   token=self.config['token'])
         self.assertTrue('Bad credentials' in str(context.exception))
 
     @mock.patch('github.Github.get_user', side_effect=test_mock.mock_get_user)
     def test_request_reviews_get_user(self, mock_get_user):
-        with open('test_githubtest.yaml', 'r') as f:
-            config = yaml.load(f)
         with self.assertRaises(Exception) as context:
-            GithubService().request_reviews(user_name=config['user_name'],
-                                            token=config['token'])
-        msg = 'Invalid username/organizaton: %s' % config['user_name']
+            GithubService().request_reviews(user_name=self.config['user_name'],
+                                            token=self.config['token'])
+        msg = 'Invalid username/organizaton: %s' % self.config['user_name']
         self.assertTrue(msg in str(context.exception))
 
     @mock.patch('github.Github.get_user', side_effect=test_mock.mock_get_user_)
@@ -43,12 +43,10 @@ class GithubTest(TestCase):
                 side_effect=test_mock.mock_github_get_reviews)
     def test_request_reviews_with_repo(self, mock_get_user_,
                                        mock_github_get_reviews):
-        with open('test_githubtest.yaml', 'r') as f:
-            config = yaml.load(f)
-        res = GithubService().request_reviews(user_name=config['user_name'],
-                                              token=config['token'],
-                                              repo_name=config['repo_name'])
-        msg = config['msg']
+        res = GithubService().request_reviews(user_name=self.config['user_name'],
+                                              token=self.config['token'],
+                                              repo_name=self.config['repo_name'])
+        msg = self.config['msg']
         result = []
         result.append(msg)
         self.assertTrue(result, res)
@@ -59,76 +57,69 @@ class GithubTest(TestCase):
                 side_effect=test_mock.mock_github_get_reviews)
     def test_request_reviews_without_repo(self, mock_get_user_,
                                           mock_github_get_reviews, mock_get_repos):
-        with open('test_githubtest.yaml', 'r') as f:
-            config = yaml.load(f)
-        res = GithubService().request_reviews(user_name=config['user_name'],
-                                              token=config['token'])
-        msg = config['msg']
+        res = GithubService().request_reviews(user_name=self.config['user_name'],
+                                              token=self.config['token'])
+        msg = self.config['msg']
         result = []
         result.append(msg)
         self.assertTrue(result, res)
 
     @mock.patch('github.NamedUser.NamedUser.get_repo', side_effect=test_mock.mock_get_repo)
     def test_get_reviews_get_repo_not_found(self, mock_get_repo):
-        with open('test_githubtest.yaml', 'r') as f:
-            config = yaml.load(f)
         with self.assertRaises(Exception) as context:
-            uname = test_mock.mock_get_user_(config['user_name'])
+            uname = test_mock.mock_get_user_(self.config['user_name'])
             GithubService().get_reviews(uname=uname,
-                                        repo_name=config['repo_name'])
-        msg = 'Repository %s not found for user %s' % (config['repo_name'],
+                                        repo_name=self.config['repo_name'])
+        msg = 'Repository %s not found for user %s' % (self.config['repo_name'],
                                                        uname.login)
         self.assertTrue(msg in str(context.exception))
 
     @mock.patch('github.NamedUser.NamedUser.get_repo', side_effect=test_mock.mock_get_repo_)
     @mock.patch('github.Repository.Repository.get_pulls', side_effect=test_mock.mock_get_pulls)
     def test_get_reviews_get_repo(self, mock_get_pulls, mock_get_repo_):
-        with open('test_githubtest.yaml', 'r') as f:
-            config = yaml.load(f)
-        uname = test_mock.mock_get_user_(config['user_name'])
+        uname = test_mock.mock_get_user_(self.config['user_name'])
         res = GithubService().get_reviews(uname=uname,
-                                          repo_name=config['repo_name'])
+                                          repo_name=self.config['repo_name'])
         self.assertTrue(res == [])
 
 
 class GitlabTest(TestCase):
+    def setUp(self):
+        with open('test_gitlabtest.yaml', 'r') as f:
+            self.config = yaml.load(f)
+
     def test_github_object_create(self):
         isinstance_ = isinstance(GitlabService(), GitlabService)
         self.assertEqual(isinstance_, True)
 
     def test_request_reviews__token(self):
-        with open('test_gitlabtest.yaml', 'r') as f:
-            config = yaml.load(f)
         github = GitlabService()
         with self.assertRaises(GitlabConnectionError)as context:
-            github.request_reviews(user_name=config['user_name'],
-                                   token=config['token'], host=config['host'])
+            github.request_reviews(user_name=self.config['user_name'],
+                                   token=self.config['token'],
+                                   host=self.config['host'])
         self.assertTrue('NewConnectionError' in str(context.exception))
 
     @mock.patch('gitlab.Project.get', side_effect=test_mock.mock_projects_get)
     @mock.patch('gitlab.Gitlab.auth', side_effect=test_mock.mock_auth)
     def test_request_reviews_projects_get(self, mock_projects_get, mock_auth):
-        with open('test_gitlabtest.yaml', 'r') as f:
-            config = yaml.load(f)
         with self.assertRaises(Exception) as context:
-            GitlabService().request_reviews(user_name=config['user_name'],
-                                            repo_name=config['repo_name'],
-                                            token=config['token'],
-                                            host=config['host'])
-        msg = 'Project %s not found for user %s' % (config['repo_name'],
-                                                    config['user_name'])
+            GitlabService().request_reviews(user_name=self.config['user_name'],
+                                            repo_name=self.config['repo_name'],
+                                            token=self.config['token'],
+                                            host=self.config['host'])
+        msg = 'Project %s not found for user %s' % (self.config['repo_name'],
+                                                    self.config['user_name'])
         self.assertTrue(msg in str(context.exception))
 
     @mock.patch('gitlab.GroupManager.search', side_effect=test_mock.mock_groups_search)
     @mock.patch('gitlab.Gitlab.auth', side_effect=test_mock.mock_auth)
     def test_request_reviews_groups_search(self, mock_groups_search, mock_auth):
-        with open('test_gitlabtest.yaml', 'r') as f:
-            config = yaml.load(f)
         with self.assertRaises(Exception) as context:
-            GitlabService().request_reviews(user_name=config['user_name'],
-                                            token=config['token'],
-                                            host=config['host'])
-        msg = 'Invalid user/group name: %s' % config['user_name']
+            GitlabService().request_reviews(user_name=self.config['user_name'],
+                                            token=self.config['token'],
+                                            host=self.config['host'])
+        msg = 'Invalid user/group name: %s' % self.config['user_name']
         self.assertTrue(msg in str(context.exception))
 
     @mock.patch('gitlab.Project.get', side_effect=test_mock.mock_projects_get_)
@@ -137,30 +128,30 @@ class GitlabTest(TestCase):
                 side_effect=test_mock.mock_gitlab_get_reviews)
     def test_request_reviews_with_repo(self, mock_projects_get_,
                                        mock_gitlab_get_reviews, mock_auth):
-        with open('test_gitlabtest.yaml', 'r') as f:
-            config = yaml.load(f)
-        res = GitlabService().request_reviews(user_name=config['user_name'],
-                                              repo_name=config['repo_name'],
-                                              token=config['token'],
-                                              host=config['host'])
-        msg = config['msg']
+        res = GitlabService().request_reviews(user_name=self.config['user_name'],
+                                              repo_name=self.config['repo_name'],
+                                              token=self.config['token'],
+                                              host=self.config['host'])
+        msg = self.config['msg']
         result = []
         result.append(msg)
         self.assertTrue(result, res)
 
 
 class PagureTest(TestCase):
+    def setUp(self):
+        with open('test_paguretest.yaml', 'r') as f:
+            self.config = yaml.load(f)
+
     def test_pagure_object_create(self):
         isinstance_ = isinstance(PagureService(), PagureService)
         self.assertEqual(isinstance_, True)
 
     def test_request_review_incorrect_project_with_repo(self):
-        with open('test_paguretest.yaml', 'r') as f:
-            config = yaml.load(f)
         pagure = PagureService()
         with self.assertRaises(Exception)as context:
-            pagure.request_reviews(user_name=config['user_name'],
-                                   repo_name=config['repo_name'])
+            pagure.request_reviews(user_name=self.config['user_name'],
+                                   repo_name=self.config['repo_name'])
         self.assertTrue('Project not found' in str(context.exception))
 
 

@@ -17,7 +17,9 @@ setup(name='review-rot',
           'PyGithub',
           'PyYAML',
           'dateutils',
-          'python-gitlab',
+          'python-gitlab'
+      ],
+      test_requires=[
           'mock'
       ],
       scripts=['bin/review-rot']
