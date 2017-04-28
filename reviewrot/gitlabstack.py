@@ -2,7 +2,7 @@ import os
 import logging
 import gitlab
 import datetime
-from basereview import BaseService, BaseReview
+from reviewrot.basereview import BaseService, BaseReview
 from gitlab.exceptions import GitlabGetError
 
 log = logging.getLogger(__name__)

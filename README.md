@@ -14,6 +14,18 @@ Alternatively, for development:
 python setup.py develop
 ```
 
+## Tests
+To run the tests in your virtualenv, execute:
+```shell
+python setup.py test
+```
+
+Alternatively, you can use `tox` or `detox` to run the tests against multiple versions of python:
+```shell
+sudo dnf install python-detox
+detox
+```
+
 ## Script:
 
 #### review-rot

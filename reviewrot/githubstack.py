@@ -1,5 +1,5 @@
 import logging
-from basereview import BaseService, BaseReview
+from reviewrot.basereview import BaseService, BaseReview
 from github import Github
 from github.GithubException import UnknownObjectException
 
