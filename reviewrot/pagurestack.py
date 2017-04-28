@@ -2,7 +2,7 @@ import os
 import logging
 import datetime
 import requests
-from basereview import BaseService, BaseReview
+from reviewrot.basereview import BaseService, BaseReview
 
 log = logging.getLogger(__name__)
 
