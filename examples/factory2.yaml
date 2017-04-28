@@ -1,0 +1,32 @@
+- type: github
+  host: github.com
+  # Get the token at https://github.com/settings/tokens
+  token: GET_YOUR_TOKEN_AND_PUT_IT_HERE
+  repos:
+     - nirzari/review-rot
+     - fedora-modularity/product-definition-center
+     - fedora-infra/pdc-updater
+     - fedora-infra/datanommer
+     - fedora-infra/datagrepper
+     - release-engineering/resultsdb-updater
+     - release-engineering/fedmsg_meta_umb
+
+- type: gitlab
+  host: https://gitlab.infra.prod.eng.rdu2.redhat.com
+  # Get the token at https://gitlab.infra.prod.eng.rdu2.redhat.com/profile/account
+  token: GET_YOUR_TOKEN_AND_PUT_IT_HERE
+  repos:
+      - eng-ops/ansible
+      - ansible-roles/resultsdb
+      - ansible-roles/resultsdb-updater
+      - ansible-roles/resultsdb-frontend
+
+- type: pagure
+  host: pagure.io
+  repos:
+     - fm-orchestrator
+     - waiverdb
+     - freshmaker
+     - modulemd
+     - sync-to-jira
+     - set-jira-paf
