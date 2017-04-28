@@ -19,8 +19,10 @@ setup(name='review-rot',
           'dateutils',
           'python-gitlab'
       ],
-      tests_requires=[
-          'mock'
+      tests_require=[
+          'nose',
+          'mock',
       ],
+      test_suite='nose.collector',
       scripts=['bin/review-rot']
       )

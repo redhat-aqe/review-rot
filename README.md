@@ -14,6 +14,12 @@ Alternatively, for development:
 python setup.py develop
 ```
 
+## Tests
+To run the tests, execute:
+```shell
+python setup.py test
+```
+
 ## Script:
 
 #### review-rot
