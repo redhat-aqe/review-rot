@@ -1,3 +1,4 @@
+from os.path import join, dirname
 import yaml
 import github
 import gitlab
@@ -5,10 +6,10 @@ from github.GithubException import UnknownObjectException
 from gitlab.exceptions import GitlabGetError
 
 
-with open('test_githubtest.yaml', 'r') as f:
+with open(join(dirname(__file__), 'test_githubtest.yaml'), 'r') as f:
     github_config = yaml.load(f)
 
-with open('test_gitlabtest.yaml', 'r') as f:
+with open(join(dirname(__file__), 'test_gitlabtest.yaml'), 'r') as f:
     gitlab_config = yaml.load(f)
 
 # github

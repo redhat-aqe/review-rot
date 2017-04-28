@@ -3,6 +3,7 @@ import mock
 import yaml
 import test_mock
 import unittest
+from os.path import join, dirname
 from unittest import TestCase
 from reviewrot.githubstack import GithubService
 from reviewrot.gitlabstack import GitlabService
@@ -17,7 +18,8 @@ logging.disable(logging.CRITICAL)
 
 class GithubTest(TestCase):
     def setUp(self):
-        with open('test_githubtest.yaml', 'r') as f:
+        filename = join(dirname(__file__), 'test_githubtest.yaml')
+        with open(filename, 'r') as f:
             self.config = yaml.load(f)
 
     def test_object_create(self):
@@ -79,7 +81,8 @@ class GithubTest(TestCase):
 
 class GitlabTest(TestCase):
     def setUp(self):
-        with open('test_gitlabtest.yaml', 'r') as f:
+        filename = join(dirname(__file__), 'test_gitlabtest.yaml')
+        with open(filename, 'r') as f:
             self.config = yaml.load(f)
 
     def test_github_object_create(self):
@@ -130,7 +133,8 @@ class GitlabTest(TestCase):
 
 class PagureTest(TestCase):
     def setUp(self):
-        with open('test_paguretest.yaml', 'r') as f:
+        filename = join(dirname(__file__), 'test_paguretest.yaml')
+        with open(filename, 'r') as f:
             self.config = yaml.load(f)
 
     def test_pagure_object_create(self):
