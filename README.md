@@ -2,7 +2,7 @@
 reviewrot is a CLI tool, that helps to list down open review requests from github, gitlab and pagure.
 
 ## Sample I/P:
-create '~/.reviewrot.yaml' with the content from sampleinput.yaml
+Create '~/.reviewrot.yaml' with the content from sampleinput.yaml or browse the [examples](https://github.com/nirzari/review-rot/tree/master/examples/).
 
 ## Installation
 ```shell
