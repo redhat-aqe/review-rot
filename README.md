@@ -1,5 +1,5 @@
 # review-rot
-Basic structure for reviewrot
+reviewrot is a CLI tool, that helps to list down open review requests from github, gitlab and pagure.
 
 ## Sample I/P:
 create '~/.reviewrot.yaml' with the content from sampleinput.yaml

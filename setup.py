@@ -19,5 +19,8 @@ setup(name='review-rot',
           'dateutils',
           'python-gitlab'
       ],
+      tests_requires=[
+          'mock'
+      ],
       scripts=['bin/review-rot']
       )
