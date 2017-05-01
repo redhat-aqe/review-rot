@@ -53,7 +53,7 @@ class GithubService(BaseService):
             res = self.get_reviews(uname=uname, repo_name=repo_name,
                                    state_=state_, value=value,
                                    duration=duration)
-            # append incase of a non empty result
+            # extend incase of a non empty result
             if res:
                 response.extend(res)
         else:
@@ -69,7 +69,7 @@ class GithubService(BaseService):
                 res = self.get_reviews(uname=uname, repo_name=repo.name,
                                        state_=state_, value=value,
                                        duration=duration)
-                # append incase of a non empty result
+                # extend incase of a non empty result
                 if res:
                     response.extend(res)
         return response
