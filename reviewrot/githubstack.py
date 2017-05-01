@@ -55,7 +55,7 @@ class GithubService(BaseService):
                                    duration=duration)
             # append incase of a non empty result
             if res:
-                response.append(res)
+                response.extend(res)
         else:
             # get all of the respositories for specified user/organization
             repo_list = uname.get_repos()
@@ -71,7 +71,7 @@ class GithubService(BaseService):
                                        duration=duration)
                 # append incase of a non empty result
                 if res:
-                    response.append(res)
+                    response.extend(res)
         return response
 
     def get_reviews(self, uname, repo_name, state_=None,
@@ -129,7 +129,7 @@ class GithubService(BaseService):
                                url=pr.html_url,
                                time=time,
                                comments=pr.comments)
-            log.info(res)
+            log.debug(res)
             res_.append(res)
         return res_
 

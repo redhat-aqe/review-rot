@@ -139,7 +139,7 @@ class GitlabService(BaseService):
                                url=mr.web_url,
                                time=time,
                                comments=mr.user_notes_count)
-            log.info(res)
+            log.debug(res)
             res_.append(res)
         return res_
 

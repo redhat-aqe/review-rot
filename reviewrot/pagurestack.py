@@ -94,7 +94,7 @@ class PagureService(BaseService):
                                url=url,
                                time=time,
                                comments=len(res['comments']))
-            log.info(res)
+            log.debug(res)
             res_.append(res)
         return res_
 
