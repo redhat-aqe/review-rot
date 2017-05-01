@@ -11,16 +11,6 @@
      - release-engineering/resultsdb-updater
      - release-engineering/fedmsg_meta_umb
 
-- type: gitlab
-  host: https://gitlab.infra.prod.eng.rdu2.redhat.com
-  # Get the token at https://gitlab.infra.prod.eng.rdu2.redhat.com/profile/account
-  token: GET_YOUR_TOKEN_AND_PUT_IT_HERE
-  repos:
-      - eng-ops/ansible
-      - ansible-roles/resultsdb
-      - ansible-roles/resultsdb-updater
-      - ansible-roles/resultsdb-frontend
-
 - type: pagure
   host: pagure.io
   repos:
@@ -30,3 +20,19 @@
      - modulemd
      - sync-to-jira
      - set-jira-paf
+
+# We have weird problems interfacing with gitlab.infra.prod.eng.rdu2.redhat.com
+# If this matters to you, try enabling this and digging into the error
+# messages. It looks like you have to be an owner the of the repos, but even
+# then you are redirect to login over the API, which may be a server-side
+# configuration issue.
+#- type: gitlab
+#  host: https://gitlab.infra.prod.eng.rdu2.redhat.com
+#  # Get the token at https://gitlab.infra.prod.eng.rdu2.redhat.com/profile/account
+#  token: GET_YOUR_TOKEN_AND_PUT_IT_HERE
+#  repos:
+#      - eng-ops/ansible
+#      - ansible-roles/resultsdb
+#      - ansible-roles/resultsdb-updater
+#      - ansible-roles/resultsdb-frontend
+#      - shared-access/factory2-secrets
