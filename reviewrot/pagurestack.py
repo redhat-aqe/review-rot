@@ -87,12 +87,10 @@ class PagureService(BaseService):
                 log.debug("pull request '%s' is not %s than specified"
                           " time interval", res['title'], state_)
                 continue
-            # format the time interval pull request has been filed since
-            time = self.format_duration(created_at=date)
             res = PagureReview(user=res['user']['name'],
                                title=res['title'],
                                url=url,
-                               time=time,
+                               time=date,
                                comments=len(res['comments']))
             log.debug(res)
             res_.append(res)

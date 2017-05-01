@@ -122,12 +122,10 @@ class GithubService(BaseService):
                 log.debug("review request '%s' is not %s than specified"
                           " time interval", pr.title, state_)
                 continue
-            # format the time interval pull request has been filed since
-            time = self.format_duration(created_at=pr.created_at)
             res = GithubReview(user=pr.user.login,
                                title=pr.title,
                                url=pr.html_url,
-                               time=time,
+                               time=pr.created_at,
                                comments=pr.comments)
             log.debug(res)
             res_.append(res)
