@@ -58,9 +58,9 @@ class GitlabService(BaseService):
             res = self.get_reviews(uname=user_name, project=project,
                                    state_=state_, value=value,
                                    duration=duration)
-            # append incase of a non empty result
+            # extend incase of a non empty result
             if res:
-                response.append(res)
+                response.extend(res)
 
         else:
             # get user object
@@ -79,9 +79,9 @@ class GitlabService(BaseService):
                     res = self.get_reviews(uname=user_name, project=project,
                                            state_=state_, value=value,
                                            duration=duration)
-                # append incase of a non empty result
+                # extend incase of a non empty result
                 if res:
-                    response.append(res)
+                    response.extend(res)
         return response
 
     def get_reviews(self, uname, project, state_=None,
@@ -132,14 +132,12 @@ class GitlabService(BaseService):
                 log.debug("merge request '%s' is not %s than specified"
                           " time interval", mr.title, state_)
                 continue
-            # format the time interval pull request has been filed since
-            time = self.format_duration(created_at=mr_date)
             res = GitlabReview(user=mr.author.username,
                                title=mr.title,
                                url=mr.web_url,
-                               time=time,
+                               time=mr_date,
                                comments=mr.user_notes_count)
-            log.info(res)
+            log.debug(res)
             res_.append(res)
         return res_
 

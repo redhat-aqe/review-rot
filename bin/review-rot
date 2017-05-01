@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+import operator
 import os
 import logging
 import argparse
@@ -30,6 +31,7 @@ def main(state_, value, duration):
     with open(path_to_config, 'r') as f:
         config = yaml.load(f)
 
+    results = []
     for item in config:
         if 'type' not in item:
             log.debug('git service type not found for %s', item)
@@ -53,14 +55,22 @@ def main(state_, value, duration):
                 get pull requests for specified git service, username
                 and repository name
                 """
-                git_service.request_reviews(user_name=res['user_name'],
-                                            repo_name=res['repo_name'],
-                                            state_=state_,
-                                            value=value,
-                                            duration=duration,
-                                            token=item.get('token'),
-                                            host=item.get('host')
-                                            )
+                results.extend(
+                    git_service.request_reviews(
+                        user_name=res['user_name'],
+                        repo_name=res['repo_name'],
+                        state_=state_,
+                        value=value,
+                        duration=duration,
+                        token=item.get('token'),
+                        host=item.get('host'),
+                    )
+                )
+
+    # Now, with all results in place, sort them and print
+    for result in sorted(results, key=operator.attrgetter('time')):
+        print(result)
+
 
 
 def format_user_repo_name(data):

@@ -53,9 +53,9 @@ class GithubService(BaseService):
             res = self.get_reviews(uname=uname, repo_name=repo_name,
                                    state_=state_, value=value,
                                    duration=duration)
-            # append incase of a non empty result
+            # extend incase of a non empty result
             if res:
-                response.append(res)
+                response.extend(res)
         else:
             # get all of the respositories for specified user/organization
             repo_list = uname.get_repos()
@@ -69,9 +69,9 @@ class GithubService(BaseService):
                 res = self.get_reviews(uname=uname, repo_name=repo.name,
                                        state_=state_, value=value,
                                        duration=duration)
-                # append incase of a non empty result
+                # extend incase of a non empty result
                 if res:
-                    response.append(res)
+                    response.extend(res)
         return response
 
     def get_reviews(self, uname, repo_name, state_=None,
@@ -122,14 +122,12 @@ class GithubService(BaseService):
                 log.debug("review request '%s' is not %s than specified"
                           " time interval", pr.title, state_)
                 continue
-            # format the time interval pull request has been filed since
-            time = self.format_duration(created_at=pr.created_at)
             res = GithubReview(user=pr.user.login,
                                title=pr.title,
                                url=pr.html_url,
-                               time=time,
+                               time=pr.created_at,
                                comments=pr.comments)
-            log.info(res)
+            log.debug(res)
             res_.append(res)
         return res_
 

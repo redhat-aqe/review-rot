@@ -34,7 +34,7 @@ def mock_get_repos():
 
 def mock_github_get_reviews(uname, repo_name, state_=None,
                             value=None, duration=None):
-    msg = github_config['msg']
+    msg = [github_config['msg']]
     return msg
 
 
@@ -72,5 +72,5 @@ def mock_groups_search(user_name):
 
 def mock_gitlab_get_reviews(uname, project, state_=None,
                             value=None, duration=None):
-    msg = gitlab_config['msg']
+    msg = [gitlab_config['msg']]
     return msg

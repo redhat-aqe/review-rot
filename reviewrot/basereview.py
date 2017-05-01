@@ -5,39 +5,6 @@ from dateutil.relativedelta import relativedelta
 
 class BaseService(object):
 
-    def format_duration(self, created_at):
-        """
-        Formats the duration the review request is pending for
-        Args:
-            created_at (str): the date review request was filed
-
-        Returns:
-            a string of duration the review request is pending for
-        """
-        """
-        find the relative time difference between now and
-        review request filed to retrieve relative information
-        """
-        rel_diff = relativedelta(datetime.datetime.utcnow(),
-                                 created_at)
-
-        time_dict = OrderedDict([
-            ('year', rel_diff.years),
-            ('month', rel_diff.months),
-            ('day', rel_diff.days),
-            ('hour', rel_diff.hours),
-            ('minute', rel_diff.minutes),
-        ])
-
-        result = []
-        for k, v in time_dict.items():
-            if v == 1:
-                result.append('%s %s' % (v, k))
-            elif v > 1:
-                result.append('%s %ss' % (v, k))
-
-        return ' '.join(result)
-
     def check_request_state(self, created_at,
                             state_, value, duration):
         """
@@ -124,13 +91,51 @@ class BaseReview(object):
         self.time = time
         self.comments = comments
 
+    @staticmethod
+    def format_duration(created_at):
+        """
+        Formats the duration the review request is pending for
+        Args:
+            created_at (str): the date review request was filed
+
+        Returns:
+            a string of duration the review request is pending for
+        """
+        """
+        find the relative time difference between now and
+        review request filed to retrieve relative information
+        """
+        rel_diff = relativedelta(datetime.datetime.utcnow(),
+                                 created_at)
+
+        time_dict = OrderedDict([
+            ('year', rel_diff.years),
+            ('month', rel_diff.months),
+            ('day', rel_diff.days),
+            ('hour', rel_diff.hours),
+            ('minute', rel_diff.minutes),
+        ])
+
+        result = []
+        for k, v in time_dict.items():
+            if v == 1:
+                result.append('%s %s' % (v, k))
+            elif v > 1:
+                result.append('%s %ss' % (v, k))
+
+        return ' '.join(result)
+
+    @property
+    def since(self):
+        return self.format_duration(created_at=self.time)
+
     def __str__(self):
         if self.comments == 1:
             return ("@%s filed '%s' %s since %s with %s comment" % (
-                self.user, self.title, self.url, self.time, self.comments))
+                self.user, self.title, self.url, self.since, self.comments))
         elif self.comments > 1:
             return ("@%s filed '%s' %s since %s with %s comments" % (
-                self.user, self.title, self.url, self.time, self.comments))
+                self.user, self.title, self.url, self.since, self.comments))
         else:
             return ("@%s filed '%s' %s since %s" % (self.user, self.title,
-                                                    self.url, self.time))
+                                                    self.url, self.since))
