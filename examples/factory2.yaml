@@ -10,6 +10,8 @@
      - fedora-infra/datagrepper
      - release-engineering/resultsdb-updater
      - release-engineering/fedmsg_meta_umb
+     - product-definition-center/pdc-tangle
+     - product-definition-center/pdc-tangle-web
 
 - type: pagure
   host: pagure.io
