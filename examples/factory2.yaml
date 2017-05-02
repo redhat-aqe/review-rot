@@ -23,6 +23,7 @@
      - modulemd
      - sync-to-jira
      - set-jira-paf
+     - fedrepo_req
 
 # We have weird problems interfacing with gitlab.infra.prod.eng.rdu2.redhat.com
 # If this matters to you, try enabling this and digging into the error
