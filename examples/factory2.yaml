@@ -18,6 +18,7 @@
   repos:
      - fm-orchestrator
      - waiverdb
+     - greenwave
      - freshmaker
      - modulemd
      - sync-to-jira
