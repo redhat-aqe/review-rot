@@ -1,6 +1,7 @@
 from collections import OrderedDict
 import datetime
 from dateutil.relativedelta import relativedelta
+import time
 
 
 class BaseService(object):
@@ -130,12 +131,49 @@ class BaseReview(object):
         return self.format_duration(created_at=self.time)
 
     def __str__(self):
+        return self.format('oneline')
+
+    def format(self, style):
+        lookup = {
+            'oneline': self._format_oneline,
+            'indented': self._format_indented,
+            'json': self._format_json,
+        }
+        return lookup[style]()
+
+    def _format_oneline(self):
+        string = "@%s filed '%s' %s since %s" % (
+                self.user, self.title, self.url, self.since)
+
         if self.comments == 1:
-            return ("@%s filed '%s' %s since %s with %s comment" % (
-                self.user, self.title, self.url, self.since, self.comments))
+            string += " with %s comment" % self.comments
         elif self.comments > 1:
-            return ("@%s filed '%s' %s since %s with %s comments" % (
-                self.user, self.title, self.url, self.since, self.comments))
-        else:
-            return ("@%s filed '%s' %s since %s" % (self.user, self.title,
-                                                    self.url, self.since))
+            string += " with %s comments" % self.comments
+
+        return string
+
+    def _format_indented(self):
+        string = "@%s filed '%s'\n\t%s\n\tsince %s" % (
+                self.user, self.title, self.url, self.since)
+
+        if self.comments == 1:
+            string += "\n\twith %s comment" % self.comments
+        elif self.comments > 1:
+            string += "\n\twith %s comments" % self.comments
+
+        return string
+
+    def _format_json(self):
+        import json
+        return json.dumps(self.__json__(), indent=2)
+
+    def __json__(self):
+        return {
+            'user': self.user,
+            'title': self.title,
+            'url': self.url,
+            'relative_time': self.since,
+            'time': time.mktime(self.time.timetuple()),
+            'comments': self.comments,
+            'type': type(self).__name__,
+        }

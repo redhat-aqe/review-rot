@@ -69,7 +69,7 @@ def main(state_, value, duration):
 
     # Now, with all results in place, sort them and print
     for result in sorted(results, key=operator.attrgetter('time')):
-        print(result)
+        print(result.format(style=args.format))
 
 
 
@@ -111,6 +111,10 @@ if __name__ == '__main__':
                         choices=['y', 'm', 'd', 'h', 'min'],
                         help='Pull requests duration in terms of y=years,'
                              'm=months, d=days, h=hours, min=minutes')
+    parser.add_argument('-f', '--format',
+                        default='oneline',
+                        choices=['oneline', 'indented', 'json'],
+                        help='Choose from one of a few different styles.')
     parser.add_argument('--debug', action='store_true',
                         help='Display debug logs on console')
     args = parser.parse_args()
