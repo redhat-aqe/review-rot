@@ -113,7 +113,7 @@ if __name__ == '__main__':
                              'm=months, d=days, h=hours, min=minutes')
     parser.add_argument('-f', '--format',
                         default='oneline',
-                        choices=['oneline', 'indented'],
+                        choices=['oneline', 'indented', 'json'],
                         help='Choose from one of a few different styles.')
     parser.add_argument('--debug', action='store_true',
                         help='Display debug logs on console')

@@ -1,6 +1,7 @@
 from collections import OrderedDict
 import datetime
 from dateutil.relativedelta import relativedelta
+import time
 
 
 class BaseService(object):
@@ -136,6 +137,7 @@ class BaseReview(object):
         lookup = {
             'oneline': self._format_oneline,
             'indented': self._format_indented,
+            'json': self._format_json,
         }
         return lookup[style]()
 
@@ -160,3 +162,18 @@ class BaseReview(object):
             string += "\n\twith %s comments" % self.comments
 
         return string
+
+    def _format_json(self):
+        import json
+        return json.dumps(self.__json__(), indent=2)
+
+    def __json__(self):
+        return {
+            'user': self.user,
+            'title': self.title,
+            'url': self.url,
+            'relative_time': self.since,
+            'time': time.mktime(self.time.timetuple()),
+            'comments': self.comments,
+            'type': type(self).__name__,
+        }
