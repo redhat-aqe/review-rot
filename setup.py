@@ -8,9 +8,9 @@ setup(name='review-rot',
       author='Nirzari Iyer',
       author_email='niyer@redhat.com',
       description=('CLI tool to list review(pull) requests from '
-                   'github,gitlab,pagure and gerrit'),
+                   'github, gitlab and pagure'),
       long_description=long_description,
-      license='GNU GENERAL PUBLIC LICENSE Version 3',
+      license='GPLv3',
       url='https://github.com/nirzari/review-rot',
       packages=find_packages(),
       install_requires=[
