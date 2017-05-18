@@ -5,11 +5,11 @@ import os
 import logging
 import argparse
 import yaml
-from os.path import expanduser
+from os.path import expanduser, expandvars
 from reviewrot import get_git_service
 
 
-def main(state_, value, duration):
+def main(state_, value, duration, ssl_verify=None):
     """
     Reads input configuration file.
     Calls appropriate git service with suitable inputs.
@@ -39,6 +39,16 @@ def main(state_, value, duration):
 
         # get git service
         git_service = get_git_service(item['type'])
+
+        # use configuration SSL settings by default, override with argument
+        if ssl_verify is None and 'ssl_verify' in item:
+            ssl_verify = item['ssl_verify']
+            # expand ~, environment variables, etc if it's a path
+            if not isinstance(ssl_verify, bool):
+                ssl_verify = expanduser(expandvars(ssl_verify))
+            log.debug('Using ssl_verify value "%s" from configuration',
+                      ssl_verify)
+
         """
         check if username and/or repository information is given for
         specified git service
@@ -64,13 +74,13 @@ def main(state_, value, duration):
                         duration=duration,
                         token=item.get('token'),
                         host=item.get('host'),
+                        ssl_verify=ssl_verify,
                     )
                 )
 
     # Now, with all results in place, sort them and print
     for result in sorted(results, key=operator.attrgetter('time')):
         print(result.format(style=args.format))
-
 
 
 def format_user_repo_name(data):
@@ -117,6 +127,19 @@ if __name__ == '__main__':
                         help='Choose from one of a few different styles.')
     parser.add_argument('--debug', action='store_true',
                         help='Display debug logs on console')
+
+    ssl_group = parser.add_argument_group('SSL')
+    ssl_group.add_argument('-k', '--insecure',
+                           default=False,
+                           action='store_true',
+                           help='Disable SSL certificate verification '
+                                '(not recommended).')
+    ssl_group.add_argument('--cacert',
+                           default=None,
+                           type=open,
+                           help='Path to CA certificate to use for SSL '
+                                'certificate verification.')
+
     args = parser.parse_args()
     options = (args.state, args.value, args.duration)
     if any(options) and not all(options):
@@ -127,4 +150,5 @@ if __name__ == '__main__':
     else:
         logging.basicConfig(level=logging.INFO)
 
-    main(state_=args.state, value=args.value, duration=args.duration)
+    main(state_=args.state, value=args.value, duration=args.duration,
+         ssl_verify=False if args.insecure else args.cacert)
