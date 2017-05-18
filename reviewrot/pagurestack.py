@@ -14,7 +14,8 @@ class PagureService(BaseService):
         self.header = None
 
     def request_reviews(self, user_name, repo_name=None, state_=None,
-                        value=None, duration=None, host=None, token=None):
+                        value=None, duration=None, host=None, token=None,
+                        ssl_verify=True, **kwargs):
         """
         Fetches merge requests by making API calls for specified
         username(namespace) and repo(project) name.
@@ -35,6 +36,8 @@ class PagureService(BaseService):
                          (Commented for unauthenticated request)
             host (str): Pagure host name (This value is not yet supported.
                         The default behavior is to use public pagure instance)
+            ssl_verify (bool/str): Whether or not to verify SSL certificates,
+                                   or a path to a CA file to use.
         Returns:
             res_ (list): Returns list of pull requests for specified
                          namespace and/or repo name
@@ -57,7 +60,7 @@ class PagureService(BaseService):
             log.debug('Looking for pull requests for %s -> %s',
                       'pagure.io',  repo_name)
         log.debug('Calling API with request_url: %s', request_url)
-        response = self._call_api(url=request_url)
+        response = self._call_api(url=request_url, ssl_verify=ssl_verify)
         res_ = []
         for res in response['requests']:
             # if namespace exists in response
@@ -96,7 +99,7 @@ class PagureService(BaseService):
             res_.append(res)
         return res_
 
-    def _call_api(self, url, method='GET'):
+    def _call_api(self, url, method='GET', ssl_verify=True):
         """
         Method used to call the API.
         It returns the raw JSON returned by the API or raises an exception
@@ -113,6 +116,7 @@ class PagureService(BaseService):
             method=method,
             url=url,
             headers=self.header,
+            verify=ssl_verify,
         )
         output = None
         try:

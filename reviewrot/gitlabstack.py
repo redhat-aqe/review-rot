@@ -14,7 +14,8 @@ class GitlabService(BaseService):
      https://docs.gitlab.com/ee/api/
     """
     def request_reviews(self, user_name, repo_name=None, state_=None,
-                        value=None, duration=None, token=None, host=None):
+                        value=None, duration=None, token=None, host=None,
+                        ssl_verify=True, **kwargs):
         """
         Creates a gitlab object.
         Requests merge requests for specified username and repo name.
@@ -34,13 +35,14 @@ class GitlabService(BaseService):
                             newer than
             token (str): Gitlab token for authentication
             host (str): Gitlab host name for authentication
-
+            ssl_verify (bool/str): Whether or not to verify SSL certificates,
+                                   or a path to a CA file to use.
         Returns:
             response (list): Returns list of list of pull requests for
                              specified user(group) name and projectname or all
                              projectname for given groupname
         """
-        gl = gitlab.Gitlab(host, token)
+        gl = gitlab.Gitlab(host, token, ssl_verify=ssl_verify)
         gl.auth()
         log.debug('Gitlab instance created: %s', gl)
         response = []
