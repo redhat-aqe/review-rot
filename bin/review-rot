@@ -72,7 +72,6 @@ def main(state_, value, duration):
         print(result.format(style=args.format))
 
 
-
 def format_user_repo_name(data):
     """
     Takes input from configuration file for a specified git service.
@@ -92,10 +91,10 @@ def format_user_repo_name(data):
         repo_name = None
     return {'user_name': user_name, 'repo_name': repo_name}
 
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(
-        description='Lists pull/merge requests for github, gitlab,'
-                    'pagure and gerrit')
+        description='Lists pull/merge requests for github, gitlab and pagure')
     parser.add_argument('-s', '--state',
                         default=None,
                         choices=['older', 'newer'],
@@ -120,7 +119,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
     options = (args.state, args.value, args.duration)
     if any(options) and not all(options):
-        parser.error('Either none or all arguments are required')
+        parser.error('Either no or all arguments are required')
 
     if args.debug:
         logging.basicConfig(level=logging.DEBUG)
