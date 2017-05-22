@@ -12,7 +12,8 @@ class GithubService(BaseService):
     https://developer.github.com/v3/
     """
     def request_reviews(self, user_name, repo_name=None, state_=None,
-                        value=None, duration=None, token=None, host=None):
+                        value=None, duration=None, token=None, host=None,
+                        **kwargs):
         """
         Creates a github object.
         Requests pull requests for specified username and repo name.
