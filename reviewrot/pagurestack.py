@@ -99,37 +99,5 @@ class PagureService(BaseService):
             res_.append(res)
         return res_
 
-    def _call_api(self, url, method='GET', ssl_verify=True):
-        """
-        Method used to call the API.
-        It returns the raw JSON returned by the API or raises an exception
-        if something goes wrong.
-
-        Args:
-            method (str): the URL to call, can be GET, POST, DELETE, UPDATE...
-                          Defaults to GET
-
-        Returns:
-            raw JSON returned by API
-        """
-        req = self.session.request(
-            method=method,
-            url=url,
-            headers=self.header,
-            verify=ssl_verify,
-        )
-        output = None
-        try:
-            output = req.json()
-        except Exception as err:
-            log.exception('Error while decoding JSON: {0}'.format(err))
-            raise
-        if req.status_code != 200:
-            if 'error_code' in output:
-                log.debug(output['error'])
-                raise Exception(output['error'])
-        return output
-
-
 class PagureReview(BaseReview):
     pass

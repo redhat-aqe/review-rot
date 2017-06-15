@@ -62,21 +62,23 @@ def main(state_, value, duration, ssl_verify=None):
                 """
                 res = format_user_repo_name(data)
                 """
-                get pull requests for specified git service, username
-                and repository name
+                get pull/merge/change requests for specified git service
                 """
+                repo_name =  data if res.get('repo_name') is None else res.get('repo_name')
                 results.extend(
                     git_service.request_reviews(
-                        user_name=res['user_name'],
-                        repo_name=res['repo_name'],
+                        user_name=res.get('user_name',None),
+                        repo_name=repo_name,
                         state_=state_,
                         value=value,
                         duration=duration,
-                        token=item.get('token'),
+                        token=item.get('token',None),
                         host=item.get('host'),
                         ssl_verify=ssl_verify,
                     )
                 )
+
+
 
     # Now, with all results in place, sort them and print
     for result in sorted(results, key=operator.attrgetter('time')):
@@ -102,10 +104,9 @@ def format_user_repo_name(data):
         repo_name = None
     return {'user_name': user_name, 'repo_name': repo_name}
 
-
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(
-        description='Lists pull/merge requests for github, gitlab and pagure')
+        description='Lists pull/merge/change requests for github, gitlab, pagure and gerrit')
     parser.add_argument('-s', '--state',
                         default=None,
                         choices=['older', 'newer'],
@@ -122,7 +123,7 @@ if __name__ == '__main__':
                         help='Pull requests duration in terms of y=years,'
                              'm=months, d=days, h=hours, min=minutes')
     parser.add_argument('-f', '--format',
-                        default='oneline',
+                        default='online',
                         choices=['oneline', 'indented', 'json'],
                         help='Choose from one of a few different styles.')
     parser.add_argument('--debug', action='store_true',

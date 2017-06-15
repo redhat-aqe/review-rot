@@ -1,5 +1,5 @@
 # review-rot
-reviewrot is a CLI tool, that helps to list down open review requests from github, gitlab and pagure.
+reviewrot is a CLI tool, that helps to list down open review requests from github, gitlab, pagure and gerrit.
 
 ## Sample I/P:
 Create '~/.reviewrot.yaml'. browse the [examples](https://github.com/nirzari/review-rot/tree/master/examples/) for content. 
@@ -35,7 +35,7 @@ detox
 usage: review-rot [-h] [-s {older,newer}] [-v VALUE] [-d {y,m,d,h,min}]
                   [--debug]
 
-Lists pull/merge requests for github, gitlab,pagure and gerrit
+Lists pull/merge/change requests for github, gitlab, pagure and gerrit
 
 optional arguments:
   -h, --help            show this help message and exit

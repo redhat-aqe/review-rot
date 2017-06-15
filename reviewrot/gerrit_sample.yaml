@@ -1,0 +1,6 @@
+- type: gerrit
+  host: https://gerrit-review.googlesource.com
+  repos:
+     - gerrit
+  format: indented
+  ssl_verify: False

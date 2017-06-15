@@ -2,7 +2,8 @@ from collections import OrderedDict
 import datetime
 from dateutil.relativedelta import relativedelta
 import time
-
+import json
+from requests.exceptions import HTTPError
 
 class BaseService(object):
 
@@ -81,6 +82,62 @@ class BaseService(object):
             else:
                 raise ValueError("Invalid duration type: %s" % duration)
         return True
+
+    def _decode_response(self,response):
+
+        GERRIT_JSON_PREFIX = ")]}\'\n"
+
+        """ Remove Gerrit's prefix and convert to JSON.
+        :returns:
+            Converted JSON content
+        :raises:
+            requests.HTTPError if the response contains an HTTP error status code.
+        """
+        content = response.content.strip()
+        if response.encoding:
+            content = content.decode(response.encoding)
+        response.raise_for_status()
+        content_type = response.headers.get('content-type', '')
+        if content_type.split(';')[0] != 'application/json':
+            return content
+        if content.startswith(GERRIT_JSON_PREFIX):
+            content = content[len(GERRIT_JSON_PREFIX):]
+        try:
+            return json.loads(content)
+        except ValueError:
+            logging.error('Invalid json content: %s' % content)
+            raise
+
+
+    def _call_api(self, url, method='GET', ssl_verify=True):
+        """
+        Method used to call the API.
+        It returns the raw JSON returned by the API or raises an exception
+        if something goes wrong.
+        Args:
+            method (str): the URL to call, can be GET, POST, DELETE, UPDATE...
+                          Defaults to GET
+        Returns:
+            raw JSON returned by API
+        """
+        response = self.session.request(method=method,url=url,headers=self.header,verify=ssl_verify)
+        decoded_response = None
+        try:
+
+            decoded_response = response.json()
+        except Exception as err:
+            try:
+                decoded_response = self._decode_response(response)
+            except HTTPError as http_error:
+                return ''
+            except Exception as e:
+                log.exception('Error while decoding JSON: {0}'.format(err))
+                raise
+        if response.status_code != 200:
+            if 'error_code' in decoded_response:
+                log.debug(decoded_response['error'])
+                raise Exception(decoded_response['error'])
+        return decoded_response
 
 
 class BaseReview(object):

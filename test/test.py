@@ -8,6 +8,7 @@ from unittest import TestCase
 from reviewrot.githubstack import GithubService
 from reviewrot.gitlabstack import GitlabService
 from reviewrot.pagurestack import PagureService
+from reviewrot.gerritstack import GerritService
 from reviewrot import get_git_service
 from github.GithubException import BadCredentialsException
 from gitlab.exceptions import GitlabConnectionError
@@ -147,6 +148,14 @@ class PagureTest(TestCase):
                                    repo_name=self.config['repo_name'])
         self.assertTrue('Project not found' in str(context.exception))
 
+class GerritTest(TestCase):
+    def setUp(self):
+        filename = join(dirname(__file__), 'test_gerrittest.yaml')
+        with open(filename, 'r') as f:
+            self.config = yaml.load(f)
+
+    def test_gerrit_object_create(self):
+        self.assertTrue(isinstance((get_git_service('gerrit')), GerritService))
 
 if __name__ == '__main__':
     unittest.main()
