@@ -1,12 +1,14 @@
 #!/usr/bin/env python
 
+import argparse
+import logging
 import operator
 import os
-import logging
-import argparse
-import yaml
 from os.path import expanduser, expandvars
+
 from reviewrot import get_git_service
+
+import yaml
 
 
 def main(state_, value, duration, ssl_verify=None):
@@ -64,21 +66,22 @@ def main(state_, value, duration, ssl_verify=None):
                 """
                 get pull/merge/change requests for specified git service
                 """
-                repo_name =  data if res.get('repo_name') is None else res.get('repo_name')
+                repo_name = data
+                if res.get('repo_name') is not None:
+                    repo_name = res.get('repo_name')
+
                 results.extend(
                     git_service.request_reviews(
-                        user_name=res.get('user_name',None),
+                        user_name=res.get('user_name'),
                         repo_name=repo_name,
                         state_=state_,
                         value=value,
                         duration=duration,
-                        token=item.get('token',None),
+                        token=item.get('token'),
                         host=item.get('host'),
                         ssl_verify=ssl_verify,
                     )
                 )
-
-
 
     # Now, with all results in place, sort them and print
     for result in sorted(results, key=operator.attrgetter('time')):

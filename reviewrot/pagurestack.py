@@ -1,8 +1,10 @@
-import os
-import logging
 import datetime
+import logging
+import os
+
 import requests
-from reviewrot.basereview import BaseService, BaseReview
+
+from reviewrot.basereview import BaseReview, BaseService
 
 log = logging.getLogger(__name__)
 
@@ -58,7 +60,7 @@ class PagureService(BaseService):
             request_url = "{}/api/0/{}/pull-requests".format(self.instance,
                                                              repo_name)
             log.debug('Looking for pull requests for %s -> %s',
-                      'pagure.io',  repo_name)
+                      'pagure.io', repo_name)
         log.debug('Calling API with request_url: %s', request_url)
         response = self._call_api(url=request_url, ssl_verify=ssl_verify)
         res_ = []
@@ -98,6 +100,7 @@ class PagureService(BaseService):
             log.debug(res)
             res_.append(res)
         return res_
+
 
 class PagureReview(BaseReview):
     pass

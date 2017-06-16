@@ -148,6 +148,7 @@ class PagureTest(TestCase):
                                    repo_name=self.config['repo_name'])
         self.assertTrue('Project not found' in str(context.exception))
 
+
 class GerritTest(TestCase):
     def setUp(self):
         filename = join(dirname(__file__), 'test_gerrittest.yaml')
@@ -156,6 +157,25 @@ class GerritTest(TestCase):
 
     def test_gerrit_object_create(self):
         self.assertTrue(isinstance((get_git_service('gerrit')), GerritService))
+
+    def test_gerrit_incorrect_host_url(self):
+        gerrit = GerritService()
+        with self.assertRaises(Exception)as context:
+            self.assertRaises(ValueError, gerrit.request_reviews(repo_name=self.config['repo_name'],
+                                                                 host=self.config['incorrect_host']))
+        self.assertTrue( self.config['incorrect_host_msg']  in str(context.exception))
+
+    def test_gerrit_incorrect_repo_name(self):
+        gerrit = GerritService()
+        with self.assertRaises(Exception)as context:
+            self.assertRaises(ValueError, gerrit.request_reviews(repo_name=self.config['incorrect_repo_name'],
+                                                                 host=self.config['host']))
+        self.assertTrue(self.config['incorrect_repo_name_msg'] in str(context.exception))
+
+    def test_gerrit_request_reviews(self):
+        gerrit = GerritService()
+        result = gerrit.request_reviews(repo_name=self.config['repo_name'], host=self.config['host'])
+        self.assertTrue(result is not None)
 
 if __name__ == '__main__':
     unittest.main()
