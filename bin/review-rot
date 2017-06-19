@@ -79,7 +79,12 @@ def main(state_, value, duration, ssl_verify=None):
                 )
 
     # Now, with all results in place, sort them and print
-    for result in sorted(results, key=operator.attrgetter('time')):
+    sorted_results = sorted(
+        results,
+        key=operator.attrgetter('time'),
+        reverse=args.reverse,
+    )
+    for result in sorted_results:
         print(result.format(style=args.format))
 
 
@@ -125,6 +130,8 @@ if __name__ == '__main__':
                         default='oneline',
                         choices=['oneline', 'indented', 'json'],
                         help='Choose from one of a few different styles.')
+    parser.add_argument('--reverse', action='store_true',
+                        help='Display results with the latest first.')
     parser.add_argument('--debug', action='store_true',
                         help='Display debug logs on console')
 
