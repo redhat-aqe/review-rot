@@ -29,7 +29,8 @@ class BaseService(object):
             True if the review request is older or newer than
             specified time interval, False otherwise
         """
-        if (state_ is not None and value is not None and duration is not None):
+        if state_ is not None and value is not None\
+                and duration is not None:
             """
             find the relative time difference between now and
             review request filed to retrieve relative information
@@ -89,9 +90,9 @@ class BaseService(object):
     def _decode_response(self, response):
         """
         Remove Gerrit's prefix and convert to JSON.
-        :returns:
+        Returns:
             Converted JSON content
-        :raises:
+        Raises:
             ValueError if the content is not in proper json format.
         """
         gerrit_json_prefix = ")]}\'\n"
@@ -109,7 +110,7 @@ class BaseService(object):
         except ValueError:
             raise ValueError('Invalid json content: %s' % content)
 
-    def _call_api(self, url, method='GET', ssl_verify=True, ignore_error=False):
+    def _call_api(self, url, method='GET', ssl_verify=True, ignore_err=False):
         """
         Method used to call the API.
         It returns the raw JSON returned by the API or raises an exception
@@ -126,14 +127,14 @@ class BaseService(object):
             decoded_response = response.json()
         except ValueError:
             if response.status_code == 404:
-                # usually happens when comments are not found for Gerrit Change Request
-                if not ignore_error:
+                # happens when comments are not found for Gerrit Change Request
+                if not ignore_err:
                     raise ValueError('Page not found: %s' % response.url)
             elif response.status_code == 200:
                 try:
                     decoded_response = self._decode_response(response)
                 except Exception as e:
-                    raise ValueError('Error while decoding JSON: {0}'.format(e))
+                    raise ValueError('Error while decoding JSON:{0}'.format(e))
             else:
                 raise
         except:

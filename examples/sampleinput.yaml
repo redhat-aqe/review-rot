@@ -20,6 +20,6 @@
     - namespace/repo_name
 
 - type: gerrit
-  host: null
+  host: gerrit_host_url
   repos:
     - project_name

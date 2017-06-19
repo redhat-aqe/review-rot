@@ -1,4 +1,0 @@
-- type: gerrit
-  host: https://gerrit-review.googlesource.com
-  repos:
-     - gerrit

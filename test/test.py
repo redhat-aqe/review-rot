@@ -143,7 +143,7 @@ class PagureTest(TestCase):
 
     def test_request_review_incorrect_project_with_repo(self):
         pagure = PagureService()
-        with self.assertRaises(Exception)as context:
+        with self.assertRaises(Exception) as context:
             pagure.request_reviews(user_name=self.config['user_name'],
                                    repo_name=self.config['repo_name'])
         self.assertTrue('Project not found' in str(context.exception))
@@ -160,22 +160,28 @@ class GerritTest(TestCase):
 
     def test_gerrit_incorrect_host_url(self):
         gerrit = GerritService()
+        error_msg = self.config['incorrect_host_msg']
         with self.assertRaises(Exception)as context:
-            self.assertRaises(ValueError, gerrit.request_reviews(repo_name=self.config['repo_name'],
-                                                                 host=self.config['incorrect_host']))
-        self.assertTrue( self.config['incorrect_host_msg']  in str(context.exception))
+            self.assertRaises(ValueError, gerrit.request_reviews(
+                repo_name=self.config['repo_name'],
+                host=self.config['incorrect_host']))
+        self.assertTrue(error_msg in str(context.exception))
 
     def test_gerrit_incorrect_repo_name(self):
         gerrit = GerritService()
-        with self.assertRaises(Exception)as context:
-            self.assertRaises(ValueError, gerrit.request_reviews(repo_name=self.config['incorrect_repo_name'],
-                                                                 host=self.config['host']))
-        self.assertTrue(self.config['incorrect_repo_name_msg'] in str(context.exception))
+        error_msg = self.config['incorrect_repo_name_msg']
+        with self.assertRaises(Exception) as context:
+            self.assertRaises(ValueError, gerrit.request_reviews(
+                repo_name=self.config['incorrect_repo_name'],
+                host=self.config['host']))
+        self.assertTrue(error_msg in str(context.exception))
 
     def test_gerrit_request_reviews(self):
         gerrit = GerritService()
-        result = gerrit.request_reviews(repo_name=self.config['repo_name'], host=self.config['host'])
+        result = gerrit.request_reviews(repo_name=self.config['repo_name'],
+                                        host=self.config['host'])
         self.assertTrue(result is not None)
+
 
 if __name__ == '__main__':
     unittest.main()
