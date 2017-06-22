@@ -2,6 +2,7 @@ import logging
 import requests
 
 from datetime import datetime
+
 from reviewrot.basereview import BaseReview, BaseService
 
 log = logging.getLogger(__name__)
@@ -14,7 +15,7 @@ class GerritService(BaseService):
     """
     def __init__(self):
         self.session = requests.session()
-        self.header = None
+        self.header = {'Accept': 'application/json'}
 
     def request_reviews(self, host, repo_name, state_=None,
                         user_name=None, token=None, value=None,
@@ -23,7 +24,7 @@ class GerritService(BaseService):
         reviews = None
 
         if self.check_host_url(ssl_verify) and \
-                self.check_repo_exist(repo_name, ssl_verify):
+                self.check_repo_exists(repo_name, ssl_verify):
             request_url = "{}/changes/?q=project:{}+status:open&" \
                           "o=DETAILED_ACCOUNTS".format(self.url, repo_name)
             log.debug('Looking for change requests for %s -> %s',
@@ -34,7 +35,7 @@ class GerritService(BaseService):
                                            duration)
         return reviews
 
-    def check_repo_exist(self, repo_name, ssl_verify):
+    def check_repo_exists(self, repo_name, ssl_verify):
         request_url = "{}/projects/{}".format(self.url, repo_name)
         log.debug('Checking if repo %s exists', repo_name)
         try:
@@ -54,9 +55,11 @@ class GerritService(BaseService):
             else:
                 raise ValueError('Host URL is incorrectly configured'
                                  ' in ~/.reviewrot.yaml file.')
-        except:
+        except (ValueError, requests.ConnectionError) :
             raise ValueError('Host URL is incorrectly configured'
                              ' in ~/.reviewrot.yaml file.')
+        except:
+            raise
 
     def get_comments_count(self, change_id):
         request_url = "{}/changes/{}/comments".format(self.url, str(change_id))

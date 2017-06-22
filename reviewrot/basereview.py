@@ -90,6 +90,8 @@ class BaseService(object):
     def _decode_response(self, response):
         """
         Remove Gerrit's prefix and convert to JSON.
+        Args:
+            response (Response): Content is decoded from response object
         Returns:
             Converted JSON content
         Raises:
@@ -100,10 +102,6 @@ class BaseService(object):
         try:
             if response.encoding:
                 content = content.decode(response.encoding)
-            response.raise_for_status()
-            content_type = response.headers.get('content-type', '')
-            if content_type.split(';')[0] != 'application/json':
-                return content
             if content.startswith(gerrit_json_prefix):
                 content = content[len(gerrit_json_prefix):]
             return json.loads(content)
@@ -137,8 +135,6 @@ class BaseService(object):
                     raise ValueError('Error while decoding JSON:{0}'.format(e))
             else:
                 raise
-        except:
-            raise
         return decoded_response
 
     def get_response(self, method, url, ssl_verify):

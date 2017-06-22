@@ -5,8 +5,9 @@ import logging
 import operator
 import os
 from os.path import expanduser, expandvars
+import urllib
 
-from reviewrot import get_git_service
+from reviewrot import get_git_service, GerritService
 
 import yaml
 
@@ -62,18 +63,14 @@ def main(state_, value, duration, ssl_verify=None):
                 split and format username and repository name to further
                 request pull requests
                 """
-                res = format_user_repo_name(data)
+                res = format_user_repo_name(data, git_service)
                 """
                 get pull/merge/change requests for specified git service
                 """
-                repo_name = data
-                if res.get('repo_name') is not None:
-                    repo_name = res.get('repo_name')
-
                 results.extend(
                     git_service.request_reviews(
                         user_name=res.get('user_name'),
-                        repo_name=repo_name,
+                        repo_name=res.get('repo_name'),
                         state_=state_,
                         value=value,
                         duration=duration,
@@ -84,27 +81,37 @@ def main(state_, value, duration, ssl_verify=None):
                 )
 
     # Now, with all results in place, sort them and print
-    for result in sorted(results, key=operator.attrgetter('time')):
+    sorted_results = sorted(
+        results,
+        key=operator.attrgetter('time'),
+        reverse=args.reverse,
+    )
+    for result in sorted_results:
         print(result.format(style=args.format))
 
 
-def format_user_repo_name(data):
+def format_user_repo_name(data, git_service):
     """
     Takes input from configuration file for a specified git service.
-    Split or fomat it as per required.
+    Split or format it as required.
     Args:
         data (str): combination of username and/or reponame
-
+        git_service (BaseService) : Git service object
     Returns:
         Dictionary representation of username and reponame
     """
-    if '/' in data:
+    user_name = None
+    repo_name = None
+
+    if isinstance(git_service, GerritService):
+        # convert "/" if any into escape character for html request
+        repo_name = urllib.quote_plus(data)
+    elif '/' in data:
         # Splitting only once in case "/" is a valid character in the data.
         user_name, repo_name = data.split('/', 1)
-
     else:
         user_name = data
-        repo_name = None
+
     return {'user_name': user_name, 'repo_name': repo_name}
 
 if __name__ == '__main__':
@@ -129,6 +136,8 @@ if __name__ == '__main__':
                         default='oneline',
                         choices=['oneline', 'indented', 'json'],
                         help='Choose from one of a few different styles.')
+    parser.add_argument('--reverse', action='store_true',
+                        help='Display results with the latest first.')
     parser.add_argument('--debug', action='store_true',
                         help='Display debug logs on console')
 
