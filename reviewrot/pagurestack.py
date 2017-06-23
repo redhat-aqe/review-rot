@@ -1,8 +1,10 @@
-import os
-import logging
 import datetime
+import logging
+import os
+
 import requests
-from reviewrot.basereview import BaseService, BaseReview
+
+from reviewrot.basereview import BaseReview, BaseService
 
 log = logging.getLogger(__name__)
 
@@ -58,7 +60,7 @@ class PagureService(BaseService):
             request_url = "{}/api/0/{}/pull-requests".format(self.instance,
                                                              repo_name)
             log.debug('Looking for pull requests for %s -> %s',
-                      'pagure.io',  repo_name)
+                      'pagure.io', repo_name)
         log.debug('Calling API with request_url: %s', request_url)
         response = self._call_api(url=request_url, ssl_verify=ssl_verify)
         res_ = []
@@ -98,37 +100,6 @@ class PagureService(BaseService):
             log.debug(res)
             res_.append(res)
         return res_
-
-    def _call_api(self, url, method='GET', ssl_verify=True):
-        """
-        Method used to call the API.
-        It returns the raw JSON returned by the API or raises an exception
-        if something goes wrong.
-
-        Args:
-            method (str): the URL to call, can be GET, POST, DELETE, UPDATE...
-                          Defaults to GET
-
-        Returns:
-            raw JSON returned by API
-        """
-        req = self.session.request(
-            method=method,
-            url=url,
-            headers=self.header,
-            verify=ssl_verify,
-        )
-        output = None
-        try:
-            output = req.json()
-        except Exception as err:
-            log.exception('Error while decoding JSON: {0}'.format(err))
-            raise
-        if req.status_code != 200:
-            if 'error_code' in output:
-                log.debug(output['error'])
-                raise Exception(output['error'])
-        return output
 
 
 class PagureReview(BaseReview):

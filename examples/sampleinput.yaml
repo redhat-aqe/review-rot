@@ -17,4 +17,9 @@
   host: null
   repos:
     - repo_name
-    - namespace/repo_name                  
+    - namespace/repo_name
+
+- type: gerrit
+  host: gerrit_host_url
+  repos:
+    - project_name

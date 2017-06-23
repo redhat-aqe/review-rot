@@ -1,0 +1,8 @@
+host: https://gerrit-review.googlesource.com
+repo_name: gerrit
+
+incorrect_repo_name: gerritt
+incorrect_repo_name_msg: No repo found. Please check the repo name in ~/.reviewrot.yaml file.
+
+incorrect_host: https://gerrit-review.g00glesource.com
+incorrect_host_msg: Host URL is incorrect

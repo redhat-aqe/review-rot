@@ -1,11 +1,16 @@
-from collections import OrderedDict
 import datetime
-from dateutil.relativedelta import relativedelta
+import json
+import logging
 import time
+
+from collections import OrderedDict
+
+from dateutil.relativedelta import relativedelta
+
+log = logging.getLogger(__name__)
 
 
 class BaseService(object):
-
     def check_request_state(self, created_at,
                             state_, value, duration):
         """
@@ -24,8 +29,8 @@ class BaseService(object):
             True if the review request is older or newer than
             specified time interval, False otherwise
         """
-        if (state_ is not None and value is not None and
-                duration is not None):
+        if state_ is not None and value is not None\
+                and duration is not None:
             """
             find the relative time difference between now and
             review request filed to retrieve relative information
@@ -50,7 +55,7 @@ class BaseService(object):
             elif duration == 'm':
                 """ use rel_diff to calculate absolute time difference
                 in months """
-                abs_month = (rel_diff.years*12) + rel_diff.months
+                abs_month = (rel_diff.years * 12) + rel_diff.months
                 if state_ == 'older' and abs_month < value:
                     return False
                 elif state_ == 'newer' and abs_month >= value:
@@ -65,7 +70,7 @@ class BaseService(object):
             elif duration == 'h':
                 """ use abs_diff to calculate absolute time difference
                 in hours """
-                abs_hour = abs_diff.total_seconds()/3600
+                abs_hour = abs_diff.total_seconds() / 3600
                 if state_ == 'older' and abs_hour < value:
                     return False
                 elif state_ == 'newer' and abs_hour >= value:
@@ -73,7 +78,7 @@ class BaseService(object):
             elif duration == 'min':
                 """ use abs_diff to calculate absolute time difference
                 in minutes """
-                abs_min = abs_diff.total_seconds()/60
+                abs_min = abs_diff.total_seconds() / 60
                 if state_ == 'older' and abs_min < value:
                     return False
                 elif state_ == 'newer' and abs_min >= value:
@@ -81,6 +86,60 @@ class BaseService(object):
             else:
                 raise ValueError("Invalid duration type: %s" % duration)
         return True
+
+    def _decode_response(self, response):
+        """
+        Remove Gerrit's prefix and convert to JSON.
+        Args:
+            response (Response): Content is decoded from response object
+        Returns:
+            Converted JSON content
+        Raises:
+            ValueError if the content is not in proper json format.
+        """
+        gerrit_json_prefix = ")]}\'\n"
+        content = response.content.strip()
+        try:
+            if response.encoding:
+                content = content.decode(response.encoding)
+            if content.startswith(gerrit_json_prefix):
+                content = content[len(gerrit_json_prefix):]
+            return json.loads(content)
+        except ValueError:
+            raise ValueError('Invalid json content: %s' % content)
+
+    def _call_api(self, url, method='GET', ssl_verify=True, ignore_err=False):
+        """
+        Method used to call the API.
+        It returns the raw JSON returned by the API or raises an exception
+        if something goes wrong.
+        Args:
+            method (str): the URL to call, can be GET, POST, DELETE, UPDATE...
+                          Defaults to GET
+        Returns:
+            raw JSON returned by API
+        """
+        decoded_response = ''
+        try:
+            response = self.get_response(method, url, ssl_verify)
+            decoded_response = response.json()
+        except ValueError:
+            if response.status_code == 404:
+                # happens when comments are not found for Gerrit Change Request
+                if not ignore_err:
+                    raise ValueError('Page not found: %s' % response.url)
+            elif response.status_code == 200:
+                try:
+                    decoded_response = self._decode_response(response)
+                except Exception as e:
+                    raise ValueError('Error while decoding JSON:{0}'.format(e))
+            else:
+                raise
+        return decoded_response
+
+    def get_response(self, method, url, ssl_verify):
+        return self.session.request(method=method, url=url,
+                                    headers=self.header, verify=ssl_verify)
 
 
 class BaseReview(object):
@@ -143,7 +202,7 @@ class BaseReview(object):
 
     def _format_oneline(self):
         string = "@%s filed '%s' %s since %s" % (
-                self.user, self.title, self.url, self.since)
+            self.user, self.title, self.url, self.since)
 
         if self.comments == 1:
             string += " with %s comment" % self.comments
@@ -154,7 +213,7 @@ class BaseReview(object):
 
     def _format_indented(self):
         string = "@%s filed '%s'\n\t%s\n\tsince %s" % (
-                self.user, self.title, self.url, self.since)
+            self.user, self.title, self.url, self.since)
 
         if self.comments == 1:
             string += "\n\twith %s comment" % self.comments

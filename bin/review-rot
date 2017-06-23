@@ -1,12 +1,15 @@
 #!/usr/bin/env python
 
+import argparse
+import logging
 import operator
 import os
-import logging
-import argparse
-import yaml
 from os.path import expanduser, expandvars
-from reviewrot import get_git_service
+import urllib
+
+from reviewrot import get_git_service, GerritService
+
+import yaml
 
 
 def main(state_, value, duration, ssl_verify=None):
@@ -60,15 +63,14 @@ def main(state_, value, duration, ssl_verify=None):
                 split and format username and repository name to further
                 request pull requests
                 """
-                res = format_user_repo_name(data)
+                res = format_user_repo_name(data, git_service)
                 """
-                get pull requests for specified git service, username
-                and repository name
+                get pull/merge/change requests for specified git service
                 """
                 results.extend(
                     git_service.request_reviews(
-                        user_name=res['user_name'],
-                        repo_name=res['repo_name'],
+                        user_name=res.get('user_name'),
+                        repo_name=res.get('repo_name'),
                         state_=state_,
                         value=value,
                         duration=duration,
@@ -88,29 +90,33 @@ def main(state_, value, duration, ssl_verify=None):
         print(result.format(style=args.format))
 
 
-def format_user_repo_name(data):
+def format_user_repo_name(data, git_service):
     """
     Takes input from configuration file for a specified git service.
-    Split or fomat it as per required.
+    Split or format it as required.
     Args:
         data (str): combination of username and/or reponame
-
+        git_service (BaseService) : Git service object
     Returns:
         Dictionary representation of username and reponame
     """
-    if '/' in data:
+    user_name = None
+    repo_name = None
+
+    if isinstance(git_service, GerritService):
+        # convert "/" if any into escape character for html request
+        repo_name = urllib.quote_plus(data)
+    elif '/' in data:
         # Splitting only once in case "/" is a valid character in the data.
         user_name, repo_name = data.split('/', 1)
-
     else:
         user_name = data
-        repo_name = None
-    return {'user_name': user_name, 'repo_name': repo_name}
 
+    return {'user_name': user_name, 'repo_name': repo_name}
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(
-        description='Lists pull/merge requests for github, gitlab and pagure')
+        description='Lists pull/merge/change requests for github, gitlab, pagure and gerrit')
     parser.add_argument('-s', '--state',
                         default=None,
                         choices=['older', 'newer'],
