@@ -19,6 +19,7 @@
      - fm-orchestrator
      - waiverdb
      - greenwave
+     - odcs
      - freshmaker
      - modulemd
      - sync-to-jira
