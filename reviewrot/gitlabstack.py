@@ -38,7 +38,7 @@ class GitlabService(BaseService):
             ssl_verify (bool/str): Whether or not to verify SSL certificates,
                                    or a path to a CA file to use.
         Returns:
-            response (list): Returns list of list of pull requests for
+            response (list): Returns the list of pull requests for
                              specified user(group) name and projectname or all
                              projectname for given groupname
         """
@@ -46,7 +46,7 @@ class GitlabService(BaseService):
         gl.auth()
         log.debug('Gitlab instance created: %s', gl)
         response = []
-        # if Repository name is explicitely provided
+        # if Repository name is explicitly provided
         if repo_name is not None:
             try:
                 # get project object for given repo_name(project name)
@@ -60,7 +60,7 @@ class GitlabService(BaseService):
             res = self.get_reviews(uname=user_name, project=project,
                                    state_=state_, value=value,
                                    duration=duration)
-            # extend incase of a non empty result
+            # extend in case of a non empty result
             if res:
                 response.extend(res)
 
@@ -81,7 +81,7 @@ class GitlabService(BaseService):
                     res = self.get_reviews(uname=user_name, project=project,
                                            state_=state_, value=value,
                                            duration=duration)
-                # extend incase of a non empty result
+                # extend in case of a non empty result
                 if res:
                     response.extend(res)
         return response
@@ -141,7 +141,7 @@ class GitlabService(BaseService):
                                comments=mr.user_notes_count,
                                # XXX - I don't know how to find gitlab avatars
                                # for now.  Can we figure this out later?
-                               image=GitlavReview.logo)
+                               image=GitlabReview.logo)
             log.debug(res)
             res_.append(res)
         return res_
