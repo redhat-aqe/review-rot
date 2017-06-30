@@ -5,8 +5,10 @@ $(document).ready(function() {
 	var xhr = $.ajax({
 		dataType: 'json',
 		cache: false,
-		// TODO -- this is temporary while WiP.
-		url: 'http://threebean.org/example-reviewrot.json',
+
+		// A user needs to change this value to get their site to work.
+		url: 'https://raw.githubusercontent.com/nirzari/review-rot/396e5a7e878e5ac9779973c7a42ca5de311a6ed5/web/js/default-data.json',
+
 		error: function() {
 			$('error-message').removeClass('hidden');
 		},
