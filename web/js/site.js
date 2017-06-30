@@ -4,6 +4,7 @@ $(document).ready(function() {
 
 	var xhr = $.ajax({
 		dataType: 'json',
+		cache: false,
 		// TODO -- this is temporary while WiP.
 		url: 'http://threebean.org/example-reviewrot.json',
 		error: function() {
