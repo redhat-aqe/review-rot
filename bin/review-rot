@@ -11,6 +11,10 @@ from reviewrot import get_git_service, GerritService
 
 import yaml
 
+# Characters to include at the beginning and end of reports
+report_prefixes = {'oneline': '', 'indented': '', 'json': '['}
+report_suffixes = {'oneline': '', 'indented': '', 'json': ']'}
+
 
 def main(state_, value, duration, ssl_verify=None):
     """
@@ -86,8 +90,12 @@ def main(state_, value, duration, ssl_verify=None):
         key=operator.attrgetter('time'),
         reverse=args.reverse,
     )
-    for result in sorted_results:
-        print(result.format(style=args.format))
+
+    N = len(results)
+    print(report_prefixes[args.format])
+    for i, result in enumerate(sorted_results):
+        print(result.format(style=args.format, i=i, N=N))
+    print(report_suffixes[args.format])
 
 
 def format_user_repo_name(data, git_service):

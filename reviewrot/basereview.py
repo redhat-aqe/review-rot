@@ -192,15 +192,21 @@ class BaseReview(object):
     def __str__(self):
         return self.format('oneline')
 
-    def format(self, style):
+    def format(self, style, i, N):
+        """ Format the result in a given style.
+
+        style - the name of the style.
+        i - an integer, indicating the position in a list.
+        N - the total size of the list.
+        """
         lookup = {
             'oneline': self._format_oneline,
             'indented': self._format_indented,
             'json': self._format_json,
         }
-        return lookup[style]()
+        return lookup[style](i, N)
 
-    def _format_oneline(self):
+    def _format_oneline(self, i, N):
         string = "@%s filed '%s' %s since %s" % (
             self.user, self.title, self.url, self.since)
 
@@ -211,7 +217,7 @@ class BaseReview(object):
 
         return string
 
-    def _format_indented(self):
+    def _format_indented(self, i, N):
         string = "@%s filed '%s'\n\t%s\n\tsince %s" % (
             self.user, self.title, self.url, self.since)
 
@@ -222,9 +228,11 @@ class BaseReview(object):
 
         return string
 
-    def _format_json(self):
+    def _format_json(self, i, N):
         import json
-        return json.dumps(self.__json__(), indent=2)
+        # Include a comma after every entry, except the last.
+        suffix = ',' if i < N - 1 else ''
+        return json.dumps(self.__json__(), indent=2) + suffix
 
     def __json__(self):
         return {
