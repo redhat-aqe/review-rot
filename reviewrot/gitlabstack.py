@@ -138,11 +138,16 @@ class GitlabService(BaseService):
                                title=mr.title,
                                url=mr.web_url,
                                time=mr_date,
-                               comments=mr.user_notes_count)
+                               comments=mr.user_notes_count,
+                               # XXX - I don't know how to find gitlab avatars
+                               # for now.  Can we figure this out later?
+                               image=GitlavReview.logo)
             log.debug(res)
             res_.append(res)
         return res_
 
 
 class GitlabReview(BaseReview):
+    # XXX - Here just until we figure out how to do gitlab avatars.
+    logo = 'https://docs.gitlab.com/assets/images/gitlab-logo.svg'
     pass

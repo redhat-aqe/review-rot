@@ -127,7 +127,8 @@ class GithubService(BaseService):
                                title=pr.title,
                                url=pr.html_url,
                                time=pr.created_at,
-                               comments=pr.comments)
+                               comments=pr.comments,
+                               image=pr.user.avatar_url)
             log.debug(res)
             res_.append(res)
         return res_
