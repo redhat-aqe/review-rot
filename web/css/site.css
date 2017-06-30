@@ -6,7 +6,13 @@ body {
   margin-bottom: 60px;
 }
 .page-header {
-    border-bottom: none !important;
+  border-bottom: none !important;
+}
+.avatar {
+  object-fit: cover;
+  border-radius:50%;
+  width: 64px;
+  height: 64px;
 }
 .footer {
   position: absolute;
@@ -24,5 +30,5 @@ body {
   margin: 20px 0;
 }
 a {
-    color: black;
+  color: black;
 }
