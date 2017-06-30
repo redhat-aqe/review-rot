@@ -146,7 +146,7 @@ class PagureTest(TestCase):
         with self.assertRaises(Exception) as context:
             pagure.request_reviews(user_name=self.config['user_name'],
                                    repo_name=self.config['repo_name'])
-        self.assertTrue('Project not found' in str(context.exception))
+        self.assertIn('Page not found', str(context.exception))
 
 
 class GerritTest(TestCase):
