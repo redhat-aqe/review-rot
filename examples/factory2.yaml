@@ -26,6 +26,13 @@
      - set-jira-paf
      - fedrepo_req
 
+- type: gitlab
+  host: https://gitlab.cee.redhat.com
+  # Get the token at https://gitlab.cee.redhat.com/profile/account
+  token: GET_YOUR_TOKEN_AND_PUT_IT_HERE
+  repos:
+      - rad/mars
+
 # We have weird problems interfacing with gitlab.infra.prod.eng.rdu2.redhat.com
 # If this matters to you, try enabling this and digging into the error
 # messages. It looks like you have to be an owner the of the repos, but even
