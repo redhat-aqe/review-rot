@@ -123,6 +123,11 @@ class BaseService(object):
         try:
             response = self.get_response(method, url, ssl_verify)
             decoded_response = response.json()
+            # Some services (like pagure) return valid JSON with a 404 error.
+            # https://pagure.io/api/0/username/reponame/pull-requests
+            if not bool(response):
+                raise ValueError("%r gave %r: %r" % (
+                    response.request, response, decoded_response))
         except ValueError:
             if response.status_code == 404:
                 # happens when comments are not found for Gerrit Change Request
