@@ -75,7 +75,7 @@ class PagureService(BaseService):
             url = os.path.join('https://pagure.io/', repo_reference,
                                'pull-request', str(res['id']))
             # fetch the date pull request was filed at
-            created_date = datetime.datetime.fromtimestamp(
+            created_date = datetime.datetime.utcfromtimestamp(
                 int(res['date_created'])).strftime('%Y-%m-%d %H:%M:%S')
             # format the date pull request was filed at
             try:
