@@ -125,7 +125,7 @@ class BaseService(object):
             decoded_response = response.json()
             # Some services (like pagure) return valid JSON with a 404 error.
             # https://pagure.io/api/0/username/reponame/pull-requests
-            if not bool(response):
+            if not response:
                 raise ValueError("%r gave %r: %r" % (
                     response.request, response, decoded_response))
         except ValueError:
