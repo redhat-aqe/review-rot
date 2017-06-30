@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<!-- derived from url=(0047)http://getbootstrap.com/examples/sticky-footer/ -->
+<html lang="en">
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+		<meta http-equiv="X-UA-Compatible" content="IE=edge">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+		<meta name="description" content="Web view on review-rot output.">
+		<meta name="author" content="Ralph Bean">
+
+		<title class="title">Review Rot</title>
+		<link href="css/bootstrap.min.css" rel="stylesheet">
+		<link href="css/site.css" rel="stylesheet">
+	</head>
+
+	<body>
+		<div class="container">
+			<div class="page-header">
+				<h1 class="title">Open Pull Requests</h1>
+			</div>
+			<div id="reviews">
+				<!-- site.js populates this div with the reviews. -->
+			</div>
+		</div>
+
+		<footer class="footer">
+		</footer>
+	</body>
+
+	<script src="js/jquery-3.2.1.min.js"></script>
+	<script src="js/handlebars.min.js"></script>
+	<script src="js/moment.min.js"></script>
+	<script id="entry-template" type="text/x-handlebars-template">
+<hr/>
+		<a href="{{url}}">
+			<div class="media">
+				<div class="media-left">
+						<img class="media-object" src="{{image}}">
+				</div>
+				<div class="media-body">
+					<h4 class="media-heading">{{title}}</h4>
+					submitted by <b>@{{user}}</b>, with {{comments}} comments.
+				</div>
+			</div>
+		</a>
+	</script>
+	<script id="footer-template" type="text/x-handlebars-template">
+<div class="container">
+			<p class="text-muted">Generated about {{generated}} by
+				<a href="https://github.com/nirzari">@nirzari</a>'s
+				<a href="https://github.com/nirzari/review-rot">review-rot</a>.</p>
+		</div>
+	</script>
+	<script src="js/site.js"></script>
+</html>
