@@ -49,3 +49,15 @@ optional arguments:
   --debug               Display debug logs on console
 ```
 
+## Web UI
+
+There is a static html+js web interface that can read in the output of the
+`review-rot` CLI tool and produce a web page:
+
+First, set up a *cron job* to run review-rot every (say) 15 minutes:
+
+```shell
+*/15 * * * * review-rot -f json > /home/someuser/public_html/reviewrot/data.json
+```
+
+Then, modify `web/js/site.js` to point the data url to the location of your new file.
