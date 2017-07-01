@@ -1,5 +1,15 @@
+var average_age = function(requests) {
+	var total = 0;
+	$.each(requests, function(key, value) { total = total + value.time; });
+	return {
+		age: moment.unix(total / requests.length).fromNow(true),
+		// TODO - someday we can make this warning or danger.
+		cls: 'default'
+	}
+}
 $(document).ready(function() {
 	var entry_template = Handlebars.compile($("#entry-template").html());
+	var stats_template = Handlebars.compile($("#stats-template").html());
 	var footer_template = Handlebars.compile($("#footer-template").html());
 
 	var xhr = $.ajax({
@@ -20,6 +30,7 @@ $(document).ready(function() {
 			$.each(data, function(key, value) {
 				$('#reviews').append(entry_template(value));
 			});
+			$('.page-header').append(stats_template(average_age(data)));
 		}
 	})
 });
