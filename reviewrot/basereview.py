@@ -149,12 +149,13 @@ class BaseService(object):
 
 class BaseReview(object):
     def __init__(self, user=None, title=None, url=None,
-                 time=None, comments=None):
+                 time=None, comments=None, image=None):
         self.user = user
         self.title = title
         self.url = url
         self.time = time
         self.comments = comments
+        self.image = image
 
     @staticmethod
     def format_duration(created_at):
@@ -248,4 +249,5 @@ class BaseReview(object):
             'time': time.mktime(self.time.timetuple()),
             'comments': self.comments,
             'type': type(self).__name__,
+            'image': self.image,
         }

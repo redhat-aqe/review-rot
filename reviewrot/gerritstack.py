@@ -91,10 +91,15 @@ class GerritService(BaseService):
                                                   str(change_number)),
                                time=created_date,
                                comments=self.get_comments_count(
-                                   decoded_response['id']))
+                                   decoded_response['id']),
+                               # XXX - I don't know how to find gerrit avatars
+                               # for now.  Can we figure this out later?
+                               image=GerritReview.logo)
             res_.append(res)
         return res_
 
 
 class GerritReview(BaseReview):
+    # XXX - Here just until we figure out how to do gerrit avatars.
+    logo = 'http://electric-cloud.com/wp-content/uploads/2014/09/EC-Gerrit.png'
     pass

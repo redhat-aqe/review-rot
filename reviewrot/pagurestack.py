@@ -1,6 +1,8 @@
 import datetime
+import hashlib
 import logging
 import os
+import urllib
 
 import requests
 
@@ -96,10 +98,22 @@ class PagureService(BaseService):
                                title=res['title'],
                                url=url,
                                time=date,
-                               comments=len(res['comments']))
+                               comments=len(res['comments']),
+                               image=self._avatar(res['user']['name']))
             log.debug(res)
             res_.append(res)
         return res_
+
+    @staticmethod
+    def _avatar(username):
+        """ Return the avatar of a given pagure user.
+
+        Pagure avatars have a predictable URL structure.
+        """
+        query = urllib.urlencode({'s': 64, 'd': 'retro'})
+        openid = 'http://%s.id.fedoraproject.org' % username
+        idx = hashlib.sha256(openid).hexdigest()
+        return "https://seccdn.libravatar.org/avatar/%s?%s" % (idx, query)
 
 
 class PagureReview(BaseReview):
