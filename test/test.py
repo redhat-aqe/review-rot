@@ -138,6 +138,13 @@ class PagureTest(TestCase):
         with open(filename, 'r') as f:
             self.config = yaml.load(f)
 
+    def test_pagure_avatar(self):
+        expected = ('https://seccdn.libravatar.org/avatar/'
+                    '9c9f7784935381befc302fe3c814f9136e7a3'
+                    '3953d0318761669b8643f4df55c')
+        actual = PagureService._avatar('ralph')
+        self.assertEqual(actual.split('?')[0], expected)
+
     def test_pagure_object_create(self):
         self.assertTrue(isinstance((get_git_service('pagure')), PagureService))
 

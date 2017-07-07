@@ -115,8 +115,8 @@ class PagureService(BaseService):
         Pagure avatars have a predictable URL structure.
         """
         query = urlencode({'s': 64, 'd': 'retro'})
-        openid = 'http://%s.id.fedoraproject.org' % username
-        idx = hashlib.sha256(openid).hexdigest()
+        openid = u'http://%s.id.fedoraproject.org/' % username
+        idx = hashlib.sha256(openid.encode('utf-8')).hexdigest()
         return "https://seccdn.libravatar.org/avatar/%s?%s" % (idx, query)
 
 
