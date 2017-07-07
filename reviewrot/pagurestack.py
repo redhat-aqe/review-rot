@@ -2,7 +2,11 @@ import datetime
 import hashlib
 import logging
 import os
-import urllib
+
+try:
+    from urllib.parse import urlencode  # python3
+except ImportError:
+    from urllib import urlencode  # python2
 
 import requests
 
@@ -110,9 +114,9 @@ class PagureService(BaseService):
 
         Pagure avatars have a predictable URL structure.
         """
-        query = urllib.urlencode({'s': 64, 'd': 'retro'})
-        openid = 'http://%s.id.fedoraproject.org' % username
-        idx = hashlib.sha256(openid).hexdigest()
+        query = urlencode({'s': 64, 'd': 'retro'})
+        openid = u'http://%s.id.fedoraproject.org/' % username
+        idx = hashlib.sha256(openid.encode('utf-8')).hexdigest()
         return "https://seccdn.libravatar.org/avatar/%s?%s" % (idx, query)
 
 
