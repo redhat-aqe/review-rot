@@ -60,27 +60,27 @@ def get_arguments(cli_arguments, config_arguments, choices):
 
     if config_arguments is not None:
         for argument in config_arguments:
-                # Explicitly commandline arguments cannot be specified
-                # false or none.
-                if command_line_args.get(argument) is None or \
-                   command_line_args.get(argument) is False:
-                    # if argument is present in grouped_arguments,
-                    # all the associated arguments should also
-                    # be specified in the config file
-                    if argument not in grouped_arguments or \
-                        (argument in grouped_arguments and
-                         grouped_arguments.issubset(config_arguments.keys())):
-                        config_value = config_arguments.get(argument)
-                        if is_valid_choice(argument, config_value, choices):
-                            parsed_arguments[argument] = config_value
-                        else:
-                            log.warn("Invalid choice '%s' provided for '%s' in"
-                                     " config file" %
-                                     (config_value, argument))
-                    elif not logged_error:
-                        log.warn("Either no or all arguments (state, duration "
-                                 "and value) are required in config file")
-                        logged_error = True
+            # Explicitly commandline arguments cannot be specified
+            # false or none.
+            if command_line_args.get(argument) is None or \
+               command_line_args.get(argument) is False:
+                # if argument is present in grouped_arguments,
+                # all the associated arguments should also
+                # be specified in the config file
+                if argument not in grouped_arguments or \
+                    (argument in grouped_arguments and
+                     grouped_arguments.issubset(config_arguments.keys())):
+                    config_value = config_arguments.get(argument)
+                    if is_valid_choice(argument, config_value, choices):
+                        parsed_arguments[argument] = config_value
+                    else:
+                        log.warn("Invalid choice '%s' provided for '%s' in"
+                                 " config file" %
+                                 (config_value, argument))
+                elif not logged_error:
+                    log.warn("Either no or all arguments (state, duration "
+                             "and value) are required in config file")
+                    logged_error = True
 
         # --debug, --reverse and --insecure or --cacert flags are used to
         # specify arguments from command line. If not specified, value will
@@ -116,8 +116,9 @@ def is_valid_choice(argument, value, choices):
        Args:
             value (str): argument value
             choices (dict): valid values of choices for arguments
+            argument (str): argument as key
        Returns:
-             arguments (dict): Returns boolean value
+             Returns boolean value
      """
     if choices.get(argument) is None or value in choices.get(argument):
             return True

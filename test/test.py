@@ -1,6 +1,8 @@
 import logging
 
 import argparse
+import os
+
 import mock
 import yaml
 import test_mock
@@ -200,16 +202,17 @@ class CommandLineParserTest(TestCase):
     for boolean expressions. In such cases, if config file arguments
     has boolean 'True' value, then 'True' value will be considered.
     """
-    def setUp(self):
+    @classmethod
+    def setUpClass(cls):
         filename = join(dirname(__file__), 'test_command_line.yaml')
         with open(filename, 'r') as f:
-            self.config = yaml.load(f)
+            cls.config = yaml.load(f)
 
         duration_choices = ['y', 'm', 'd', 'h', 'min']
         state_choices = ['older', 'newer']
         format_choices = ['oneline', 'indented', 'json']
 
-        self.choices = {'duration': duration_choices, 'state': state_choices, 'format': format_choices}
+        cls.choices = {'duration': duration_choices, 'state': state_choices, 'format': format_choices}
 
     def test_args_from_config(self):
         cli_args = argparse.Namespace(cacert=None, debug=False, format=None,
@@ -364,6 +367,43 @@ class CommandLineParserTest(TestCase):
 
         ssl_result = arguments.get('ssl_verify') is False
         self.assertTrue(ssl_result)
+
+    @mock.patch('__builtin__.raw_input', return_value='n')
+    def test_load_config_file_re_write_no(self, mocked_input):
+        filename = join(dirname(__file__), 'test_old_format.yaml')
+        load_config_file(filename)
+        # Load the old style config file and don't convert it to
+        # new style dict format.
+        with open(filename, 'r') as f:
+            new_config = yaml.load(f)
+
+        arguments_present = 'arguments' not in new_config
+        git_services_present = 'type' in new_config[0]
+        self.assertTrue(isinstance(new_config, list) and arguments_present
+                         and git_services_present)
+
+    @mock.patch('__builtin__.raw_input', return_value='y')
+    def test_load_config_file_re_write_yes(self, mocked_input):
+        filename = join(dirname(__file__), 'test_old_format.yaml')
+        load_config_file(filename)
+        # Load the old style config file and converts it to new style
+        # dict format. Also creates backup file before converting.
+        with open(filename, 'r') as f:
+            new_config = yaml.load(f)
+
+        backup_config_file_exist = os.path.exists(filename + ".backup")
+        arguments_present = 'arguments' in new_config
+        git_services_present = 'git_services' in new_config
+        self.assertTrue(isinstance(new_config, dict) and arguments_present
+                        and git_services_present and backup_config_file_exist)
+
+    @classmethod
+    def tearDownClass(cls):
+        backup_filename = join(dirname(__file__), 'test_old_format.yaml.backup')
+        filename = join(dirname(__file__), 'test_old_format.yaml')
+        if os.path.exists(filename):
+            os.remove(filename)
+            os.rename(backup_filename,filename)
 
 if __name__ == '__main__':
     unittest.main()
