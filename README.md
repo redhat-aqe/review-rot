@@ -59,6 +59,7 @@ SSL:
                         recommended).
   --cacert CACERT       Path to CA certificate to use for SSL certificate
                         verification.
+```
 
 ## Web UI
 
