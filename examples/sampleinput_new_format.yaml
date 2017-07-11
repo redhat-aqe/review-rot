@@ -1,0 +1,37 @@
+git_services:
+  - type: github
+    token: my_github_token
+    host: null
+    repos:
+       - user_name
+       - user_name/repo_name
+
+  - type: gitlab
+    token: my_gitlab_token
+    host: my_host_server
+    repos:
+        - group_name/project_name
+        - group_name
+
+  - type: pagure
+    token: my_pagure_token
+    host: null
+    repos:
+      - repo_name
+      - namespace/repo_name
+
+  - type: gerrit
+    host: gerrit_host_url
+    repos:
+      - project_name
+
+# Optional tag
+arguments: 
+  format: json
+  reverse: true
+  ssl_verfiy: false
+  debug: true
+  state: newer
+  value: 2
+  duration: d
+  cacert: ~/cacert_location

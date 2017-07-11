@@ -32,13 +32,16 @@ detox
 ```shell
 > review-rot --help
 
-usage: review-rot [-h] [-s {older,newer}] [-v VALUE] [-d {y,m,d,h,min}]
-                  [--debug]
+usage: review-rot [-h] [-c CONFIG] [-s {older,newer}] [-v VALUE]
+                  [-d {y,m,d,h,min}] [-f {oneline,indented,json}] [--reverse]
+                  [--debug] [-k] [--cacert CACERT]
 
 Lists pull/merge/change requests for github, gitlab, pagure and gerrit
 
 optional arguments:
   -h, --help            show this help message and exit
+  -c CONFIG, --config CONFIG
+                        Configuration file to use.
   -s {older,newer}, --state {older,newer}
                         Pull requests state 'older' or 'newer'
   -v VALUE, --value VALUE
@@ -46,7 +49,16 @@ optional arguments:
   -d {y,m,d,h,min}, --duration {y,m,d,h,min}
                         Pull requests duration in terms of y=years,m=months,
                         d=days, h=hours, min=minutes
+  -f {oneline,indented,json}, --format {oneline,indented,json}
+                        Choose from one of a few different styles.
+  --reverse             Display results with the latest first.
   --debug               Display debug logs on console
+
+SSL:
+  -k, --insecure        Disable SSL certificate verification (not
+                        recommended).
+  --cacert CACERT       Path to CA certificate to use for SSL certificate
+                        verification.
 ```
 
 ## Web UI

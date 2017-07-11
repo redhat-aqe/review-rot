@@ -1,0 +1,50 @@
+test1:
+  arguments:
+    format: json
+    insecure: True
+    reverse: True
+    debug: True
+
+test2:
+  arguments:
+    format: indented
+    insecure: False
+    reverse: False
+    debug: False
+
+test3:
+  arguments:
+    format: json
+    reverse: True
+    debug: True
+
+test4:
+  arguments:
+    state: newer
+    duration: m
+
+test5:
+  arguments:
+    state: newer
+    duration: d
+    value: 4
+
+test6:
+  arguments:
+    state: newer
+    duration: d
+    value: 4
+
+test7:
+  arguments:
+    insecure: False
+    cacert: ~/review-rot/
+
+test8:
+  arguments:
+    cacert: ~/
+
+test9:
+  arguments:
+    insecure: True
+    cacert: ~/

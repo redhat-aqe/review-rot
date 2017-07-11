@@ -43,7 +43,7 @@ class GerritService(BaseService):
             return True
         except ValueError:
             raise ValueError("No repo found. Please check the repo "
-                             "name in ~/.reviewrot.yaml file.")
+                             "name in config file.")
 
     def check_host_url(self, ssl_verify):
         log.debug('Checking if host URL %s is correct', self.url)
@@ -54,10 +54,10 @@ class GerritService(BaseService):
                 return True
             else:
                 raise ValueError('Host URL is incorrectly configured'
-                                 ' in ~/.reviewrot.yaml file.')
-        except (ValueError, requests.ConnectionError) :
+                                 ' in config file.')
+        except (ValueError, requests.ConnectionError):
             raise ValueError('Host URL is incorrectly configured'
-                             ' in ~/.reviewrot.yaml file.')
+                             ' in config file.')
         except:
             raise
 

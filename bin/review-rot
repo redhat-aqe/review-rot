@@ -3,55 +3,44 @@
 import argparse
 import logging
 import operator
-import os
-from os.path import expanduser, expandvars
 import urllib
 
-from reviewrot import get_git_service, GerritService
+from reviewrot import GerritService, get_git_service
+from reviewrot import get_arguments, load_config_file
+from os.path import expanduser
 
-import yaml
+log = logging.getLogger(__name__)
 
 # Characters to include at the beginning and end of reports
 report_prefixes = {'oneline': '', 'indented': '', 'json': '['}
 report_suffixes = {'oneline': '', 'indented': '', 'json': ']'}
 
 
-def main(state_, value, duration, config_path, ssl_verify=None):
+def main(cli_args, valid_choices):
     """
     Reads input configuration file.
     Calls appropriate git service with suitable inputs.
-
-    state_ (str): The filter(state) for review requests, e.g, older or newer
-    value (int): The value in terms of duration for requests
-                 to be older or newer than
-    duration (str): The duration in terms of period(year,month,hour,minute)
-                    for requests to be older or newer than.
+    Args:
+        cli_args (argparse.Namespace): Arguments provided by command line
+                                       interface
+        valid_choices (dict): valid values of choices for arguments
     """
-    log = logging.getLogger('review-rot')
+    config = load_config_file(cli_args.config)
 
-    if not os.path.exists(config_path):
-        raise RuntimeError("No config file found at %s" % config_path)
-    # read input from the config file for pull requests
-    with open(config_path, 'r') as f:
-        config = yaml.load(f)
+    arguments = get_arguments(cli_args, config.get('arguments'), valid_choices)
+
+    if arguments.get('debug'):
+        log.setLevel(level=logging.DEBUG)
 
     results = []
-    for item in config:
+
+    for item in config.get('git_services', []):
         if 'type' not in item:
             log.debug('git service type not found for %s', item)
             raise KeyError('git service not found for %s' % item)
 
         # get git service
         git_service = get_git_service(item['type'])
-
-        # use configuration SSL settings by default, override with argument
-        if ssl_verify is None and 'ssl_verify' in item:
-            ssl_verify = item['ssl_verify']
-            # expand ~, environment variables, etc if it's a path
-            if not isinstance(ssl_verify, bool):
-                ssl_verify = expanduser(expandvars(ssl_verify))
-            log.debug('Using ssl_verify value "%s" from configuration',
-                      ssl_verify)
 
         """
         check if username and/or repository information is given for
@@ -72,12 +61,12 @@ def main(state_, value, duration, config_path, ssl_verify=None):
                     git_service.request_reviews(
                         user_name=res.get('user_name'),
                         repo_name=res.get('repo_name'),
-                        state_=state_,
-                        value=value,
-                        duration=duration,
+                        state_=arguments.get('state'),
+                        value=arguments.get('value'),
+                        duration=arguments.get('duration'),
                         token=item.get('token'),
                         host=item.get('host'),
-                        ssl_verify=ssl_verify,
+                        ssl_verify=arguments.get('ssl_verify', False),
                     )
                 )
 
@@ -85,14 +74,16 @@ def main(state_, value, duration, config_path, ssl_verify=None):
     sorted_results = sorted(
         results,
         key=operator.attrgetter('time'),
-        reverse=args.reverse,
+        reverse=arguments.get('reverse'),
     )
 
-    N = len(results)
-    print(report_prefixes[args.format])
+    formatting = arguments.get('format', 'oneline')
+
+    n = len(results)
+    print(report_prefixes[formatting])
     for i, result in enumerate(sorted_results):
-        print(result.format(style=args.format, i=i, N=N))
-    print(report_suffixes[args.format])
+        print(result.format(style=formatting, i=i, N=n))
+    print(report_suffixes[formatting])
 
 
 def format_user_repo_name(data, git_service):
@@ -119,16 +110,26 @@ def format_user_repo_name(data, git_service):
 
     return {'user_name': user_name, 'repo_name': repo_name}
 
+
 if __name__ == '__main__':
+
+    duration_choices = ['y', 'm', 'd', 'h', 'min']
+    state_choices = ['older', 'newer']
+    format_choices = ['oneline', 'indented', 'json']
+
+    choices = {'duration': duration_choices, 'state': state_choices,
+               'format': format_choices}
+
     parser = argparse.ArgumentParser(
-        description='Lists pull/merge/change requests for github, gitlab, pagure and gerrit')
+        description='Lists pull/merge/change requests for github, gitlab,'
+                    ' pagure and gerrit')
     default_config = expanduser('~/.reviewrot.yaml')
     parser.add_argument('-c', '--config',
                         default=default_config,
                         help='Configuration file to use.')
     parser.add_argument('-s', '--state',
                         default=None,
-                        choices=['older', 'newer'],
+                        choices=state_choices,
                         help="Pull requests state 'older' or 'newer'"
                         )
     parser.add_argument('-v', '--value',
@@ -138,12 +139,12 @@ if __name__ == '__main__':
                         )
     parser.add_argument('-d', '--duration',
                         default=None,
-                        choices=['y', 'm', 'd', 'h', 'min'],
+                        choices=duration_choices,
                         help='Pull requests duration in terms of y=years,'
                              'm=months, d=days, h=hours, min=minutes')
     parser.add_argument('-f', '--format',
-                        default='oneline',
-                        choices=['oneline', 'indented', 'json'],
+                        default=None,
+                        choices=format_choices,
                         help='Choose from one of a few different styles.')
     parser.add_argument('--reverse', action='store_true',
                         help='Display results with the latest first.')
@@ -172,10 +173,4 @@ if __name__ == '__main__':
     else:
         logging.basicConfig(level=logging.INFO)
 
-    main(
-        state_=args.state,
-        value=args.value,
-        duration=args.duration,
-        config_path=args.config,
-        ssl_verify=False if args.insecure else args.cacert,
-    )
+    main(args, choices)
