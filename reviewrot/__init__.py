@@ -1,9 +1,11 @@
 import collections
 import logging
 import os
-
+import platform
 from os.path import expanduser, expandvars
 from shutil import copyfile
+from select import select
+import sys
 
 from reviewrot.gerritstack import GerritService
 from reviewrot.githubstack import GithubService
@@ -142,9 +144,18 @@ def load_config_file(config_path):
     if isinstance(config, list):
         # convert to new format
         config = dict(git_services=config, arguments=None)
-        answer = str(raw_input("Would you like to rewrite the config file"
-                               " in new format [y/n] : ")).lower().strip()
+        prompt = "Would you like to rewrite the config file in new " \
+                 "format [y/n] :"
+
+        if platform.system() in ['Linux', 'Darwin']:
+            input_choice = read_input_with_timeout(prompt)
+        else:
+            # for non linux machine
+            input_choice = raw_input(prompt)
+
+        answer = str(input_choice).lower().strip()
         if answer == 'y' or answer == '':
+            print
             # Take the backup of configuration file and
             # save the configurations in new format
             backup_path = config_path + '.backup'
@@ -155,6 +166,27 @@ def load_config_file(config_path):
                 f.write(yaml.dump(config, default_flow_style=False))
 
     return config
+
+
+def read_input_with_timeout(prompt, timeout=10):
+    """
+      Read input from keyboard with timeout. If input is not provided
+      within the specified timeout, the default value 'y' will be used.
+
+      Args:
+           prompt (str): Prompt to be shown to user
+           timeout(int): timeout for reading input
+      Returns:
+          input(String): standard input from keyboard or default value
+    """
+    sys.stdout.write(prompt)
+    sys.stdout.flush()
+
+    rlist, _, _ = select([sys.stdin], [], [], timeout)
+    if rlist:
+        return sys.stdin.readline ()
+    else:
+        return 'y'
 
 
 def load_ordered_config(config_path):
