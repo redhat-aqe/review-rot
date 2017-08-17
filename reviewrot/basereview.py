@@ -215,7 +215,7 @@ class BaseReview(object):
         Format the result in a given style.
         Args:
             style(str): the name of the style.
-            i(int): an integer, indicating the position in a list.
+            i(int): position in a list.
             N(int): The total size of the list.
         Return:
             fromatted_string(str): Formatted string as per style
@@ -231,8 +231,10 @@ class BaseReview(object):
         """
         Format the result in oneline style.
         Args:
-            i(int): an integer, indicating the position in a list.
-            N(int): the total size of the list.
+            i(int): Not used in this method, added to have same parameters
+                    in all the formatting methods
+            N(int): Not used in this method, added to have same parameters
+                    in all the formatting methods
         Return:
             fromatted_string(str): Formatted string as per style
         """
@@ -250,8 +252,10 @@ class BaseReview(object):
         """
         Format the result in indented style.
         Args:
-            i(int): an integer, indicating the position in a list.
-            N(int): the total size of the list.
+            i(int): Not used in this method, added to have same parameters
+                    in all the formatting methods
+            N(int): Not used in this method, added to have same parameters
+                    in all the formatting methods
         Return:
             fromatted_string(str): Formatted string as per style
         """
@@ -269,7 +273,7 @@ class BaseReview(object):
         """
         Format the result in json style.
         Args:
-            i(int): an integer, indicating the position in a list.
+            i(int): position in a list.
             N(int): the total size of the list.
         Return:
             fromatted_string(str): Formatted string as per style
