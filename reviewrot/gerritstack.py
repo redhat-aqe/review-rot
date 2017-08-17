@@ -20,6 +20,26 @@ class GerritService(BaseService):
     def request_reviews(self, host, repo_name, state_=None,
                         user_name=None, token=None, value=None,
                         duration=None, ssl_verify=True):
+        """
+        Creates a Gerrit object.
+        Requests pull requests for specified repo name.
+        Args:
+            host (str): Gerrit Host URL
+            repo_name (str): Gerrit repository name
+            user_name(str): This will be None in case of Gerrit
+            state_ (str): The filter state for pull requests, e.g, older
+                          or newer
+            value (int): The value in terms of duration for requests
+                         to be older or newer than
+            duration (str): The duration in terms of period(year, month, hour,
+                            minute) for requests to be older or newer than
+            token (str): This will be None in case of Gerrit
+            ssl_verify (bool/str): Whether or not to verify SSL certificates,
+                                   or a path to a CA file to use.
+        Returns:
+            response (list): Returns list of list of pull requests for
+                             specified repo name
+        """
         self.url = host
         reviews = None
 
@@ -36,6 +56,15 @@ class GerritService(BaseService):
         return reviews
 
     def check_repo_exists(self, repo_name, ssl_verify):
+        """
+        Check if repo exist in gerrit
+        Args:
+            repo_name (str): Gerrit repository name
+            ssl_verify (bool/str): Whether or not to verify SSL certificates,
+                                   or a path to a CA file to use.
+        Returns:
+             true/false(bool): Returns true if repo exist else false
+        """
         request_url = "{}/projects/{}".format(self.url, repo_name)
         log.debug('Checking if repo %s exists', repo_name)
         try:
@@ -46,6 +75,14 @@ class GerritService(BaseService):
                              "name in config file.")
 
     def check_host_url(self, ssl_verify):
+        """
+        Check if host url is valid
+        Args:
+            ssl_verify (bool/str): Whether or not to verify SSL certificates,
+                                   or a path to a CA file to use.
+        Returns:
+             true/false(bool): Returns true if url is valid else false
+        """
         log.debug('Checking if host URL %s is correct', self.url)
         try:
             response = self.get_response(method='GET', url=self.url,
@@ -62,6 +99,14 @@ class GerritService(BaseService):
             raise
 
     def get_comments_count(self, change_id):
+        """
+        Check if host url is valid
+        Args:
+            change_id (int): pull/merge request id
+        Returns:
+             total_comments(int): Returns count of comments for the
+                                  change id
+        """
         request_url = "{}/changes/{}/comments".format(self.url, str(change_id))
         decoded_response = self._call_api(request_url, ignore_err=True)
         total_comments = 0
@@ -73,6 +118,20 @@ class GerritService(BaseService):
         return total_comments
 
     def format_response(self, decoded_responses, state_, value, duration):
+        """
+        Formats the pull requests details and print it on console.
+        Args:
+            decoded_responses (list): Response from REST api call to Gerrit
+            state_ (str): The filter state for pull requests, e.g, older
+                          or newer
+            value (int): The value in terms of duration for requests
+                         to be older or newer than
+            duration (str): The duration in terms of period(year, month, hour,
+                            minute) for requests to be older or newer than
+
+        Returns:
+             res_(list): Returns list of pull requests for specified repo name.
+        """
         res_ = []
         for decoded_response in decoded_responses:
             created_date = datetime.strptime(decoded_response['created'][:-3],
