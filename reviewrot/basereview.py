@@ -216,7 +216,7 @@ class BaseReview(object):
         Args:
             style(str): the name of the style.
             i(int): position in a list.
-            N(int): The total size of the list.
+            N(int): length of the list.
         Return:
             fromatted_string(str): Formatted string as per style
         """
@@ -274,7 +274,7 @@ class BaseReview(object):
         Format the result in json style.
         Args:
             i(int): position in a list.
-            N(int): the total size of the list.
+            N(int): length of the list.
         Return:
             fromatted_string(str): Formatted string as per style
         """
