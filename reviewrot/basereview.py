@@ -114,8 +114,12 @@ class BaseService(object):
         It returns the raw JSON returned by the API or raises an exception
         if something goes wrong.
         Args:
+            url(str): URL for git based service
             method (str): the URL to call, can be GET, POST, DELETE, UPDATE...
                           Defaults to GET
+            ssl_verify (bool/str): Whether or not to verify SSL certificates,
+                                   or a path to a CA file to use.
+            ignore_err(bool): raise exception if ignore_error is True
         Returns:
             raw JSON returned by API
         """
@@ -143,6 +147,17 @@ class BaseService(object):
         return decoded_response
 
     def get_response(self, method, url, ssl_verify):
+        """
+        Method used to make request.
+        Args:
+            method (str): the URL to call, can be GET, POST, DELETE, UPDATE...
+                          Defaults to GET
+            url(str): URL for git based service
+            ssl_verify (bool/str): Whether or not to verify SSL certificates,
+                                   or a path to a CA file to use.
+        Returns:
+            Output returned by request module
+        """
         return self.session.request(method=method, url=url,
                                     headers=self.header, verify=ssl_verify)
 
@@ -195,15 +210,15 @@ class BaseReview(object):
     def since(self):
         return self.format_duration(created_at=self.time)
 
-    def __str__(self):
-        return self.format('oneline')
-
     def format(self, style, i, N):
-        """ Format the result in a given style.
-
-        style - the name of the style.
-        i - an integer, indicating the position in a list.
-        N - the total size of the list.
+        """
+        Format the result in a given style.
+        Args:
+            style(str): the name of the style.
+            i(int): position in a list.
+            N(int): length of the list.
+        Return:
+            fromatted_string(str): Formatted string as per style
         """
         lookup = {
             'oneline': self._format_oneline,
@@ -213,6 +228,16 @@ class BaseReview(object):
         return lookup[style](i, N)
 
     def _format_oneline(self, i, N):
+        """
+        Format the result in oneline style.
+        Args:
+            i(int): Not used in this method, added to have same parameters
+                    in all the formatting methods
+            N(int): Not used in this method, added to have same parameters
+                    in all the formatting methods
+        Return:
+            fromatted_string(str): Formatted string as per style
+        """
         string = "@%s filed '%s' %s since %s" % (
             self.user, self.title, self.url, self.since)
 
@@ -224,6 +249,16 @@ class BaseReview(object):
         return string
 
     def _format_indented(self, i, N):
+        """
+        Format the result in indented style.
+        Args:
+            i(int): Not used in this method, added to have same parameters
+                    in all the formatting methods
+            N(int): Not used in this method, added to have same parameters
+                    in all the formatting methods
+        Return:
+            fromatted_string(str): Formatted string as per style
+        """
         string = "@%s filed '%s'\n\t%s\n\tsince %s" % (
             self.user, self.title, self.url, self.since)
 
@@ -235,6 +270,14 @@ class BaseReview(object):
         return string
 
     def _format_json(self, i, N):
+        """
+        Format the result in json style.
+        Args:
+            i(int): position in a list.
+            N(int): length of the list.
+        Return:
+            fromatted_string(str): Formatted string as per style
+        """
         import json
         # Include a comma after every entry, except the last.
         suffix = ',' if i < N - 1 else ''
