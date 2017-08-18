@@ -171,7 +171,7 @@ def load_config_file(config_path):
 def read_input_with_timeout(prompt, timeout=10):
     """
       Read input from keyboard with timeout. If input is not provided
-      within the specified timeout, the default value 'y' will be used.
+      within the specified timeout, the default value 'n' will be used.
 
       Args:
            prompt (str): Prompt to be shown to user
@@ -186,7 +186,7 @@ def read_input_with_timeout(prompt, timeout=10):
     if rlist:
         return sys.stdin.readline ()
     else:
-        return 'y'
+        return 'n'
 
 
 def load_ordered_config(config_path):
