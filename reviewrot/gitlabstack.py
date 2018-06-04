@@ -4,6 +4,7 @@ import gitlab
 import datetime
 from reviewrot.basereview import BaseService, BaseReview
 from gitlab.exceptions import GitlabGetError
+from distutils.version import LooseVersion
 
 log = logging.getLogger(__name__)
 
@@ -43,6 +44,22 @@ class GitlabService(BaseService):
                              projectname for given groupname
         """
         gl = gitlab.Gitlab(host, token, ssl_verify=ssl_verify)
+        
+        # Test GitLab version and fall back to API v3 if possible, as a
+        # workaround to 404 Errors produced by authentication on some
+        # GitLab instances
+        try:
+    	    gl_version = gl.version()
+        except ValueError:
+            # Some instances have thrown a ValueError instead of failing
+            # gracefully when queried for version
+            gl_version = ('unknown', 'unknown')
+        if (gl_version == ('unknown', 'unknown') or
+            LooseVersion(gl_version[0]) < LooseVersion('9.0')):
+            # GitLab API v3 was deprecated in GitLab v9.0
+            gl = gitlab.Gitlab(host, token, ssl_verify=ssl_verify,
+                               api_version=3)
+			
         gl.auth()
         log.debug('Gitlab instance created: %s', gl)
         response = []
