@@ -151,7 +151,7 @@ class GitlabService(BaseService):
                 log.debug("merge request '%s' is not %s than specified"
                           " time interval", mr.title, state_)
                 continue
-            res = GitlabReview(user=mr.author.username,
+            res = GitlabReview(user=mr.author['username'],
                                title=mr.title,
                                url=mr.web_url,
                                time=mr_date,
