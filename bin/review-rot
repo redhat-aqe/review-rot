@@ -3,6 +3,7 @@
 import argparse
 import logging
 import operator
+import os
 import urllib
 
 from reviewrot import GerritService, get_git_service
@@ -57,6 +58,17 @@ def main(cli_args, valid_choices):
                 """
                 get pull/merge/change requests for specified git service
                 """
+                token = item.get('token')
+                # Support pulling a token from an environment variable
+                # If the token value starts with "ENV.", then the value
+                # for the token will be pulled from the environment variable
+                # specified following "ENV."
+                # For example, if the token value specified in the config is
+                # "ENV.FOO", then the real value for the environment variable
+                # will be taken from the environment variable "FOO"
+                if token and token.startswith('ENV.'):
+                    token_env_var = token.split('ENV.')[1]
+                    token = os.environ.get(token_env_var)
                 results.extend(
                     git_service.request_reviews(
                         user_name=res.get('user_name'),
@@ -64,7 +76,7 @@ def main(cli_args, valid_choices):
                         state_=arguments.get('state'),
                         value=arguments.get('value'),
                         duration=arguments.get('duration'),
-                        token=item.get('token'),
+                        token=token,
                         host=item.get('host'),
                         ssl_verify=arguments.get('ssl_verify', False),
                     )
