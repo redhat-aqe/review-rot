@@ -14,10 +14,11 @@ setup(name='review-rot',
       url='https://github.com/nirzari/review-rot',
       packages=find_packages(),
       install_requires=[
+          'requests>=2.14.0',
           'PyGithub',
           'PyYAML',
           'dateutils',
-          'python-gitlab'
+          'python-gitlab==1.5.1',
       ],
       tests_require=[
           'nose',
