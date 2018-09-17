@@ -5,8 +5,18 @@
   "title": "modify web/js/site.js to point to the output of 'reviewrot -f json'",
   "url": "https://github.com/nirzari/review-rot/pull/44",
   "image": "https://ih1.redbubble.net/image.106544476.3270/flat,800x800,075,f.jpg",
-  "time": 1496403471.0, 
+  "time": 1496403471.0,
   "type": "...",
   "comments": 9999
+},
+{
+  "relative_time": "sometime",
+  "user": "YOU",
+  "title": "this is a WIP PR",
+  "url": "https://github.com/nirzari/review-rot/pull/44",
+  "image": "https://ih1.redbubble.net/image.106544476.3270/flat,800x800,075,f.jpg",
+  "time": 1496403471.0,
+  "type": "...",
+  "comments": 0
 }
 ]

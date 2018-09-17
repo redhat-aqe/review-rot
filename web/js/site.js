@@ -28,7 +28,12 @@ $(document).ready(function() {
 				generated: moment(modified).fromNow()
 			}));
 			$.each(data, function(key, value) {
-				$('#reviews').append(entry_template(value));
+				if (value.title.indexOf("WIP") == -1) {
+					$('#reviews').append(entry_template(value));
+				} else {
+					$('#wip-header').removeClass('hidden');
+					$('#wip-reviews').append(entry_template(value));
+				}
 			});
 			$('.page-header').append(stats_template(average_age(data)));
 		}
