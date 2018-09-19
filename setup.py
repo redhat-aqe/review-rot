@@ -18,7 +18,7 @@ setup(name='review-rot',
           'PyGithub',
           'PyYAML',
           'dateutils',
-          'python-gitlab==1.5.1',
+          'python-gitlab>=1.6.0',
       ],
       tests_require=[
           'nose',
