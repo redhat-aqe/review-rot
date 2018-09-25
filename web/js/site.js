@@ -28,7 +28,7 @@ $(document).ready(function() {
 				generated: moment(modified).fromNow()
 			}));
 			$.each(data, function(key, value) {
-				if (value.title.indexOf("WIP") == -1) {
+				if (value.title.toUpperCase().indexOf("WIP") == -1) {
 					$('#reviews').append(entry_template(value));
 				} else {
 					$('#wip-header').removeClass('hidden');
