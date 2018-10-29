@@ -4,7 +4,7 @@ with open("README.md", 'r') as f:
     long_description = f.read()
 
 setup(name='review-rot',
-      version='0.0',
+      version='1.0',
       author='Nirzari Iyer',
       author_email='niyer@redhat.com',
       description=('CLI tool to list review(pull) requests from '
@@ -20,11 +20,13 @@ setup(name='review-rot',
           'dateutils',
           'python-gitlab>=1.6.0',
           'six',
+          'Jinja2',
       ],
       tests_require=[
           'nose',
           'mock',
       ],
       test_suite='nose.collector',
-      scripts=['bin/review-rot']
+      scripts=['bin/review-rot'],
+      include_package_data=True
       )

@@ -33,15 +33,17 @@ detox
 > review-rot --help
 
 usage: review-rot [-h] [-c CONFIG] [-s {older,newer}] [-v VALUE]
-                  [-d {y,m,d,h,min}] [-f {oneline,indented,json}] [--reverse]
-                  [--debug] [-k] [--cacert CACERT]
+                  [-d {y,m,d,h,min}] [-f {oneline,indented,json}]
+                  [--show-last-comment [show_last_comment]] [--reverse]
+                  [--comment-sort] [--debug] [--email EMAIL [EMAIL ...]] [-k]
+                  [--cacert CACERT]
 
 Lists pull/merge/change requests for github, gitlab, pagure and gerrit
 
 optional arguments:
   -h, --help            show this help message and exit
   -c CONFIG, --config CONFIG
-                        Configuration file to use.
+                        Configuration file to use
   -s {older,newer}, --state {older,newer}
                         Pull requests state 'older' or 'newer'
   -v VALUE, --value VALUE
@@ -50,15 +52,22 @@ optional arguments:
                         Pull requests duration in terms of y=years,m=months,
                         d=days, h=hours, min=minutes
   -f {oneline,indented,json}, --format {oneline,indented,json}
-                        Choose from one of a few different styles.
-  --reverse             Display results with the latest first.
+                        Choose from one of a few different styles
+  --show-last-comment [show_last_comment]
+                        Show text of last comment and filter out pull requests
+                        in which last comments are newer than specified number
+                        of days
+  --reverse             Display results with the most recent first
+  --comment-sort        Display results sorted by last comment
   --debug               Display debug logs on console
+  --email EMAIL [EMAIL ...]
+                        send output to list of email adresses
 
 SSL:
   -k, --insecure        Disable SSL certificate verification (not
                         recommended).
   --cacert CACERT       Path to CA certificate to use for SSL certificate
-                        verification.
+                        verification
 ```
 
 ## Web UI
@@ -73,3 +82,12 @@ First, set up a *cron job* to run review-rot every (say) 15 minutes:
 ```
 
 Then, modify `web/js/site.js` to point the data url to the location of your new file.
+
+## Email notification
+
+To use email notification functionality you must specify mailer configuration in config file
+```
+mailer:
+  sender: do-not-reply@example.com
+  server: smtp.example.com
+```

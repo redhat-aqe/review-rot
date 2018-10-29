@@ -1,5 +1,5 @@
 import logging
-from reviewrot.basereview import BaseService, BaseReview
+from reviewrot.basereview import BaseService, BaseReview, LastComment
 from github import Github
 from github.GithubException import UnknownObjectException
 
@@ -12,7 +12,8 @@ class GithubService(BaseService):
     https://developer.github.com/v3/
     """
     def request_reviews(self, user_name, repo_name=None, state_=None,
-                        value=None, duration=None, token=None, host=None,
+                        value=None, duration=None,
+                        show_last_comment=None, token=None, host=None,
                         **kwargs):
         """
         Creates a github object.
@@ -30,6 +31,10 @@ class GithubService(BaseService):
                          to be older or newer than
             duration (str): The duration in terms of period(year, month, hour,
                             minute) for requests to be older or newer than
+            show_last_comment (int): Show text of last comment and
+                                     filter out pull requests in which
+                                     last comments are newer than
+                                     specified number of days
             token (str): Github token for authentication
             host (str): Github host name (This value is not yet supported.
                         Default behavior is to use public github instance.)
@@ -53,7 +58,8 @@ class GithubService(BaseService):
             # get pull requests for specified username and repo name
             res = self.get_reviews(uname=uname, repo_name=repo_name,
                                    state_=state_, value=value,
-                                   duration=duration)
+                                   duration=duration,
+                                   show_last_comment=show_last_comment)
             # extend incase of a non empty result
             if res:
                 response.extend(res)
@@ -69,14 +75,15 @@ class GithubService(BaseService):
             for repo in repo_list:
                 res = self.get_reviews(uname=uname, repo_name=repo.name,
                                        state_=state_, value=value,
-                                       duration=duration)
+                                       duration=duration,
+                                       show_last_comment=show_last_comment)
                 # extend incase of a non empty result
                 if res:
                     response.extend(res)
         return response
 
     def get_reviews(self, uname, repo_name, state_=None,
-                    value=None, duration=None):
+                    value=None, duration=None, show_last_comment=None):
         """
         Fetches pull requests for specified username and repo name.
         Formats the pull requests details and print it on console.
@@ -92,6 +99,10 @@ class GithubService(BaseService):
             duration (str): The duration in terms of period(year,
                             month, hour, minute) for requests to be
                             older or newer than
+            show_last_comment (int): Show text of last comment and
+                                     filter out pull requests in which
+                                     last comments are newer than
+                                     specified number of days
         Returns:
             res_ (list): Returns list of pull requests for specified
                          username and repo name
@@ -112,7 +123,10 @@ class GithubService(BaseService):
             log.debug('No open pull requests found for %s/%s ',
                       uname.login, repo_name)
         res_ = []
+
         for pr in pull_requests:
+            last_comment = self.get_last_comment(pr)
+
             """ check if review request is older/newer than specified time
             interval"""
             result = self.check_request_state(pr.created_at,
@@ -123,15 +137,69 @@ class GithubService(BaseService):
                 log.debug("review request '%s' is not %s than specified"
                           " time interval", pr.title, state_)
                 continue
+
+            if last_comment and show_last_comment:
+                if self.has_new_comments(last_comment.created_at,
+                                         show_last_comment):
+                    log.debug("Pull request '%s' had "
+                              "new comments in last %s days",
+                              pr.title, show_last_comment)
+                    continue
+
             res = GithubReview(user=pr.user.login,
                                title=pr.title,
                                url=pr.html_url,
                                time=pr.created_at,
-                               comments=pr.review_comments,
-                               image=pr.user.avatar_url)
+                               comments=pr.review_comments+pr.comments,
+                               image=pr.user.avatar_url,
+                               last_comment=last_comment,
+                               project_name=repo.full_name,
+                               project_url=repo.html_url)
             log.debug(res)
             res_.append(res)
         return res_
+
+    def get_last_comment(self, pr):
+        """
+        Returns information about last comment of given
+        pull request
+
+        Args:
+            pr (github.PullRequest.PullRequest): Github pull request
+
+        Returns:
+            last comment (LastComment): Returns namedtuple LastComment
+            with data related to last comment
+        """
+
+        review_comments = pr.get_comments()
+        issue_comments = pr.get_issue_comments()
+
+        last_review_comment = None
+        last_issue_comment = None
+        last_comment = None
+
+        if review_comments.totalCount > 0:
+            last_review_comment = review_comments.reversed[0]
+
+        if issue_comments.totalCount > 0:
+            last_issue_comment = issue_comments.reversed[0]
+
+        # check which is newer if pr has both types of comments
+        if last_issue_comment and last_review_comment:
+            if last_issue_comment.created_at > last_review_comment.created_at:
+                last_comment = last_issue_comment
+            else:
+                last_comment = last_review_comment
+
+        # if pr has only one type of comment
+        else:
+            last_comment = last_issue_comment or last_review_comment
+
+        if last_comment:
+            return LastComment(author=last_comment.user.login,
+                               body=last_comment.body,
+                               created_at=last_comment.created_at)
 
 
 class GithubReview(BaseReview):

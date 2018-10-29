@@ -35,3 +35,8 @@ arguments:
   value: 2
   duration: d
   cacert: ~/cacert_location
+
+# tag needed for email notification functionality
+mailer:
+  sender: do-not-reply@example.com
+  server: smtp.example.com

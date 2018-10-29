@@ -1,16 +1,12 @@
 import datetime
 import hashlib
 import logging
-import os
+from six.moves import urllib
 
-try:
-    from urllib.parse import urlencode  # python3
-except ImportError:
-    from urllib import urlencode  # python2
 
 import requests
 
-from reviewrot.basereview import BaseReview, BaseService
+from reviewrot.basereview import BaseReview, BaseService, LastComment
 
 log = logging.getLogger(__name__)
 
@@ -22,7 +18,8 @@ class PagureService(BaseService):
         self.header = None
 
     def request_reviews(self, user_name, repo_name=None, state_=None,
-                        value=None, duration=None, host=None, token=None,
+                        value=None, duration=None,
+                        show_last_comment=None, host=None, token=None,
                         ssl_verify=True, **kwargs):
         """
         Fetches merge requests by making API calls for specified
@@ -40,6 +37,10 @@ class PagureService(BaseService):
             duration (str): The duration in terms of period(year, month,
                             hour, minute) for requests to be older or
                             newer than
+            show_last_comment (int): Show text of last comment and
+                                     filter out pull requests in which
+                                     last comments are newer than
+                                     specified number of days
             token (str): Pagure token for authentication
                          (Commented for unauthenticated request)
             host (str): Pagure host name (This value is not yet supported.
@@ -68,18 +69,27 @@ class PagureService(BaseService):
             log.debug('Looking for pull requests for %s -> %s',
                       'pagure.io', repo_name)
         log.debug('Calling API with request_url: %s', request_url)
-        response = self._call_api(url=request_url, ssl_verify=ssl_verify)
+        try:
+            response = self._call_api(url=request_url, ssl_verify=ssl_verify)
+        except requests.exceptions.HTTPError:
+            raise ValueError("No repo found. Please check the repo "
+                             "name in config file.")
         res_ = []
         for res in response['requests']:
             # if namespace exists in response
-            try:
-                repo_reference = os.path.join(res['project']['namespace'],
-                                              res['project']['name'])
-            except:
+            if res['project']['namespace']:
+                repo_reference = '{}/{}'.format(
+                    res['project']['namespace'], res['project']['name']
+                )
+            else:
                 repo_reference = res['project']['name']
+
+            last_comment = self.get_last_comment(res)
+
             # format pull request url
-            url = os.path.join('https://pagure.io/', repo_reference,
-                               'pull-request', str(res['id']))
+            url = 'https://pagure.io/{}/pull-request/{}'.format(
+                repo_reference, res['id']
+            )
             # fetch the date pull request was filed at
             created_date = datetime.datetime.utcfromtimestamp(
                 int(res['date_created'])).strftime('%Y-%m-%d %H:%M:%S')
@@ -98,15 +108,52 @@ class PagureService(BaseService):
                 log.debug("pull request '%s' is not %s than specified"
                           " time interval", res['title'], state_)
                 continue
+
+            if last_comment and show_last_comment:
+                if self.has_new_comments(last_comment.created_at,
+                                         show_last_comment):
+                    log.debug("pull request '%s' has new "
+                              "comments in last %s days",
+                              res['title'], show_last_comment)
+                    continue
+
+            project_url = 'https://pagure.io/{}'.format(repo_reference)
             res = PagureReview(user=res['user']['name'],
                                title=res['title'],
                                url=url,
                                time=date,
                                comments=len(res['comments']),
-                               image=self._avatar(res['user']['name']))
+                               image=self._avatar(res['user']['name']),
+                               last_comment=last_comment,
+                               project_name=repo_reference,
+                               project_url=project_url)
             log.debug(res)
             res_.append(res)
         return res_
+
+    def get_last_comment(self, res):
+        """
+        Returns information about last comment of given
+        pull request
+
+        Args:
+           res (dict): dictionary containing
+           comments data of pull request
+
+        Returns:
+           last comment (LastComment): Returns namedtuple LastComment
+           with data related to last comment
+        """
+
+        comments = res['comments']
+
+        if comments:
+            last_comment_date = datetime.datetime.utcfromtimestamp(
+                int(comments[-1]['date_created']))
+            return LastComment(
+                author=str(comments[-1]['user']['name']),
+                body=str(comments[-1]['comment']),
+                created_at=last_comment_date)
 
     @staticmethod
     def _avatar(username):
@@ -114,7 +161,7 @@ class PagureService(BaseService):
 
         Pagure avatars have a predictable URL structure.
         """
-        query = urlencode({'s': 64, 'd': 'retro'})
+        query = urllib.parse.urlencode({'s': 64, 'd': 'retro'})
         openid = u'http://%s.id.fedoraproject.org/' % username
         idx = hashlib.sha256(openid.encode('utf-8')).hexdigest()
         return "https://seccdn.libravatar.org/avatar/%s?%s" % (idx, query)

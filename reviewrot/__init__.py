@@ -38,7 +38,7 @@ def get_git_service(git):
         raise ValueError('requested git service %s is not valid' % (git))
 
 
-def get_arguments(cli_arguments, config_arguments, choices):
+def get_arguments(cli_arguments, config_arguments, config_mailer, choices):
     """
        Parse the arguments provided in configuration file
        and command line arguments
@@ -46,6 +46,7 @@ def get_arguments(cli_arguments, config_arguments, choices):
             cli_arguments (argparse.Namespace): Arguments provided by command
                                                 line interface
             config_arguments (dict): Arguments specified in yaml file
+            config_mailer (dict): Mailer configuration specified in yaml file
             choices (dict): valid values of choices for arguments
        Returns:
              arguments (dict): Returns the parsed arguments
@@ -92,6 +93,12 @@ def get_arguments(cli_arguments, config_arguments, choices):
     if config_arguments.get('reverse'):
         parsed_arguments['reverse'] = True
 
+    email_in_config = config_arguments.get('email')
+    if email_in_config:
+        parsed_arguments['email'] = [
+            email.strip() for email in email_in_config.split(',')
+        ]
+
     parsed_arguments['ssl_verify'] = False if cli_arguments.insecure \
         else cli_arguments.cacert
 
@@ -104,15 +111,39 @@ def get_arguments(cli_arguments, config_arguments, choices):
         else:
             parsed_arguments['ssl_verify'] = True
 
-
     if isinstance(parsed_arguments['ssl_verify'], str):
         parsed_arguments['ssl_verify'] = \
             expanduser(expandvars(parsed_arguments['ssl_verify']))
-        if not os.path.exists(parsed_arguments['ssl_verify'] ):
-            raise IOError("No certificate file found at %s" % parsed_arguments['ssl_verify'])
+        if not os.path.exists(parsed_arguments['ssl_verify']):
+            raise IOError("No certificate file found at %s "
+                          % parsed_arguments['ssl_verify'])
 
-    if parsed_arguments.get('insecure') and parsed_arguments.get('cacert', None):
+    if (parsed_arguments.get('insecure') and
+            parsed_arguments.get('cacert', None)):
         raise ValueError("Certificate file can't be used with insecure flag")
+
+    format = parsed_arguments.get('format')
+    if (format in ['oneline', 'indented'] and
+            parsed_arguments.get('show_last_comment') is not None):
+        raise ValueError(
+            '{} format doesn\'t support last comment functionality'.format(
+                format
+            )
+        )
+
+    email = parsed_arguments.get('email')
+    if email and format:
+        raise ValueError(
+            'No format should be specified when selecting email output'
+        )
+
+    if email:
+        if any(property not in config_mailer for property in ['server', 'sender']):
+            raise ValueError(
+                'Missing mailer configuration.'
+                ' Check examples/sampleinput_new_format '
+                'for correct configuration.'
+            )
 
     return parsed_arguments
 
