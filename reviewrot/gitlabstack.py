@@ -82,22 +82,25 @@ class GitlabService(BaseService):
                 response.extend(res)
 
         else:
-            # get user object
-            groups = gl.groups.search(user_name)
-            if not groups:
+            # get group object
+            group = gl.groups.get(user_name)
+            if not group:
                 log.debug('Invalid user/group name: %s', user_name)
                 raise Exception('Invalid user/group name: %s' % user_name)
 
+            group_projects = group.projects.list(all=True, simple=True)
+
+            if not group_projects:
+                log.debug("No projects found for user/group name %s",
+                          user_name)
+
             # get merge requests for all projects for specified group
-            for group in groups:
-                projects = gl.group_projects.list(group_id=group.id)
-                if not projects:
-                    log.debug("No projects found for user/group name %s",
-                              user_name)
-                for project in projects:
-                    res = self.get_reviews(uname=user_name, project=project,
-                                           state_=state_, value=value,
-                                           duration=duration)
+            for group_project in group_projects:
+
+                project = gl.projects.get(group_project.id)
+                res = self.get_reviews(uname=user_name, project=project,
+                                       state_=state_, value=value,
+                                       duration=duration)
                 # extend in case of a non empty result
                 if res:
                     response.extend(res)

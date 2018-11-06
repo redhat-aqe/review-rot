@@ -104,6 +104,9 @@ def get_arguments(cli_arguments, config_arguments, choices):
             elif 'cacert' in config_arguments:
                 # expand ~, environment variables, etc if it's a path
                 parsed_arguments['ssl_verify'] = config_arguments.get('cacert')
+            else:
+                parsed_arguments['ssl_verify'] = False
+
 
         if isinstance(parsed_arguments['ssl_verify'], str):
             parsed_arguments['ssl_verify'] = \
