@@ -29,6 +29,8 @@ $(document).ready(function() {
 			}));
 			$.each(data, function(key, value) {
 				value.pretty_repo = prettify_repo(value.url);
+				// Strip off the pull request from the URL to get the base URL of the repo
+				value.repo_url = value.url.split('/').slice(0, -2).join('/')
 				if (value.title.toUpperCase().indexOf("WIP") == -1) {
 					$('#reviews').append(entry_template(value));
 				} else {
