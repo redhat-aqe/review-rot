@@ -28,6 +28,7 @@ $(document).ready(function() {
 				generated: moment(modified).fromNow()
 			}));
 			$.each(data, function(key, value) {
+				value.pretty_repo = prettify_repo(value.url);
 				if (value.title.toUpperCase().indexOf("WIP") == -1) {
 					$('#reviews').append(entry_template(value));
 				} else {
@@ -40,3 +41,15 @@ $(document).ready(function() {
 	})
 });
 
+function prettify_repo(full_repo) {
+	// The expression below will parse the URL and manipulate the
+	// pathname to remove leading forward slash and extract the
+	// repo name from it. Usually the last two parts of pathname
+	// are something like:
+	//   pull/63 -> GitHub
+	//   merge_requests/29 -> GitLab
+	//   pull-request/18 -> Pagure
+	// So removing the last two parts is a good enough heuristic for
+	// determining the repo name.
+	return new URL(full_repo).pathname.split('/').filter(x=>x).slice(0, -2).join('/');
+}
