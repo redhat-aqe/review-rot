@@ -3,7 +3,7 @@ import logging
 import gitlab
 import datetime
 from reviewrot.basereview import BaseService, BaseReview
-from gitlab.exceptions import GitlabGetError
+from gitlab.exceptions import GitlabGetError, GitlabListError
 from distutils.version import LooseVersion
 
 log = logging.getLogger(__name__)
@@ -132,9 +132,15 @@ class GitlabService(BaseService):
         log.debug('Looking for merge requests for %s -> %s',
                   uname, project.name)
 
-        # get list of open merge requests for a given repository(project)
-        merge_requests = project.mergerequests.list(project_id=project.id,
-                                                    state='opened')
+        try:
+            # get list of open merge requests for a given repository(project)
+            merge_requests = project.mergerequests.list(project_id=project.id,
+                                                        state='opened')
+            
+        # merge requests are not available for this project
+        except GitlabListError:
+            merge_requests = []
+
         if not merge_requests:
             log.debug('No open merge requests found for %s/%s ',
                       uname, project.name)
