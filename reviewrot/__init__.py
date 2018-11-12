@@ -60,57 +60,61 @@ def get_arguments(cli_arguments, config_arguments, choices):
         if command_line_args.get(arg) is not None:
             parsed_arguments[arg] = command_line_args.get(arg)
 
-    if config_arguments is not None:
-        for argument in config_arguments:
-            # Explicitly commandline arguments cannot be specified
-            # false or none.
-            if command_line_args.get(argument) is None or \
-               command_line_args.get(argument) is False:
-                # if argument is present in grouped_arguments,
-                # all the associated arguments should also
-                # be specified in the config file
-                if argument not in grouped_arguments or \
-                    (argument in grouped_arguments and
-                     grouped_arguments.issubset(config_arguments.keys())):
-                    config_value = config_arguments.get(argument)
-                    if is_valid_choice(argument, config_value, choices):
-                        parsed_arguments[argument] = config_value
-                    else:
-                        log.warn("Invalid choice '%s' provided for '%s' in"
-                                 " config file" %
-                                 (config_value, argument))
-                elif not logged_error:
-                    log.warn("Either no or all arguments (state, duration "
-                             "and value) are required in config file")
-                    logged_error = True
+    for argument in config_arguments:
+        # Explicitly commandline arguments cannot be specified
+        # false or none.
+        if command_line_args.get(argument) is None or \
+           command_line_args.get(argument) is False:
+            # if argument is present in grouped_arguments,
+            # all the associated arguments should also
+            # be specified in the config file
+            if argument not in grouped_arguments or \
+                (argument in grouped_arguments and
+                 grouped_arguments.issubset(config_arguments.keys())):
+                config_value = config_arguments.get(argument)
+                if is_valid_choice(argument, config_value, choices):
+                    parsed_arguments[argument] = config_value
+                else:
+                    log.warn("Invalid choice '%s' provided for '%s' in"
+                             " config file" %
+                             (config_value, argument))
+            elif not logged_error:
+                log.warn("Either no or all arguments (state, duration "
+                         "and value) are required in config file")
+                logged_error = True
 
-        # --debug, --reverse and --insecure or --cacert flags are used to
-        # specify arguments from command line. If not specified, value will
-        # be False or None. In this case, if these arguments are specified in
-        # config file, then the value will be taken from the config file.
-        if config_arguments.get('debug'):
-            parsed_arguments['debug'] = True
+    # --debug, --reverse and --insecure or --cacert flags are used to
+    # specify arguments from command line. If not specified, value will
+    # be False or None. In this case, if these arguments are specified in
+    # config file, then the value will be taken from the config file.
+    if config_arguments.get('debug'):
+        parsed_arguments['debug'] = True
 
-        if config_arguments.get('reverse'):
-            parsed_arguments['reverse'] = True
+    if config_arguments.get('reverse'):
+        parsed_arguments['reverse'] = True
 
-        parsed_arguments['ssl_verify'] = False if cli_arguments.insecure \
-            else cli_arguments.cacert
+    parsed_arguments['ssl_verify'] = False if cli_arguments.insecure \
+        else cli_arguments.cacert
 
-        if parsed_arguments.get('ssl_verify') is None:
-            if config_arguments.get('insecure'):
-                parsed_arguments['ssl_verify'] = not \
-                    config_arguments.get('insecure')
-            elif 'cacert' in config_arguments:
-                # expand ~, environment variables, etc if it's a path
-                parsed_arguments['ssl_verify'] = config_arguments.get('cacert')
-            else:
-                parsed_arguments['ssl_verify'] = False
+    if parsed_arguments.get('ssl_verify') is None:
+        if config_arguments.get('insecure'):
+            parsed_arguments['ssl_verify'] = not \
+                config_arguments.get('insecure')
+        elif 'cacert' in config_arguments:
+            # expand ~, environment variables, etc if it's a path
+            parsed_arguments['ssl_verify'] = config_arguments.get('cacert')
+        else:
+            parsed_arguments['ssl_verify'] = True
 
 
-        if isinstance(parsed_arguments['ssl_verify'], str):
-            parsed_arguments['ssl_verify'] = \
-                expanduser(expandvars(parsed_arguments['ssl_verify']))
+    if isinstance(parsed_arguments['ssl_verify'], str):
+        parsed_arguments['ssl_verify'] = \
+            expanduser(expandvars(parsed_arguments['ssl_verify']))
+        if not os.path.exists(parsed_arguments['ssl_verify'] ):
+            raise IOError("No certificate file found at %s" % parsed_arguments['ssl_verify'])
+
+    if parsed_arguments.get('insecure') and parsed_arguments.get('cacert', None):
+        raise ValueError("Certificate file can't be used with insecure flag")
 
     return parsed_arguments
 
@@ -150,11 +154,7 @@ def load_config_file(config_path):
         prompt = "Would you like to rewrite the config file in new " \
                  "format [y/n] :"
 
-        if platform.system() in ['Linux', 'Darwin']:
-            input_choice = read_input_with_timeout(prompt)
-        else:
-            # for non linux machine
-            input_choice = raw_input(prompt)
+        input_choice = raw_input(prompt)
 
         answer = str(input_choice).lower().strip()
         if answer == 'y' or answer == '':
@@ -169,27 +169,6 @@ def load_config_file(config_path):
                 f.write(yaml.dump(config, default_flow_style=False))
 
     return config
-
-
-def read_input_with_timeout(prompt, timeout=10):
-    """
-      Read input from keyboard with timeout. If input is not provided
-      within the specified timeout, the default value 'n' will be used.
-
-      Args:
-           prompt (str): Prompt to be shown to user
-           timeout(int): timeout for reading input
-      Returns:
-          input(String): standard input from keyboard or default value
-    """
-    sys.stdout.write(prompt)
-    sys.stdout.flush()
-
-    rlist, _, _ = select([sys.stdin], [], [], timeout)
-    if rlist:
-        return sys.stdin.readline ()
-    else:
-        return 'n'
 
 
 def load_ordered_config(config_path):

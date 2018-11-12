@@ -44,6 +44,7 @@ class GitlabService(BaseService):
                              projectname for given groupname
         """
         gl = gitlab.Gitlab(host, token, ssl_verify=ssl_verify)
+        gl.auth()
 
         # Test GitLab version and fall back to API v3 if possible, as a
         # workaround to 404 Errors produced by authentication on some
@@ -60,7 +61,6 @@ class GitlabService(BaseService):
             gl = gitlab.Gitlab(host, token, ssl_verify=ssl_verify,
                                api_version=3)
 
-        gl.auth()
         log.debug('Gitlab instance created: %s', gl)
         response = []
         # if Repository name is explicitly provided
@@ -136,7 +136,7 @@ class GitlabService(BaseService):
             # get list of open merge requests for a given repository(project)
             merge_requests = project.mergerequests.list(project_id=project.id,
                                                         state='opened')
-            
+
         # merge requests are not available for this project
         except GitlabListError:
             merge_requests = []

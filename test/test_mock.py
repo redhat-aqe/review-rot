@@ -55,11 +55,11 @@ def mock_get_pulls():
 
 
 def mock_projects_get(user_name, repo_name):
-    raise GitlabGetError()
+    return GitlabGetError()
 
 
-def mock_projects_get_(user_name, repo_name):
-    return gitlab.Project({'key': 'value'})
+def mock_projects_get_():
+    return gitlab.Gitlab.projects.create({'name': 'project'})
 
 
 def mock_auth():
