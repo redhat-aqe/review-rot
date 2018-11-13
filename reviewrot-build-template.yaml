@@ -1,0 +1,84 @@
+kind: Template
+apiVersion: v1
+metadata:
+  name: code-review-reminder-build-template
+  annotations:
+    openshift.io/display-name: "Code review reminder build"
+    description: "Build template builds Centos7 Dockerfile, adds review-rot git repository,
+     install reviewrot and upload Docker Image to QUAY."
+    tags: "reviewrot code-review-reminder build"
+message: |
+  Code review reminder has been initialized.
+  Please add a modified config file
+  .reviewrot.yaml into secrets.
+objects:
+- kind: ImageStream
+  apiVersion: v1
+  metadata:
+    annotations:
+      openshift.io/display-name: "reviewrot"
+    name: reviewrot
+  spec:
+    tags:
+    - name: latest
+      annotation: null
+      from:
+        kind: DockerImage
+        name: ${DOCKER_IMAGE}:${TAG}
+      importPolicy:
+        scheduled: true
+
+- kind: BuildConfig
+  apiVersion: v1
+  metadata:
+    name: ${APP}-build
+    labels:
+      app: build
+      service: ${APP}
+  spec:
+    source:
+      type: Git
+      git:
+        uri: ${GIT_URL}
+        ref: ${REF}
+    # Maybe change the strategy to get image from docker-registry
+    strategy:
+      type: Docker
+    output:
+      pushSecret:
+        name: ${PUSH_SECRETS}
+      to:
+        kind: DockerImage
+        name: ${DOCKER_IMAGE}:${TAG}
+    runPolicy: Serial
+    triggers:
+      - type: ImageChange
+        imageChange: {}
+      - type: ConfigChange
+
+# code-review-reminder
+parameters:
+- description: "APP name [lowercase]"
+  name: APP
+  required: true
+  value: "code-review-reminder"
+- description: "Review rot Github url"
+  name: GIT_URL
+  required: true
+  value: "https://github.com/nirzari/review-rot.git"
+- description: "Git branch"
+  name: REF
+  required: true
+  value: master
+- description: "Docker image tag"
+  name: TAG
+  required: true
+  value: latest
+- description: "Docker image url"
+  name: DOCKER_IMAGE
+  required: true
+  value: quay.io/pbortlov/reviewrot
+- description: "Docker registry push secrets (QUAY BOT SECRETS)"
+  name: PUSH_SECRETS
+  required: true
+  value: pbortlov-reviewrot-bot-secret

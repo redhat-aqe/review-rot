@@ -1,0 +1,93 @@
+kind: Template
+apiVersion: v1
+metadata:
+  name: code-review-reminder-cronjob-template
+  annotations:
+    openshift.io/display-name: "Code review reminder cronjob"
+    description: "Cronjob sends email reminders of open git pull requests for certain project to specified recipient."
+    tags: "reviewrot code-review-reminder cronjob"
+message: |
+  Cronjob for Code review reminder will run by a schedule ${SCHEDULE}
+  with secrets ${SECRET_CONFIG}/${CONFIG} on the image
+  ${DOCKER_IMAGE}:${TAG}.
+parameters:
+- description: "Name which distinguish a template from others (e.g. login) NAME-code-review-reminder-cronjob"
+  name: NAME
+  required: true
+- description: "CPU limit"
+  name: CPU_LIMIT
+  required: true
+  value: 200m
+- description: "Memory limit"
+  name: MEMORY_LIMIT
+  required: true
+  value: 256Mi
+- description: "Name of configuration's secret"
+  name: SECRET_CONFIG
+  required: true
+- description: "Name of reviewrot config file"
+  name: CONFIG
+  required: true
+- description: "Cron Job schedule '* * * * *' "
+  name: SCHEDULE
+  required: true
+- description: "Docker image tag"
+  name: TAG
+  required: true
+  value: latest
+- description: "Docker image url"
+  name: DOCKER_IMAGE
+  required: true
+  value: quay.io/pbortlov/reviewrot
+
+objects:
+- kind: CronJob
+  apiVersion: batch/v1beta1
+  metadata:
+    name: ${NAME}-code-review-reminder-cronjob
+    labels:
+      app: ${NAME}-code-review-reminder-cronjob
+  spec:
+    schedule: ${SCHEDULE}
+    suspend: false
+    concurrencyPolicy: Forbid
+    successfulJobsHistoryLimit: 5
+    failedJobsHistoryLimit: 5
+    jobTemplate:
+      spec:
+        activeDeadlineSeconds: 3600
+        parallelism: 1
+        completions: 1
+        template:
+          metadata:
+            labels:
+              parent: code-review-reminder-cronjob
+          spec:
+            containers:
+            - name: ${NAME}-code-review-reminder-cronjob
+              image: ${DOCKER_IMAGE}:${TAG}
+              imagePullPolicy: Always
+              env:
+              - name: CONF
+                value: ${CONFIG}
+              command:
+              - review-rot
+              args:
+              - "-c"
+              - /secrets/$(CONF)
+              volumeMounts:
+              - name: secrets
+                mountPath: "/secrets"
+                readOnly: true
+            resources:
+              requests:
+                cpu: 100m
+                memory: 128Mi
+              limits:
+                cpu: ${CPU_LIMIT}
+                memory: ${MEMORY_LIMIT}
+            restartPolicy: Never
+            volumes:
+            - name: secrets
+              secret:
+                secretName: "${SECRET_CONFIG}"
