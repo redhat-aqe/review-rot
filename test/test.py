@@ -93,10 +93,8 @@ class GitlabTest(TestCase):
     def test_gitlab_object_create(self):
         self.assertTrue(isinstance((get_git_service('gitlab')), GitlabService))
 
-    @mock.patch('gitlab.Gitlab')
-    def test_request_reviews_token(self, mock_gitlab):
+    def test_request_reviews_token(self):
         with self.assertRaises(Exception) as context:
-            mock_gitlab().version.return_value = "9.0"
             GitlabService().request_reviews(user_name=self.config['user_name'],
                                    token=self.config['token'],
                                    host=self.config['host'])
@@ -108,7 +106,6 @@ class GitlabTest(TestCase):
     @mock.patch('gitlab.Gitlab')
     def test_request_reviews_projects_get(self, mock_auth, mock_gitlab):
         with self.assertRaises(Exception) as context:
-            mock_gitlab().version.return_value = "9.0"
             mock_gitlab().projects.get.side_effect = test_mock.mock_projects_get()
             GitlabService().request_reviews(user_name=self.config['user_name'],
                                             repo_name=self.config['repo_name'],
@@ -134,7 +131,6 @@ class GitlabTest(TestCase):
     @mock.patch('reviewrot.gitlabstack.GitlabService.get_reviews',
                 side_effect=test_mock.mock_gitlab_get_reviews)
     def test_request_reviews_with_repo(self, mock_auth, mock_gitlab, mock_get_reviews):
-        mock_gitlab().version.return_value = "9.0"
         mock_gitlab().projects.get.side_effect = test_mock.mock_projects_get_()
         res = GitlabService().request_reviews(user_name=self.config['user_name'],
                                               repo_name=self.config['repo_name'],
