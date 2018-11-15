@@ -1,11 +1,10 @@
 import collections
 import logging
 import os
-import platform
 from os.path import expanduser, expandvars
 from shutil import copyfile
-from select import select
-import sys
+from six.moves import input
+from six import iteritems
 
 from reviewrot.gerritstack import GerritService
 from reviewrot.githubstack import GithubService
@@ -98,8 +97,7 @@ def get_arguments(cli_arguments, config_arguments, choices):
 
     if parsed_arguments.get('ssl_verify') is None:
         if config_arguments.get('insecure'):
-            parsed_arguments['ssl_verify'] = not \
-                config_arguments.get('insecure')
+            parsed_arguments['ssl_verify'] = False
         elif 'cacert' in config_arguments:
             # expand ~, environment variables, etc if it's a path
             parsed_arguments['ssl_verify'] = config_arguments.get('cacert')
@@ -154,7 +152,7 @@ def load_config_file(config_path):
         prompt = "Would you like to rewrite the config file in new " \
                  "format [y/n] :"
 
-        input_choice = raw_input(prompt)
+        input_choice = input(prompt)
 
         answer = str(input_choice).lower().strip()
         if answer == 'y' or answer == '':
@@ -185,7 +183,7 @@ def load_ordered_config(config_path):
     _mapping_tag = yaml.resolver.BaseResolver.DEFAULT_MAPPING_TAG
 
     def dict_representer(dumper, data):
-        return dumper.represent_mapping(_mapping_tag, data.iteritems())
+        return dumper.represent_mapping(_mapping_tag, iteritems(data))
 
     def dict_constructor(loader, node):
         return collections.OrderedDict(loader.construct_pairs(node))

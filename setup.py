@@ -19,6 +19,7 @@ setup(name='review-rot',
           'PyYAML',
           'dateutils',
           'python-gitlab>=1.6.0',
+          'six',
       ],
       tests_require=[
           'nose',

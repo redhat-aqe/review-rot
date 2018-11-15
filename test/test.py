@@ -361,7 +361,7 @@ class CommandLineParserTest(TestCase):
             msg = "Certificate file can't be used with insecure flag"
             self.assertTrue(msg in str(context.exception), msg=context.exception)
 
-    @mock.patch('__builtin__.raw_input', return_value='n')
+    @mock.patch('reviewrot.input', return_value='n')
     def test_load_config_file_re_write_no(self, mocked_input):
         filename = join(dirname(__file__), 'test_old_format.yaml')
         load_config_file(filename)
@@ -375,7 +375,7 @@ class CommandLineParserTest(TestCase):
         self.assertTrue(isinstance(new_config, list) and arguments_present
                          and git_services_present)
 
-    @mock.patch('__builtin__.raw_input', return_value='y')
+    @mock.patch('reviewrot.input', return_value='y')
     def test_load_config_file_re_write_yes(self, mocked_input):
         filename = join(dirname(__file__), 'test_old_format.yaml')
         load_config_file(filename)
