@@ -28,10 +28,14 @@ def main(cli_args, valid_choices):
     """
     config = load_config_file(cli_args.config)
 
-    arguments = get_arguments(cli_args, config.get('arguments'), valid_choices)
+
+    arguments = get_arguments(cli_args, config.get('arguments', {}), valid_choices)
 
     if arguments.get('debug'):
-        log.setLevel(level=logging.DEBUG)
+        logging.basicConfig(level=logging.DEBUG)
+    else:
+        logging.basicConfig(level=logging.INFO)
+
 
     results = []
 
@@ -78,7 +82,7 @@ def main(cli_args, valid_choices):
                         duration=arguments.get('duration'),
                         token=token,
                         host=item.get('host'),
-                        ssl_verify=arguments.get('ssl_verify', False),
+                        ssl_verify=arguments.get('ssl_verify'),
                     )
                 )
 
@@ -171,7 +175,6 @@ if __name__ == '__main__':
                                 '(not recommended).')
     ssl_group.add_argument('--cacert',
                            default=None,
-                           type=open,
                            help='Path to CA certificate to use for SSL '
                                 'certificate verification.')
 
@@ -180,9 +183,5 @@ if __name__ == '__main__':
     if any(options) and not all(options):
         parser.error('Either no or all arguments are required')
 
-    if args.debug:
-        logging.basicConfig(level=logging.DEBUG)
-    else:
-        logging.basicConfig(level=logging.INFO)
 
     main(args, choices)

@@ -16,7 +16,6 @@ from reviewrot.gerritstack import GerritService
 from reviewrot import get_git_service, get_arguments, load_config_file
 from github.GithubException import BadCredentialsException
 from gitlab.exceptions import GitlabConnectionError
-import reviewrot
 
 # Disable logging to avoid messing up test output
 logging.disable(logging.CRITICAL)
@@ -91,45 +90,48 @@ class GitlabTest(TestCase):
         with open(filename, 'r') as f:
             self.config = yaml.load(f)
 
-    def test_github_object_create(self):
+    def test_gitlab_object_create(self):
         self.assertTrue(isinstance((get_git_service('gitlab')), GitlabService))
 
-    def test_request_reviews__token(self):
-        github = GitlabService()
-        with self.assertRaises(GitlabConnectionError)as context:
-            github.request_reviews(user_name=self.config['user_name'],
+    def test_request_reviews_token(self):
+        with self.assertRaises(Exception) as context:
+            GitlabService().request_reviews(user_name=self.config['user_name'],
                                    token=self.config['token'],
                                    host=self.config['host'])
-        self.assertTrue('NewConnectionError' in str(context.exception))
 
-    @mock.patch('gitlab.Project.get', side_effect=test_mock.mock_projects_get)
+            self.assertTrue('NewConnectionError' in str(context.exception), msg=context.exception)
+
+
     @mock.patch('gitlab.Gitlab.auth', side_effect=test_mock.mock_auth)
-    def test_request_reviews_projects_get(self, mock_projects_get, mock_auth):
+    @mock.patch('gitlab.Gitlab')
+    def test_request_reviews_projects_get(self, mock_auth, mock_gitlab):
         with self.assertRaises(Exception) as context:
+            mock_gitlab().projects.get.side_effect = test_mock.mock_projects_get()
             GitlabService().request_reviews(user_name=self.config['user_name'],
                                             repo_name=self.config['repo_name'],
                                             token=self.config['token'],
                                             host=self.config['host'])
-        msg = 'Project %s not found for user %s' % (self.config['repo_name'],
-                                                    self.config['user_name'])
-        self.assertTrue(msg in str(context.exception))
+            msg = 'Project %s not found for user %s' % (self.config['repo_name'],
+                                                        self.config['user_name'])
+            self.assertTrue(msg in str(context.exception), msg=context.exception)
 
-    @mock.patch('gitlab.GroupManager.search', side_effect=test_mock.mock_groups_search)
     @mock.patch('gitlab.Gitlab.auth', side_effect=test_mock.mock_auth)
-    def test_request_reviews_groups_search(self, mock_groups_search, mock_auth):
+    @mock.patch('gitlab.Gitlab')
+    def test_request_reviews_groups_search(self, mock_auth, mock_gitlab):
         with self.assertRaises(Exception) as context:
+            mock_gitlab().groups.get.return_value = []
             GitlabService().request_reviews(user_name=self.config['user_name'],
                                             token=self.config['token'],
                                             host=self.config['host'])
-        msg = 'Invalid user/group name: %s' % self.config['user_name']
-        self.assertTrue(msg in str(context.exception))
+            msg = 'Invalid user/group name: %s' % self.config['user_name']
+            self.assertTrue(msg in str(context.exception))
 
-    @mock.patch('gitlab.Project.get', side_effect=test_mock.mock_projects_get_)
     @mock.patch('gitlab.Gitlab.auth', side_effect=test_mock.mock_auth)
+    @mock.patch('gitlab.Gitlab')
     @mock.patch('reviewrot.gitlabstack.GitlabService.get_reviews',
                 side_effect=test_mock.mock_gitlab_get_reviews)
-    def test_request_reviews_with_repo(self, mock_projects_get_,
-                                       mock_gitlab_get_reviews, mock_auth):
+    def test_request_reviews_with_repo(self, mock_auth, mock_gitlab, mock_get_reviews):
+        mock_gitlab().projects.get.side_effect = test_mock.mock_projects_get_()
         res = GitlabService().request_reviews(user_name=self.config['user_name'],
                                               repo_name=self.config['repo_name'],
                                               token=self.config['token'],
@@ -266,7 +268,7 @@ class CommandLineParserTest(TestCase):
 
         debug_result = arguments.get('debug') is True
         format_result = arguments.get('format') == config_args.get('format')
-        ssl_result = arguments.get('ssl_verify') is None
+        ssl_result = arguments.get('ssl_verify') is True
         reverse_result = arguments.get('reverse') is True
         group_arguments = arguments.get('state') is None and \
             arguments.get('duration') is None and \
@@ -324,51 +326,42 @@ class CommandLineParserTest(TestCase):
 
         self.assertTrue(group_arguments)
 
-    def test_args_ca_certi_path_from_config(self):
+    def test_args_ca_certi_invalid_path_from_config(self):
         cli_args = argparse.Namespace(cacert=None, debug=False, format=None,
                                       insecure=False, reverse=False,
                                       duration=None, state=None, value=None)
 
         config_args = self.config['test7']['arguments']
-        arguments = get_arguments(cli_args, config_args, self.choices)
-        # Arguments 'cacert' and 'insecure' is given in config.
-        # Since insecure is False, ssl_verify should have CA Certificate path
-        cacert_value = self.config['test7']['arguments'].get('cacert')
-        ssl_result = arguments.get('ssl_verify') == \
-            expanduser(expandvars(cacert_value))
-        self.assertTrue(ssl_result)
+        with self.assertRaises(IOError) as context:
+            arguments = get_arguments(cli_args, config_args, self.choices)
+            msg = "No certificate file found "
+            self.assertTrue(msg in str(context.exception), msg=context.exception)
 
-    def test_args_ca_certi_path_from_command_line(self):
+
+
+    def test_args_ca_certi_invalid_path_from_command_line(self):
         cli_args = argparse.Namespace(cacert="~/review-rot/", debug=False,
                                       format=None, insecure=False,
                                       reverse=False, duration=None, state=None,
                                       value=None)
 
         config_args = self.config['test8']['arguments']
-        arguments = get_arguments(cli_args, config_args, self.choices)
-        # Arguments 'cacert' is given in config.
-        # But 'cacert' is also provided as CLI arguments. So CLI arguments has
-        # higher precedence. Since insecure is False, ssl_verify should have
-        # CA Certificate path
+        with self.assertRaises(IOError) as context:
+            arguments = get_arguments(cli_args, config_args, self.choices)
+            msg = "No certificate file found "
+            self.assertTrue(msg in str(context.exception), msg=context.exception)
 
-        ssl_result = arguments.get('ssl_verify') == \
-            expanduser(expandvars(vars(cli_args).get('cacert')))
-        self.assertTrue(ssl_result)
-
-    def test_args_ssl_verify_is_false(self):
+    def test_args_cacert_with_insecure(self):
         cli_args = argparse.Namespace(cacert=None, debug=False, format=None,
                                       insecure=False, reverse=False,
                                       duration=None, state=None, value=None)
         config_args = self.config['test9']['arguments']
-        arguments = get_arguments(cli_args, config_args, self.choices)
-        # Arguments 'cacert' and 'insecure' is given in config.
-        # Since insecure is True, 'cacert' will be ignored and
-        # ssl_verify will be False
+        with self.assertRaises(ValueError) as context:
+            arguments = get_arguments(cli_args, config_args, self.choices)
+            msg = "Certificate file can't be used with insecure flag"
+            self.assertTrue(msg in str(context.exception), msg=context.exception)
 
-        ssl_result = arguments.get('ssl_verify') is False
-        self.assertTrue(ssl_result)
-
-    @mock.patch('__builtin__.raw_input', return_value='n')
+    @mock.patch('reviewrot.input', return_value='n')
     def test_load_config_file_re_write_no(self, mocked_input):
         filename = join(dirname(__file__), 'test_old_format.yaml')
         load_config_file(filename)
@@ -382,7 +375,7 @@ class CommandLineParserTest(TestCase):
         self.assertTrue(isinstance(new_config, list) and arguments_present
                          and git_services_present)
 
-    @mock.patch('__builtin__.raw_input', return_value='y')
+    @mock.patch('reviewrot.input', return_value='y')
     def test_load_config_file_re_write_yes(self, mocked_input):
         filename = join(dirname(__file__), 'test_old_format.yaml')
         load_config_file(filename)

@@ -3,7 +3,7 @@ import logging
 import gitlab
 import datetime
 from reviewrot.basereview import BaseService, BaseReview
-from gitlab.exceptions import GitlabGetError
+from gitlab.exceptions import GitlabGetError, GitlabListError
 from distutils.version import LooseVersion
 
 log = logging.getLogger(__name__)
@@ -44,22 +44,6 @@ class GitlabService(BaseService):
                              projectname for given groupname
         """
         gl = gitlab.Gitlab(host, token, ssl_verify=ssl_verify)
-
-        # Test GitLab version and fall back to API v3 if possible, as a
-        # workaround to 404 Errors produced by authentication on some
-        # GitLab instances
-        try:
-            gl_version = gl.version()
-        except ValueError:
-            # Some instances have thrown a ValueError instead of failing
-            # gracefully when queried for version
-            gl_version = ('unknown', 'unknown')
-        if (gl_version == ('unknown', 'unknown') or
-           LooseVersion(gl_version[0]) < LooseVersion('9.0')):
-            # GitLab API v3 was deprecated in GitLab v9.0
-            gl = gitlab.Gitlab(host, token, ssl_verify=ssl_verify,
-                               api_version=3)
-
         gl.auth()
         log.debug('Gitlab instance created: %s', gl)
         response = []
@@ -82,22 +66,25 @@ class GitlabService(BaseService):
                 response.extend(res)
 
         else:
-            # get user object
-            groups = gl.groups.search(user_name)
-            if not groups:
+            # get group object
+            group = gl.groups.get(user_name)
+            if not group:
                 log.debug('Invalid user/group name: %s', user_name)
                 raise Exception('Invalid user/group name: %s' % user_name)
 
+            group_projects = group.projects.list(all=True, simple=True)
+
+            if not group_projects:
+                log.debug("No projects found for user/group name %s",
+                          user_name)
+
             # get merge requests for all projects for specified group
-            for group in groups:
-                projects = gl.group_projects.list(group_id=group.id)
-                if not projects:
-                    log.debug("No projects found for user/group name %s",
-                              user_name)
-                for project in projects:
-                    res = self.get_reviews(uname=user_name, project=project,
-                                           state_=state_, value=value,
-                                           duration=duration)
+            for group_project in group_projects:
+
+                project = gl.projects.get(group_project.id)
+                res = self.get_reviews(uname=user_name, project=project,
+                                       state_=state_, value=value,
+                                       duration=duration)
                 # extend in case of a non empty result
                 if res:
                     response.extend(res)
@@ -129,9 +116,15 @@ class GitlabService(BaseService):
         log.debug('Looking for merge requests for %s -> %s',
                   uname, project.name)
 
-        # get list of open merge requests for a given repository(project)
-        merge_requests = project.mergerequests.list(project_id=project.id,
-                                                    state='opened')
+        try:
+            # get list of open merge requests for a given repository(project)
+            merge_requests = project.mergerequests.list(project_id=project.id,
+                                                        state='opened')
+
+        # merge requests are not available for this project
+        except GitlabListError:
+            merge_requests = []
+
         if not merge_requests:
             log.debug('No open merge requests found for %s/%s ',
                       uname, project.name)
