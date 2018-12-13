@@ -1,0 +1,82 @@
+<html>
+<head>
+    <style>
+     table {
+        width: 50%;
+        margin: 0 auto;
+     }
+     td {
+        border-top: 1px solid grey;
+        padding: 3px;
+        text-align: left;
+        text-decoration: none;
+     }
+     .blue {
+        background-color: #3d8bcd;
+        color: #ffffff;
+        font-weight: bold;
+     }
+     .grey {
+        background-color: #e6e6e6;
+        color: #4d4d4d;
+        font-weight: bold;
+     }
+     p.comment {
+        color: #5c5c5c;
+        display: block;
+        padding: 10px;
+     }
+     span a {
+        color: #222222!important;
+        text-decoration: none!important;
+        text-align: center;
+        font-weight:normal;
+     }
+     a:hover{
+        text-decoration: underline!important;
+     }
+     .f1{
+        text-transform: uppercase;
+        color: #3453A8!important;
+        font-weight: bold;
+     }
+     p {
+        padding: 0px 3px;
+        margin: 0px;
+        color: #545454;
+     }
+     h3 {
+        padding: 0px;
+        margin: 3px;
+     }
+    </style>
+</head>
+<body>
+    <table>
+    {% for result in results %}
+        <tr>
+            <td>
+                <h3>
+                    <span>
+                        <a href="{{ result.project_url }}" class="f1">{{ result.project_name }}:</a>
+                        <a href="{{ result.url }}">{{ result.title }}</a>
+                    </span>
+                </h3>
+                {% if result.comments == 1 %}
+                    <p>Opened by <strong>{{ result.user }}</strong> {{ result.time | formatduration }} ago,                 with {{ result.comments }} comment</p>
+                {% else %}
+                    <p>Opened by <strong>{{ result.user }}</strong> {{ result.time | formatduration }} ago,                 with {{ result.comments }} comments</p>
+                {% endif %}
+                {% if result.last_comment %}
+                    <p>Last comment by <strong>{{ result.last_comment.author }}</strong> {{ result.last_comment.created_at | formatduration }} ago</p>
+                    {% if show_last_comment is not none %}
+                    <p class="comment">{{ result.last_comment.body }}</p>
+                    {% endif %}
+                {% endif %}
+            </td>
+        </tr>
+    {% endfor %}
+    </table>
+
+</body>
+</html>

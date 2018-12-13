@@ -3,11 +3,13 @@ import json
 import logging
 import time
 
-from collections import OrderedDict
+from collections import OrderedDict, namedtuple
 
 from dateutil.relativedelta import relativedelta
 
 log = logging.getLogger(__name__)
+
+LastComment = namedtuple('LastComment', ('author', 'body', 'created_at'))
 
 
 class BaseService(object):
@@ -87,6 +89,24 @@ class BaseService(object):
                 raise ValueError("Invalid duration type: %s" % duration)
         return True
 
+    def has_new_comments(self, last_activity, days):
+        """
+        Checks if the comment has been added in the last days
+        Args:
+            last_activity (datetime.datetime): When was the last comment added
+            days (int) Number of days
+        Returns:
+            Boolean stating whether the comment has been added
+            in the last days
+        """
+        today = datetime.datetime.now()
+
+        if last_activity and days:
+            delta = today - last_activity
+            return delta.days < days
+
+        return False
+
     def _decode_response(self, response):
         """
         Remove Gerrit's prefix and convert to JSON.
@@ -108,7 +128,7 @@ class BaseService(object):
         except ValueError:
             raise ValueError('Invalid json content: %s' % content)
 
-    def _call_api(self, url, method='GET', ssl_verify=True, ignore_err=False):
+    def _call_api(self, url, method='GET', ssl_verify=True):
         """
         Method used to call the API.
         It returns the raw JSON returned by the API or raises an exception
@@ -119,31 +139,16 @@ class BaseService(object):
                           Defaults to GET
             ssl_verify (bool/str): Whether or not to verify SSL certificates,
                                    or a path to a CA file to use.
-            ignore_err(bool): raise exception if ignore_error is True
         Returns:
             raw JSON returned by API
         """
         decoded_response = ''
+        response = self.get_response(method, url, ssl_verify)
         try:
-            response = self.get_response(method, url, ssl_verify)
+            # fails for gerrit services
             decoded_response = response.json()
-            # Some services (like pagure) return valid JSON with a 404 error.
-            # https://pagure.io/api/0/username/reponame/pull-requests
-            if not response:
-                raise ValueError("%r gave %r: %r" % (
-                    response.request, response, decoded_response))
         except ValueError:
-            if response.status_code == 404:
-                # happens when comments are not found for Gerrit Change Request
-                if not ignore_err:
-                    raise ValueError('Page not found: %s' % response.url)
-            elif response.status_code == 200:
-                try:
-                    decoded_response = self._decode_response(response)
-                except Exception as e:
-                    raise ValueError('Error while decoding JSON:{0}'.format(e))
-            else:
-                raise
+            decoded_response = self._decode_response(response)
         return decoded_response
 
     def get_response(self, method, url, ssl_verify):
@@ -158,19 +163,26 @@ class BaseService(object):
         Returns:
             Output returned by request module
         """
-        return self.session.request(method=method, url=url,
-                                    headers=self.header, verify=ssl_verify)
+        response = self.session.request(
+            method=method, url=url,
+            headers=self.header, verify=ssl_verify)
+        response.raise_for_status()
+        return response
 
 
 class BaseReview(object):
     def __init__(self, user=None, title=None, url=None,
-                 time=None, comments=None, image=None):
+                 time=None, comments=None, image=None,
+                 last_comment=None, project_name=None, project_url=None):
         self.user = user
         self.title = title
         self.url = url
         self.time = time
         self.comments = comments
         self.image = image
+        self.last_comment = last_comment
+        self.project_name = project_name
+        self.project_url = project_url
 
     @staticmethod
     def format_duration(created_at):
@@ -210,22 +222,23 @@ class BaseReview(object):
     def since(self):
         return self.format_duration(created_at=self.time)
 
-    def format(self, style, i, N):
+    def format(self, style, i, N, show_last_comment=None):
         """
         Format the result in a given style.
         Args:
             style(str): the name of the style.
             i(int): position in a list.
             N(int): length of the list.
+            show_last_comment (int): show last_comment text in output
         Return:
             fromatted_string(str): Formatted string as per style
         """
         lookup = {
-            'oneline': self._format_oneline,
-            'indented': self._format_indented,
-            'json': self._format_json,
+            'oneline': self._format_oneline(i, N),
+            'indented': self._format_indented(i, N),
+            'json': self._format_json(i, N, show_last_comment),
         }
-        return lookup[style](i, N)
+        return lookup[style]
 
     def _format_oneline(self, i, N):
         """
@@ -269,22 +282,23 @@ class BaseReview(object):
 
         return string
 
-    def _format_json(self, i, N):
+    def _format_json(self, i, N, show_last_comment):
         """
         Format the result in json style.
         Args:
             i(int): position in a list.
             N(int): length of the list.
+            show_last_comment (int): show last_comment text in output
         Return:
             fromatted_string(str): Formatted string as per style
         """
-        import json
         # Include a comma after every entry, except the last.
         suffix = ',' if i < N - 1 else ''
-        return json.dumps(self.__json__(), indent=2) + suffix
 
-    def __json__(self):
-        return {
+        return json.dumps(self.__json__(show_last_comment), indent=2) + suffix
+
+    def __json__(self, show_last_comment):
+        data = {
             'user': self.user,
             'title': self.title,
             'url': self.url,
@@ -294,3 +308,13 @@ class BaseReview(object):
             'type': type(self).__name__,
             'image': self.image,
         }
+
+        if self.last_comment and show_last_comment is not None:
+            data['last_comment'] = {
+                'author': self.last_comment.author,
+                'body': self.last_comment.body,
+                'created_at':
+                    time.mktime(self.last_comment.created_at.timetuple())
+                }
+
+        return data

@@ -1,14 +1,19 @@
 #!/usr/bin/env python
-
 import argparse
 import logging
 import operator
+import datetime
 import os
 import urllib
-
+import pkg_resources
+from jinja2 import FileSystemLoader, Environment
+from reviewrot.mailer import Mailer
 from reviewrot import GerritService, get_git_service
 from reviewrot import get_arguments, load_config_file
-from os.path import expanduser
+from reviewrot.basereview import BaseReview
+
+format_duration = BaseReview.format_duration
+
 
 log = logging.getLogger(__name__)
 
@@ -28,17 +33,19 @@ def main(cli_args, valid_choices):
     """
     config = load_config_file(cli_args.config)
 
-
-    arguments = get_arguments(cli_args, config.get('arguments', {}), valid_choices)
+    arguments = get_arguments(
+        cli_args,
+        config.get('arguments', {}),
+        config.get('mailer', {}),
+        valid_choices
+    )
 
     if arguments.get('debug'):
         logging.basicConfig(level=logging.DEBUG)
     else:
         logging.basicConfig(level=logging.INFO)
 
-
     results = []
-
     for item in config.get('git_services', []):
         if 'type' not in item:
             log.debug('git service type not found for %s', item)
@@ -80,26 +87,96 @@ def main(cli_args, valid_choices):
                         state_=arguments.get('state'),
                         value=arguments.get('value'),
                         duration=arguments.get('duration'),
+                        show_last_comment=arguments.get('show_last_comment'),
                         token=token,
-                        host=item.get('host'),
+                        host=remove_trailing_slash_from_url(item.get('host')),
                         ssl_verify=arguments.get('ssl_verify'),
                     )
                 )
 
     # Now, with all results in place, sort them and print
+    if arguments.get('comment_sort'):
+        sorting_key = sort_by_last_comment
+    else:
+        sorting_key = operator.attrgetter('time')
+
     sorted_results = sorted(
         results,
-        key=operator.attrgetter('time'),
+        key=sorting_key,
         reverse=arguments.get('reverse'),
     )
-
     formatting = arguments.get('format', 'oneline')
 
-    n = len(results)
-    print(report_prefixes[formatting])
-    for i, result in enumerate(sorted_results):
-        print(result.format(style=formatting, i=i, N=n))
-    print(report_suffixes[formatting])
+    email = arguments.get('email')
+    if email:
+        mailer_configuration = config.get('mailer')
+        log.debug('SENDING MAIL')
+
+        loader = FileSystemLoader(
+            searchpath=pkg_resources.resource_filename('reviewrot', ''))
+        env = Environment(loader=loader)
+        env.filters['formatduration'] = format_duration
+        template = env.get_template('html_template.jinja')
+
+        output_text = template.render({
+            "results": sorted_results,
+            'show_last_comment': arguments.get('show_last_comment'),
+        })
+
+        mailer = Mailer(
+            sender=mailer_configuration['sender'],
+            server=mailer_configuration['server']
+        )
+        mailer.send(
+            email,
+            'review-rot notification',
+            output_text
+        )
+        log.debug('EMAIL SENT')
+
+    else:
+        print(report_prefixes[formatting])
+        for i, result in enumerate(sorted_results):
+            print(result.format(
+                style=formatting, i=i, N=len(results),
+                show_last_comment=arguments.get('show_last_comment')))
+        print(report_suffixes[formatting])
+
+
+def sort_by_last_comment(result):
+    """
+    Helper function for sorting by last comment date
+
+    Args:
+        result (reviewrot.basereview.Basereview):
+        Instance containing data about review
+
+    Returns:
+        last comment date (datetime.datetime): when available or
+        default datetime.datetime with MAX value
+    """
+
+    if result.last_comment:
+        return result.last_comment.created_at
+    # if result does not contain last comment, return default datetime
+    # with maximum value
+    return datetime.datetime.combine(datetime.date.max,
+                                     datetime.datetime.min.time())
+
+
+def remove_trailing_slash_from_url(url):
+    """
+    Helper function for removing trailing slash from url
+
+    Args:
+        url (string): url
+
+    Returns:
+        url (string) url without trailing slash
+    """
+    if url.endswith('/'):
+        return url[:-1]
+    return url
 
 
 def format_user_repo_name(data, git_service):
@@ -139,10 +216,10 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(
         description='Lists pull/merge/change requests for github, gitlab,'
                     ' pagure and gerrit')
-    default_config = expanduser('~/.reviewrot.yaml')
+    default_config = os.path.expanduser('~/.reviewrot.yaml')
     parser.add_argument('-c', '--config',
                         default=default_config,
-                        help='Configuration file to use.')
+                        help='Configuration file to use')
     parser.add_argument('-s', '--state',
                         default=None,
                         choices=state_choices,
@@ -161,27 +238,40 @@ if __name__ == '__main__':
     parser.add_argument('-f', '--format',
                         default=None,
                         choices=format_choices,
-                        help='Choose from one of a few different styles.')
+                        help='Choose from one of a few different styles')
+    parser.add_argument('--show-last-comment',
+                        nargs='?',
+                        default=None,
+                        const=0,
+                        type=int,
+                        help='Show text of last comment and '
+                             'filter out pull requests in which '
+                             'last comments are newer than '
+                             'specified number of days')
     parser.add_argument('--reverse', action='store_true',
-                        help='Display results with the latest first.')
+                        help='Display results with the most recent first')
+    parser.add_argument('--comment-sort', action='store_true',
+                        help='Display results sorted by last comment')
     parser.add_argument('--debug', action='store_true',
                         help='Display debug logs on console')
+    parser.add_argument('--email', nargs="+",
+                        default=None,
+                        help='send output to list of email adresses')
 
     ssl_group = parser.add_argument_group('SSL')
     ssl_group.add_argument('-k', '--insecure',
                            default=False,
                            action='store_true',
                            help='Disable SSL certificate verification '
-                                '(not recommended).')
+                                '(not recommended)')
     ssl_group.add_argument('--cacert',
                            default=None,
                            help='Path to CA certificate to use for SSL '
-                                'certificate verification.')
+                                'certificate verification')
 
     args = parser.parse_args()
     options = (args.state, args.value, args.duration)
     if any(options) and not all(options):
         parser.error('Either no or all arguments are required')
-
 
     main(args, choices)
