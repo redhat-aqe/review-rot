@@ -12,9 +12,6 @@ class Mailer:
     A mailer component used to send emails
     """
 
-    DEFAULT_FROM = "do-not-reply@redhat.com"
-    DEFAULT_SERVER = "smtp.corp.redhat.com"
-
     def __init__(self, sender, server):
         """Returns mailer object
         """
