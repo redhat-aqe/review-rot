@@ -174,9 +174,10 @@ def remove_trailing_slash_from_url(url):
     Returns:
         url (string) url without trailing slash
     """
-    if url.endswith('/'):
-        return url[:-1]
-    return url
+    if url:
+        if url.endswith('/'):
+            return url[:-1]
+        return url
 
 
 def format_user_repo_name(data, git_service):
