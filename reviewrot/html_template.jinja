@@ -63,9 +63,9 @@
                     </span>
                 </h3>
                 {% if result.comments == 1 %}
-                    <p>Opened by <strong>{{ result.user }}</strong> {{ result.time | formatduration }} ago,                 with {{ result.comments }} comment</p>
+                    <p>Opened by <strong>{{ result.user }}</strong> {{ result.time | formatduration }} ago, {{ result.comments }} comment</p>
                 {% else %}
-                    <p>Opened by <strong>{{ result.user }}</strong> {{ result.time | formatduration }} ago,                 with {{ result.comments }} comments</p>
+                    <p>Opened by <strong>{{ result.user }}</strong> {{ result.time | formatduration }} ago, {{ result.comments }} comments</p>
                 {% endif %}
                 {% if result.last_comment %}
                     <p>Last comment by <strong>{{ result.last_comment.author }}</strong> {{ result.last_comment.created_at | formatduration }} ago</p>

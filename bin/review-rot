@@ -11,6 +11,7 @@ from reviewrot.mailer import Mailer
 from reviewrot import GerritService, get_git_service
 from reviewrot import get_arguments, load_config_file
 from reviewrot.basereview import BaseReview
+from reviewrot.irc import IRC
 
 format_duration = BaseReview.format_duration
 
@@ -35,8 +36,7 @@ def main(cli_args, valid_choices):
 
     arguments = get_arguments(
         cli_args,
-        config.get('arguments', {}),
-        config.get('mailer', {}),
+        config,
         valid_choices
     )
 
@@ -134,7 +134,32 @@ def main(cli_args, valid_choices):
         )
         log.debug('EMAIL SENT')
 
-    else:
+    irc = arguments.get('irc')
+    if irc and sorted_results:
+        irc_bot = IRC(config=config.get('irc'), channels=irc)
+        irc_bot.connect()
+
+        # x02 is for bold formatting in irc
+        irc_bot.send_msg(
+            '\x02{0} Code Review Reminder {0}\x02'.format('-' * 45)
+        )
+        # output maximum 20 merge requests
+        for result in sorted_results[:20]:
+            irc_bot.send_msg(result.format(style="irc"))
+
+        if len(sorted_results) > 20:
+            irc_bot.send_msg(
+                '----- there are more than 20 MR,'
+                ' if you want to see all of them please'
+                ' use -- email configuration ----'
+            )
+
+        irc_bot.send_msg(
+            '\x02{}\x02'.format('-' * 112)
+        )
+        irc_bot.quit()
+
+    if not email and not irc:
         print(report_prefixes[formatting])
         for i, result in enumerate(sorted_results):
             print(result.format(
@@ -242,6 +267,7 @@ if __name__ == '__main__':
                         help='Choose from one of a few different styles')
     parser.add_argument('--show-last-comment',
                         nargs='?',
+                        metavar="DAYS",
                         default=None,
                         const=0,
                         type=int,
@@ -258,6 +284,10 @@ if __name__ == '__main__':
     parser.add_argument('--email', nargs="+",
                         default=None,
                         help='send output to list of email adresses')
+    parser.add_argument('--irc', nargs='+',
+                        metavar="CHANNEL",
+                        default=None,
+                        help='send output to list of irc channels')
 
     ssl_group = parser.add_argument_group('SSL')
     ssl_group.add_argument('-k', '--insecure',

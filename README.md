@@ -34,9 +34,9 @@ detox
 
 usage: review-rot [-h] [-c CONFIG] [-s {older,newer}] [-v VALUE]
                   [-d {y,m,d,h,min}] [-f {oneline,indented,json}]
-                  [--show-last-comment [show_last_comment]] [--reverse]
-                  [--comment-sort] [--debug] [--email EMAIL [EMAIL ...]] [-k]
-                  [--cacert CACERT]
+                  [--show-last-comment [DAYS]] [--reverse] [--comment-sort]
+                  [--debug] [--email EMAIL [EMAIL ...]]
+                  [--irc CHANNEL [CHANNEL ...]] [-k] [--cacert CACERT]
 
 Lists pull/merge/change requests for github, gitlab, pagure and gerrit
 
@@ -53,7 +53,7 @@ optional arguments:
                         d=days, h=hours, min=minutes
   -f {oneline,indented,json}, --format {oneline,indented,json}
                         Choose from one of a few different styles
-  --show-last-comment [show_last_comment]
+  --show-last-comment [DAYS]
                         Show text of last comment and filter out pull requests
                         in which last comments are newer than specified number
                         of days
@@ -62,12 +62,24 @@ optional arguments:
   --debug               Display debug logs on console
   --email EMAIL [EMAIL ...]
                         send output to list of email adresses
+  --irc CHANNEL [CHANNEL ...]
+                        send output to list of irc channels
 
 SSL:
-  -k, --insecure        Disable SSL certificate verification (not
-                        recommended).
+  -k, --insecure        Disable SSL certificate verification (not recommended)
   --cacert CACERT       Path to CA certificate to use for SSL certificate
                         verification
+
+```
+
+You can use **--show-last-comment** flag to include the text of last comment with formats:
+- json
+```
+review-rot -f json --show-last-comment
+```
+- email
+```
+review-rot --email user@example.com --show-last-comment
 ```
 
 ## Web UI
@@ -90,4 +102,38 @@ To use email notification functionality you must specify mailer configuration in
 mailer:
   sender: do-not-reply@example.com
   server: smtp.example.com
+```
+
+then specify email addresses in config file:
+```
+arguments:
+  email: user1@example.com, user2@example.com
+```
+
+Or in command line:
+```
+review-rot --email user1@example.com user2@example.com
+```
+
+## IRC notification
+
+To use irc notification functionality you must specify irc server configuration in config file
+```
+irc:
+  server: irc.example.com
+  port: 12345
+```
+
+then specify channels in config file for example:
+```
+arguments:
+  # don't forget to use quotes
+  irc: '#channel1, #channel2'
+```
+
+Or in command line:
+```
+# don't forget to use quotes or backslash
+review-rot --irc '#channel1' '#channel2'
+review-rot --irc \#channel1 \#channel2
 ```

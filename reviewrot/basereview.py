@@ -206,15 +206,22 @@ class BaseReview(object):
             ('month', rel_diff.months),
             ('day', rel_diff.days),
             ('hour', rel_diff.hours),
-            ('minute', rel_diff.minutes),
+            ('minute', rel_diff.minutes)
         ])
 
         result = []
         for k, v in time_dict.items():
+            # add minutes only if it is the only
+            # information available
+            if k == 'minute' and result:
+                continue
             if v == 1:
                 result.append('%s %s' % (v, k))
             elif v > 1:
                 result.append('%s %ss' % (v, k))
+
+        if not result:
+            return 'less than 1 minute'
 
         return ' '.join(result)
 
@@ -222,7 +229,7 @@ class BaseReview(object):
     def since(self):
         return self.format_duration(created_at=self.time)
 
-    def format(self, style, i, N, show_last_comment=None):
+    def format(self, style, i=None, N=None, show_last_comment=None):
         """
         Format the result in a given style.
         Args:
@@ -231,12 +238,13 @@ class BaseReview(object):
             N(int): length of the list.
             show_last_comment (int): show last_comment text in output
         Return:
-            fromatted_string(str): Formatted string as per style
+            formatted_string(str): Formatted string as per style
         """
         lookup = {
             'oneline': self._format_oneline(i, N),
             'indented': self._format_indented(i, N),
             'json': self._format_json(i, N, show_last_comment),
+            'irc': self._format_irc(),
         }
         return lookup[style]
 
@@ -249,15 +257,23 @@ class BaseReview(object):
             N(int): Not used in this method, added to have same parameters
                     in all the formatting methods
         Return:
-            fromatted_string(str): Formatted string as per style
+            formatted_string(str): Formatted string as per style
         """
-        string = "@%s filed '%s' %s since %s" % (
-            self.user, self.title, self.url, self.since)
+
+        string = "{} filed '{}' {} {} ago".format(
+            self.user, self.title, self.url, self.since
+        )
 
         if self.comments == 1:
-            string += " with %s comment" % self.comments
+            string += ", {} comment".format(self.comments)
         elif self.comments > 1:
-            string += " with %s comments" % self.comments
+            string += ", {} comments".format(self.comments)
+
+        if self.last_comment:
+            string += ", last comment by \x02{}\x02 {} ago".format(
+                self.last_comment.author,
+                self.format_duration(self.last_comment.created_at),
+            )
 
         return string
 
@@ -270,15 +286,23 @@ class BaseReview(object):
             N(int): Not used in this method, added to have same parameters
                     in all the formatting methods
         Return:
-            fromatted_string(str): Formatted string as per style
+            formatted_string(str): Formatted string as per style
         """
-        string = "@%s filed '%s'\n\t%s\n\tsince %s" % (
-            self.user, self.title, self.url, self.since)
+
+        string = "{} filed '{}'\n\t{}\n\t{} ago".format(
+            self.user, self.title, self.url, self.since
+        )
 
         if self.comments == 1:
-            string += "\n\twith %s comment" % self.comments
+            string += "\n\t{} comment".format(self.comments)
         elif self.comments > 1:
-            string += "\n\twith %s comments" % self.comments
+            string += "\n\t{} comments".format(self.comments)
+
+        if self.last_comment:
+            string += ", last comment by \x02{}\x02 {} ago".format(
+                self.last_comment.author,
+                self.format_duration(self.last_comment.created_at),
+            )
 
         return string
 
@@ -290,12 +314,39 @@ class BaseReview(object):
             N(int): length of the list.
             show_last_comment (int): show last_comment text in output
         Return:
-            fromatted_string(str): Formatted string as per style
+            formatted_string(str): Formatted string as per style
         """
         # Include a comma after every entry, except the last.
-        suffix = ',' if i < N - 1 else ''
+        if i and N:
+            suffix = ',' if i < N - 1 else ''
 
-        return json.dumps(self.__json__(show_last_comment), indent=2) + suffix
+            return json.dumps(self.__json__(show_last_comment), indent=2) + suffix
+
+    def _format_irc(self):
+        """
+        Format the result for irc output
+        Return:
+            formatted_string(str): Formatted string as per style
+        """
+
+        # \x02 is bold
+        # \x0312 is blue color
+        string = "\x02{}\x02 filed \x02'{}'\x02 \x0312{}\x03 {} ago".format(
+            self.user, self.title, self.url, self.since
+        )
+
+        if self.comments == 1:
+            string += ", {} comment".format(self.comments)
+        elif self.comments > 1:
+            string += ", {} comments".format(self.comments)
+
+        if self.last_comment:
+            string += ", last comment by \x02{}\x02 {} ago".format(
+                self.last_comment.author,
+                self.format_duration(self.last_comment.created_at),
+            )
+
+        return string
 
     def __json__(self, show_last_comment):
         data = {
@@ -308,13 +359,13 @@ class BaseReview(object):
             'type': type(self).__name__,
             'image': self.image,
         }
-
-        if self.last_comment and show_last_comment is not None:
+        if self.last_comment:
             data['last_comment'] = {
                 'author': self.last_comment.author,
-                'body': self.last_comment.body,
                 'created_at':
                     time.mktime(self.last_comment.created_at.timetuple())
                 }
+            if show_last_comment is not None:
+                data['last_comment']['body'] = self.last_comment.body
 
         return data

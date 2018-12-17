@@ -4,6 +4,7 @@ import gitlab
 import datetime
 from reviewrot.basereview import BaseService, BaseReview, LastComment
 from gitlab.exceptions import GitlabGetError, GitlabListError
+from requests.exceptions import SSLError
 
 log = logging.getLogger(__name__)
 
@@ -48,7 +49,12 @@ class GitlabService(BaseService):
                              projectname for given groupname
         """
         gl = gitlab.Gitlab(host, token, ssl_verify=ssl_verify)
-        gl.auth()
+        try:
+            gl.auth()
+        except SSLError as e:
+            log.exception('Error during authentification: %s', e.message)
+
+
         log.debug('Gitlab instance created: %s', gl)
         response = []
         # if Repository name is explicitly provided
