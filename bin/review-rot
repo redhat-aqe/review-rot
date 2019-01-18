@@ -4,8 +4,8 @@ import logging
 import operator
 import datetime
 import os
-import urllib
 import pkg_resources
+
 from jinja2 import FileSystemLoader, Environment
 from reviewrot.mailer import Mailer
 from reviewrot import GerritService, get_git_service
@@ -13,8 +13,12 @@ from reviewrot import get_arguments, load_config_file
 from reviewrot.basereview import BaseReview
 from reviewrot.irc import IRC
 
-format_duration = BaseReview.format_duration
+try:
+    import urllib.parse as urllib  # Python 3
+except ImportError:
+    import urllib  # Python 2
 
+format_duration = BaseReview.format_duration
 
 log = logging.getLogger(__name__)
 
