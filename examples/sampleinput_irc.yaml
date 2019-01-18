@@ -25,13 +25,11 @@ git_services:
     repos:
       - project_name
 
-# Optional tag
-arguments: 
-  format: json
-  reverse: true
-  ssl_verfiy: false
-  debug: true
-  state: newer
-  value: 2
-  duration: d
-  cacert: ~/cacert_location
+
+arguments:
+  # quotes needed
+  irc: "#channel1, #channel2"
+
+irc:
+  server: irc.example.com
+  port: 12345

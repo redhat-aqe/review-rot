@@ -38,19 +38,29 @@ def get_git_service(git):
         raise ValueError('requested git service %s is not valid' % (git))
 
 
-def get_arguments(cli_arguments, config_arguments, config_mailer, choices):
+def get_arguments(cli_arguments, config, choices):
     """
        Parse the arguments provided in configuration file
        and command line arguments
        Args:
             cli_arguments (argparse.Namespace): Arguments provided by command
                                                 line interface
-            config_arguments (dict): Arguments specified in yaml file
-            config_mailer (dict): Mailer configuration specified in yaml file
+            config (dict): Configuration from file
             choices (dict): valid values of choices for arguments
        Returns:
              arguments (dict): Returns the parsed arguments
      """
+
+    config_arguments = config.get('arguments', {})
+
+    if config_arguments is None:
+        raise ValueError(
+            'Argument section in config can\'t be empty,'
+            ' remove the section or add arguments'
+        )
+    config_mailer = config.get('mailer', {})
+    config_irc = config.get('irc', {})
+
     parsed_arguments = {}
     command_line_args = vars(cli_arguments)
     grouped_arguments = {'state', 'duration', 'value'}
@@ -99,6 +109,12 @@ def get_arguments(cli_arguments, config_arguments, config_mailer, choices):
             email.strip() for email in email_in_config.split(',')
         ]
 
+    irc_in_config = config_arguments.get('irc')
+    if irc_in_config:
+        parsed_arguments['irc'] = [
+            channel.strip() for channel in irc_in_config.split(',')
+        ]
+
     parsed_arguments['ssl_verify'] = False if cli_arguments.insecure \
         else cli_arguments.cacert
 
@@ -123,12 +139,19 @@ def get_arguments(cli_arguments, config_arguments, config_mailer, choices):
         raise ValueError("Certificate file can't be used with insecure flag")
 
     format = parsed_arguments.get('format')
+    show_last_comment = parsed_arguments.get('show_last_comment')
     if (format in ['oneline', 'indented'] and
-            parsed_arguments.get('show_last_comment') is not None):
+            show_last_comment is not None):
         raise ValueError(
             '{} format doesn\'t support last comment functionality'.format(
                 format
             )
+        )
+
+    irc = parsed_arguments.get('irc')
+    if irc and show_last_comment is not None:
+        raise ValueError(
+            'IRC output doesn\'t support last comment functionality'
         )
 
     email = parsed_arguments.get('email')
@@ -137,13 +160,24 @@ def get_arguments(cli_arguments, config_arguments, config_mailer, choices):
             'No format should be specified when selecting email output'
         )
 
-    if email:
-        if any(property not in config_mailer for property in ['server', 'sender']):
+    if email and any(property not in config_mailer for property in ['server', 'sender']):
             raise ValueError(
                 'Missing mailer configuration.'
-                ' Check examples/sampleinput_new_format '
+                ' Check examples/sampleinput_email.yaml '
                 'for correct configuration.'
             )
+
+    if irc and format:
+        raise ValueError(
+            'No format should be specified when selecting irc output'
+        )
+
+    if irc and any(property not in config_irc for property in ['server', 'port']):
+        raise ValueError(
+            'Missing irc configuration.'
+            ' Check examples/sampleinput_irc.yaml '
+            'for correct configuration.'
+        )
 
     return parsed_arguments
 

@@ -481,9 +481,10 @@ class CommandLineParserTest(TestCase):
             value=None,
         )
 
+        config = self.config["test1"]
         config_args = self.config["test1"]["arguments"]
         arguments = get_arguments(
-            cli_args, config_args, config_mailer={}, choices=self.choices
+            cli_args, config, self.choices
         )
         # arguments must contains values from config arguments
 
@@ -517,9 +518,9 @@ class CommandLineParserTest(TestCase):
             value=None,
         )
 
-        confi_args = self.config["test2"]["arguments"]
+        config = self.config["test2"]
         arguments = get_arguments(
-            cli_args, confi_args, config_mailer={}, choices=self.choices
+            cli_args, config, self.choices
         )
         # arguments must contains values from cli arguments
 
@@ -555,9 +556,10 @@ class CommandLineParserTest(TestCase):
             value=None,
         )
 
+        config = self.config["test3"]
         config_args = self.config["test3"]["arguments"]
         arguments = get_arguments(
-            cli_args, config_args, config_mailer={}, choices=self.choices
+            cli_args, config, self.choices
         )
         # All arguments must contains values from cli arguments except 'format'
         # It should be from config file
@@ -592,9 +594,9 @@ class CommandLineParserTest(TestCase):
             value=None,
         )
 
-        config_args = self.config["test4"]["arguments"]
+        config = self.config["test4"]
         arguments = get_arguments(
-            cli_args, config_args, config_mailer={}, choices=self.choices
+            cli_args, config, self.choices
         )
         # Only 'state' and 'duration' is given in config, but 'value' is not.
         # So value of all grouped arguments should be None
@@ -619,9 +621,10 @@ class CommandLineParserTest(TestCase):
             value=None,
         )
 
+        config = self.config["test5"]
         config_args = self.config["test5"]["arguments"]
         arguments = get_arguments(
-            cli_args, config_args, config_mailer={}, choices=self.choices
+            cli_args, config, self.choices
         )
         # Arguments 'state', 'duration' and 'value' are given in config. So
         # value of all grouped arguments should taken from config file. Grouped
@@ -646,9 +649,9 @@ class CommandLineParserTest(TestCase):
             value="m",
         )
 
-        config_args = self.config["test6"]["arguments"]
+        config = self.config["test6"]
         arguments = get_arguments(
-            cli_args, config_args, config_mailer={}, choices=self.choices
+            cli_args, config, choices=self.choices
         )
         # Arguments 'state', 'duration' and 'value' is given in config. Grouped
         # argument (state', 'duration', 'value) values are also given as CLI
@@ -674,10 +677,10 @@ class CommandLineParserTest(TestCase):
             value=None,
         )
 
-        config_args = self.config["test7"]["arguments"]
+        config = self.config["test7"]
         with self.assertRaises(IOError) as context:
             get_arguments(
-                cli_args, config_args, config_mailer={}, choices=self.choices
+                cli_args, config, self.choices
             )
             msg = "No certificate file found "
             self.assertTrue(
@@ -696,10 +699,10 @@ class CommandLineParserTest(TestCase):
             value=None,
         )
 
-        config_args = self.config["test8"]["arguments"]
+        config = self.config["test8"]
         with self.assertRaises(IOError) as context:
             get_arguments(
-                cli_args, config_args, config_mailer={}, choices=self.choices
+                cli_args, config, self.choices
             )
             msg = "No certificate file found "
             self.assertTrue(
@@ -717,10 +720,10 @@ class CommandLineParserTest(TestCase):
             state=None,
             value=None,
         )
-        config_args = self.config["test9"]["arguments"]
+        config = self.config["test9"]
         with self.assertRaises(ValueError) as context:
             get_arguments(
-                cli_args, config_args, config_mailer={}, choices=self.choices
+                cli_args, config, self.choices
             )
             msg = "Certificate file can't be used with insecure flag"
             self.assertTrue(
@@ -770,8 +773,7 @@ class CommandLineParserTest(TestCase):
         with self.assertRaises(ValueError) as context:
             get_arguments(
                 cli_arguments=cli_args,
-                config_arguments={},
-                config_mailer={},
+                config={},
                 choices=self.choices,
             )
             msg = "No format should be specified when selecting email output"
@@ -788,8 +790,7 @@ class CommandLineParserTest(TestCase):
         with self.assertRaises(ValueError) as context:
             get_arguments(
                 cli_arguments=cli_args,
-                config_arguments={},
-                config_mailer={},
+                config={},
                 choices=self.choices,
             )
             msg = "No format should be specified when selecting email output"
@@ -802,8 +803,7 @@ class CommandLineParserTest(TestCase):
         with self.assertRaises(ValueError) as context:
             get_arguments(
                 cli_arguments=cli_args,
-                config_arguments={},
-                config_mailer={},
+                config={},
                 choices=self.choices,
             )
             msg = "No format should be specified when selecting email output"
@@ -813,12 +813,16 @@ class CommandLineParserTest(TestCase):
     def test_invalid_combination_format_and_email_config_file(self):
         cli_args = argparse.Namespace(insecure=False, cacert=None)
 
-        config_args = {"email": "some@email", "format": "json"}
+        config = {
+            "arguments": {
+                "email": "some@email",
+                "format": "json"
+            }
+        }
         with self.assertRaises(ValueError) as context:
             get_arguments(
                 cli_arguments=cli_args,
-                config_arguments=config_args,
-                config_mailer={},
+                config=config,
                 choices=self.choices,
             )
             msg = "No format should be specified when selecting email output"
@@ -827,25 +831,32 @@ class CommandLineParserTest(TestCase):
 
     def test_invalid_combination_format_and_show_last_comment_configfile(self):
         cli_args = argparse.Namespace(insecure=False, cacert=None)
-
-        config_args = {"format": "oneline", "show_last_comment": 0}
+        config = {
+            "arguments": {
+                "format": "oneline",
+                "show_last_comment": 0
+            }
+        }
         with self.assertRaises(ValueError) as context:
             get_arguments(
                 cli_arguments=cli_args,
-                config_arguments=config_args,
-                config_mailer={},
+                config=config,
                 choices=self.choices,
             )
             msg = "No format should be specified when selecting email output"
 
             self.assertTrue(msg in str(context.exception))
 
-        config_args = {"format": "indented", "show_last_comment": 0}
+        config = {
+            "arguments": {
+                "format": "indented",
+                "show_last_comment": 0
+            }
+        }
         with self.assertRaises(ValueError) as context:
             get_arguments(
                 cli_arguments=cli_args,
-                config_arguments=config_args,
-                config_mailer={},
+                config=config,
                 choices=self.choices,
             )
             msg = "No format should be specified when selecting email output"
@@ -858,13 +869,18 @@ class CommandLineParserTest(TestCase):
             "user@example.com, user2@example.com,"
             "       user3@example.com,user4@example.com"
         )
-        config_args = {"email": email_input}
-        config_mailer = {
-            "sender": "do-not-reply@example.com",
-            "server": "smtp.example.com",
+        config = {
+            "arguments": {
+                "email": email_input
+            },
+            "mailer": {
+                "sender": "do-not-reply@example.com",
+                "server": "smtp.example.com",
+            }
         }
+
         arguments = get_arguments(
-            cli_args, config_args, config_mailer, self.choices
+            cli_args, config, self.choices
         )
 
         self.assertEqual(
@@ -879,17 +895,106 @@ class CommandLineParserTest(TestCase):
 
     def test_email_functionality_without_mailer_configuration(self):
         cli_args = argparse.Namespace(cacert=None, insecure=False)
-        config_args = {"email": "email@example.com"}
+        config = {
+            "arguments": {
+                "email": "email@example.com"
+            }
+        }
 
         with self.assertRaises(ValueError) as context:
             get_arguments(
-                cli_args, config_args, config_mailer={}, choices=self.choices
+                cli_args, config, choices=self.choices
             )
             msg = "Missing mailer configuration. " \
-                  "Check examples/sampleinput_new_format " \
+                  "Check examples/sampleinput_email.yaml " \
                   "for correct configuration."
 
             self.assertTrue(msg in str(context.exception))
+
+    def test_invalid_combination_format_and_irc_command_line(self):
+        cli_args = argparse.Namespace(
+            format="json", irc=True, insecure=False, cacert=None
+        )
+        with self.assertRaises(ValueError) as context:
+            get_arguments(
+                cli_arguments=cli_args,
+                config={},
+                choices=self.choices,
+            )
+            msg = "No format should be specified when selecting irc output"
+
+            self.assertTrue(msg in str(context.exception))
+
+    def test_invalid_combination_format_and_irc_config_file(self):
+        cli_args = argparse.Namespace(insecure=False, cacert=None)
+
+        config = {
+            "arguments": {
+                "irc": "#channel1",
+                "format": "json"
+            },
+            "irc": {
+                "server": "irc.example.com",
+                "port": 12345,
+            }
+        }
+        with self.assertRaises(ValueError) as context:
+            get_arguments(
+                cli_arguments=cli_args,
+                config=config,
+                choices=self.choices,
+            )
+            msg = "No format should be specified when selecting irc output"
+
+            self.assertTrue(msg in str(context.exception))
+
+    def test_irc_functionality_without_irc_configuration(self):
+        cli_args = argparse.Namespace(cacert=None, insecure=False)
+        config = {
+            "arguments": {
+                "irc": "#channel1"
+            }
+        }
+
+        with self.assertRaises(ValueError) as context:
+            get_arguments(
+                cli_args, config, choices=self.choices
+            )
+            msg = "Missing irc configuration. " \
+                  "Check examples/sampleinput_irc.yaml " \
+                  "for correct configuration."
+
+            self.assertTrue(msg in str(context.exception))
+
+    def test_irc_argument_in_config(self):
+        cli_args = argparse.Namespace(cacert=None, insecure=False)
+        irc_channels = (
+            "#channel1, #channel2,"
+            "       #channel3,#channel4"
+        )
+        config = {
+            "arguments": {
+                "irc": irc_channels
+            },
+            "irc": {
+                "server": "irc.example.com",
+                "port": 12345,
+            }
+        }
+
+        arguments = get_arguments(
+            cli_args, config, self.choices
+        )
+
+        self.assertEqual(
+            arguments.get("irc"),
+            [
+                "#channel1",
+                "#channel2",
+                "#channel3",
+                "#channel4",
+            ],
+        )
 
     @classmethod
     def tearDownClass(cls):
