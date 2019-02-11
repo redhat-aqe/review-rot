@@ -149,11 +149,6 @@ def get_arguments(cli_arguments, config, choices):
         )
 
     irc = parsed_arguments.get('irc')
-    if irc and show_last_comment is not None:
-        raise ValueError(
-            'IRC output doesn\'t support last comment functionality'
-        )
-
     email = parsed_arguments.get('email')
     if email and format:
         raise ValueError(
