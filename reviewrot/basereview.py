@@ -321,6 +321,9 @@ class BaseReview(object):
             suffix = ',' if i < N - 1 else ''
 
             return json.dumps(self.__json__(show_last_comment), indent=2) + suffix
+        # If we omit the return statement, this function will return None
+        # which will cause a malformed json.
+        return ''
 
     def _format_irc(self):
         """
