@@ -9,6 +9,7 @@ import test_mock
 import unittest
 from os.path import join, dirname
 from unittest import TestCase
+from six.moves import urllib
 from reviewrot.githubstack import GithubService
 from reviewrot.gitlabstack import GitlabService
 from reviewrot.pagurestack import PagureService
@@ -306,14 +307,32 @@ class PagureTest(TestCase):
         with open(filename, "r") as f:
             self.config = yaml.load(f)
 
-    def test_pagure_avatar(self):
+    @mock.patch("reviewrot.pagurestack.PagureService._call_api")
+    def test_pagure_missing_avatar(self, mock_call_api):
+        mock_call_api.return_value = {}
         expected = (
             "https://seccdn.libravatar.org/avatar/"
-            "9c9f7784935381befc302fe3c814f9136e7a3"
-            "3953d0318761669b8643f4df55c"
+            "9c9f7784935381befc302fe3c814f9136e7a33953d0318761669b8643f4df55c"
         )
-        actual = PagureService._avatar("ralph")
+        actual = PagureService()._avatar("ralph")
         self.assertEqual(actual.split("?")[0], expected)
+
+    @mock.patch("reviewrot.pagurestack.PagureService._call_api")
+    def test_pagure_missing_avatar(self, mock_call_api):
+        base_avatar_url = (
+            "https://seccdn.libravatar.org/avatar/"
+            "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabbbbbbbbbbbbbbbbbbccccccccccccccc"
+        )
+        pagure_avatar_url = base_avatar_url + "?s=16&d=retro"
+        mock_call_api.return_value = {'user': {'avatar_url': pagure_avatar_url}}
+
+        expected_query = "s=64&d=retro"
+        expected = base_avatar_url + "?" + expected_query
+
+        actual = PagureService()._avatar("ralph")
+        self.assertEqual(actual.split("?")[0], base_avatar_url)
+        actual_query = urllib.parse.parse_qs(urllib.parse.urlparse(actual).query)
+        self.assertEqual(actual_query, urllib.parse.parse_qs(expected_query))
 
     def test_pagure_object_create(self):
         self.assertTrue(isinstance((get_git_service("pagure")), PagureService))
