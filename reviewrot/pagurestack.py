@@ -123,7 +123,7 @@ class PagureService(BaseService):
                                url=url,
                                time=date,
                                comments=len(res['comments']),
-                               image=self._avatar(res['user']['name']),
+                               image=self._avatar(res['user']['name'], ssl_verify=ssl_verify),
                                last_comment=last_comment,
                                project_name=repo_reference,
                                project_url=project_url)
@@ -155,16 +155,49 @@ class PagureService(BaseService):
                 body=str(comments[-1]['comment']),
                 created_at=last_comment_date)
 
-    @staticmethod
-    def _avatar(username):
-        """ Return the avatar of a given pagure user.
-
-        Pagure avatars have a predictable URL structure.
+    def _avatar(self, username, ssl_verify=True):
         """
-        query = urllib.parse.urlencode({'s': 64, 'd': 'retro'})
-        openid = u'http://%s.id.fedoraproject.org/' % username
-        idx = hashlib.sha256(openid.encode('utf-8')).hexdigest()
-        return "https://seccdn.libravatar.org/avatar/%s?%s" % (idx, query)
+        Return the avatar URL of a given pagure user.
+
+        This method will first try to fetch the avatar URL from pagure API.
+        However, this information has only recently been exposed. As a fallback,
+        this method will construct the avatar URL based on the username. This
+        provides an avatar, but it's not the user's avatar since that one is
+        based on user's email address which is not publicly exposed.
+
+        Args:
+            username (str): user to fetch avatar URL for
+            ssl_verify (bool): whether or not to verify the identity
+                               cert of the pagure instance
+
+        Returns:
+           avatar_url (str): The avatar URL for the given user
+        """
+        request_url = "{}/api/0/user/{}".format(self.instance, username)
+        log.debug("Looking for avatar URL for user %s", username)
+        try:
+            response = self._call_api(url=request_url, ssl_verify=ssl_verify)
+        except requests.exceptions.HTTPError:
+            raise ValueError("User {} not found!".format(username))
+
+        avatar_query = {'s': 64, 'd': 'retro'}
+        avatar_url = response.get('user', {}).get('avatar_url')
+        if avatar_url:
+            # Make sure we're getting the resolution we expect.
+            url_parts = urllib.parse.urlparse(avatar_url)
+            url_query = urllib.parse.parse_qs(url_parts.query)
+            url_query.update(avatar_query)
+            url_query = urllib.parse.urlencode(url_query, doseq=True)
+            avatar_url = urllib.parse.urlunparse(url_parts[:4] + (url_query,) + url_parts[5:])
+        else:
+            log.debug("Pagure instance does not expose user's avatar URL. "
+                      "Fallback to construct based on username")
+            query = urllib.parse.urlencode(avatar_query)
+            openid = u'http://%s.id.fedoraproject.org/' % username
+            idx = hashlib.sha256(openid.encode('utf-8')).hexdigest()
+            avatar_url = "https://seccdn.libravatar.org/avatar/%s?%s" % (idx, query)
+
+        return avatar_url
 
 
 class PagureReview(BaseReview):
