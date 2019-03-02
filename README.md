@@ -34,9 +34,10 @@ detox
 
 usage: review-rot [-h] [-c CONFIG] [-s {older,newer}] [-v VALUE]
                   [-d {y,m,d,h,min}] [-f {oneline,indented,json}]
-                  [--show-last-comment [DAYS]] [--reverse] [--comment-sort]
-                  [--debug] [--email EMAIL [EMAIL ...]]
-                  [--irc CHANNEL [CHANNEL ...]] [-k] [--cacert CACERT]
+                  [--show-last-comment [DAYS]] [--reverse]
+                  [--sort {submitted, updated, commented}] [--debug]
+                  [--email EMAIL [EMAIL ...]] [--irc CHANNEL [CHANNEL ...]]
+                  [-k] [--cacert CACERT]
 
 Lists pull/merge/change requests for github, gitlab, pagure and gerrit
 
@@ -58,7 +59,9 @@ optional arguments:
                         in which last comments are newer than specified number
                         of days
   --reverse             Display results with the most recent first
-  --comment-sort        Display results sorted by last comment
+  --sort {submitted,updated,commented}
+                        Display results sorted by the chosen event time.
+                        Defaults to submitted
   --debug               Display debug logs on console
   --email EMAIL [EMAIL ...]
                         send output to list of email adresses

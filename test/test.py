@@ -498,6 +498,7 @@ class CommandLineParserTest(TestCase):
             duration=None,
             state=None,
             value=None,
+            sort=None,
         )
 
         config = self.config["test1"]
@@ -516,6 +517,7 @@ class CommandLineParserTest(TestCase):
             and arguments.get("duration") is None
             and arguments.get("value") is None
         )
+        sort_result = arguments.get("sort") == config_args.get("sort")
 
         self.assertTrue(
             debug_result
@@ -523,6 +525,7 @@ class CommandLineParserTest(TestCase):
             and format_result
             and ssl_result
             and group_arguments
+            and sort_result
         )
 
     def test_args_from_command_line(self):
@@ -535,6 +538,7 @@ class CommandLineParserTest(TestCase):
             duration=None,
             state=None,
             value=None,
+            sort='updated',
         )
 
         config = self.config["test2"]
@@ -554,6 +558,7 @@ class CommandLineParserTest(TestCase):
             and arguments.get("duration") is None
             and arguments.get("value") is None
         )
+        sort_result = arguments.get("sort") == vars(cli_args).get('sort')
 
         self.assertTrue(
             debug_result
@@ -561,6 +566,7 @@ class CommandLineParserTest(TestCase):
             and format_result
             and ssl_result
             and group_arguments
+            and sort_result
         )
 
     def test_args_from_command_line_except_format(self):
@@ -573,6 +579,7 @@ class CommandLineParserTest(TestCase):
             duration=None,
             state=None,
             value=None,
+            sort=None,
         )
 
         config = self.config["test3"]
@@ -592,6 +599,7 @@ class CommandLineParserTest(TestCase):
             and arguments.get("duration") is None
             and arguments.get("value") is None
         )
+        sort_result = arguments.get('sort') is None
 
         self.assertTrue(
             debug_result

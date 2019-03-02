@@ -150,6 +150,7 @@ class GithubService(BaseService):
                                title=pr.title,
                                url=pr.html_url,
                                time=pr.created_at,
+                               updated_time=pr.updated_at,
                                comments=pr.review_comments+pr.comments,
                                image=pr.user.avatar_url,
                                last_comment=last_comment,

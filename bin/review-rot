@@ -98,11 +98,33 @@ def main(cli_args, valid_choices):
                     )
                 )
 
-    # Now, with all results in place, sort them and print
+    # With the --sort argument, --comment-sort is kept for backwards
+    # compatibility. Equivalent to --sort commented
     if arguments.get('comment_sort'):
+        arguments['sort'] = 'commented'
+
+    # Now, with all results in place, sort them and print
+    # If sort is not passed or not provided as configuration argument, use the
+    # first element of the sort choices list as default.
+    sort_by = arguments.get('sort', choices['sort'][0])
+
+    if sort_by == 'commented':
         sorting_key = sort_by_last_comment
     else:
-        sorting_key = operator.attrgetter('time')
+        sort_index = {
+            'submitted': 'time',
+            'updated': 'updated_time',
+        }
+        sort_attr = sort_index.get(sort_by)
+
+        # As sort_index has to be explicitly match, ensure that is kept in sync
+        # with sort choices list.
+        if sort_attr is None:
+            error_message = 'Sort by {} not supported'.format(sort_by)
+            log.debug(error_message)
+            raise ValueError(error_message)
+
+        sorting_key = operator.attrgetter(sort_attr)
 
     sorted_results = sorted(
         results,
@@ -240,8 +262,12 @@ if __name__ == '__main__':
     state_choices = ['older', 'newer']
     format_choices = ['oneline', 'indented', 'json']
 
-    choices = {'duration': duration_choices, 'state': state_choices,
-               'format': format_choices}
+    choices = {
+        'duration': duration_choices,
+        'state': state_choices,
+        'format': format_choices,
+        'sort': ['submitted', 'updated', 'commented'],
+    }
 
     parser = argparse.ArgumentParser(
         description='Lists pull/merge/change requests for github, gitlab,'
@@ -281,8 +307,18 @@ if __name__ == '__main__':
                              'specified number of days')
     parser.add_argument('--reverse', action='store_true',
                         help='Display results with the most recent first')
+    # With --sort argument added,  --comment-sort is kept for backwards
+    # compatibility. Use --sort commented instead.
     parser.add_argument('--comment-sort', action='store_true',
-                        help='Display results sorted by last comment')
+                        help=argparse.SUPPRESS)
+    # Default value is left as None to ensure that the argument passed here
+    # takes precedence over the value in configuration arguments.
+    parser.add_argument('--sort',
+                        default=None,
+                        choices=choices['sort'],
+                        help=('Display results sorted by the chosen event '
+                              'time. Defaults to '
+                              '{}').format(choices['sort'][0]))
     parser.add_argument('--debug', action='store_true',
                         help='Display debug logs on console')
     parser.add_argument('--email', nargs="+",

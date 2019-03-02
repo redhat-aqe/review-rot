@@ -153,10 +153,14 @@ class GitlabService(BaseService):
             try:
                 mr_date = datetime.datetime.strptime(
                     mr.created_at, '%Y-%m-%dT%H:%M:%S.%fZ')
+                mr_updated_date = datetime.datetime.strptime(
+                    mr.updated_at, '%Y-%m-%dT%H:%M:%S.%fZ')
 
             except ValueError:
                 mr_date = datetime.datetime.strptime(
                     mr.created_at, '%Y-%m-%dT%H:%M:%SZ')
+                mr_updated_date = datetime.datetime.strptime(
+                    mr.updated_at, '%Y-%m-%dT%H:%M:%SZ')
 
             """ check if review request is older/newer than specified time
             interval"""
@@ -179,6 +183,7 @@ class GitlabService(BaseService):
                                title=mr.title,
                                url=mr.web_url,
                                time=mr_date,
+                               updated_time=mr_updated_date,
                                comments=mr.user_notes_count,
                                # XXX - I don't know how to find gitlab avatars
                                # for now.  Can we figure this out later?
