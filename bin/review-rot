@@ -117,8 +117,8 @@ def main(cli_args, valid_choices):
         }
         sort_attr = sort_index.get(sort_by)
 
-        # As sort_index has to be explicitly match, ensure that is kept in sync
-        # with sort choices list.
+        # As sort_index has to be explicitly matched, ensure that is kept in
+        # sync with sort choices list.
         if sort_attr is None:
             error_message = 'Sort by {} not supported'.format(sort_by)
             log.debug(error_message)
