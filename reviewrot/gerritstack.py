@@ -164,8 +164,11 @@ class GerritService(BaseService):
         res_ = []
         for decoded_response in decoded_responses:
 
+            time_format = "%Y-%m-%d %H:%M:%S.%f"
             created_date = datetime.strptime(decoded_response['created'][:-3],
-                                             "%Y-%m-%d %H:%M:%S.%f")
+                                             time_format)
+            updated_date = datetime.strptime(decoded_response['updated'][:-3],
+                                             time_format)
             result = self.check_request_state(created_date, state_, value,
                                               duration)
 
@@ -195,6 +198,7 @@ class GerritService(BaseService):
                                url="{}/{}".format(self.url,
                                                   str(change_number)),
                                time=created_date,
+                               updated_time=updated_date,
                                comments=self.get_comments_count(
                                    comments_response),
                                last_comment=last_comment,

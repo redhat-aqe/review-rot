@@ -1,4 +1,4 @@
-import datetime
+from datetime import datetime
 import hashlib
 import logging
 from six.moves import urllib
@@ -91,15 +91,19 @@ class PagureService(BaseService):
                 repo_reference, res['id']
             )
             # fetch the date pull request was filed at
-            created_date = datetime.datetime.utcfromtimestamp(
+            created_date = datetime.utcfromtimestamp(
                 int(res['date_created'])).strftime('%Y-%m-%d %H:%M:%S')
+            updated_date = datetime.utcfromtimestamp(
+                int(res['last_updated'])).strftime('%Y-%m-%d %H:%M:%S')
             # format the date pull request was filed at
             try:
-                date = datetime.datetime.strptime(created_date,
-                                                  '%Y-%m-%d %H:%M:%S.%f')
+                date = datetime.strptime(created_date, '%Y-%m-%d %H:%M:%S.%f')
+                updated_time = datetime.strptime(updated_date,
+                                                 '%Y-%m-%d %H:%M:%S.%f')
             except ValueError:
-                date = datetime.datetime.strptime(created_date,
-                                                  '%Y-%m-%d %H:%M:%S')
+                date = datetime.strptime(created_date, '%Y-%m-%d %H:%M:%S')
+                updated_time = datetime.strptime(updated_date, '%Y-%m-%d %H:%M:%S')
+
             """ check if review request is older/newer than specified time
             interval"""
             result = self.check_request_state(date,
@@ -122,6 +126,7 @@ class PagureService(BaseService):
                                title=res['title'],
                                url=url,
                                time=date,
+                               updated_time=updated_time,
                                comments=len(res['comments']),
                                image=self._avatar(res['user']['name'], ssl_verify=ssl_verify),
                                last_comment=last_comment,
@@ -148,7 +153,7 @@ class PagureService(BaseService):
         comments = res['comments']
 
         if comments:
-            last_comment_date = datetime.datetime.utcfromtimestamp(
+            last_comment_date = datetime.utcfromtimestamp(
                 int(comments[-1]['date_created']))
             return LastComment(
                 author=str(comments[-1]['user']['name']),

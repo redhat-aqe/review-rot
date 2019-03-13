@@ -4,6 +4,7 @@ test1:
     insecure: True
     reverse: True
     debug: True
+    sort: commented
 
 test2:
   arguments:

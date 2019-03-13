@@ -172,12 +172,13 @@ class BaseService(object):
 
 class BaseReview(object):
     def __init__(self, user=None, title=None, url=None,
-                 time=None, comments=None, image=None,
+                 time=None, updated_time=None, comments=None, image=None,
                  last_comment=None, project_name=None, project_url=None):
         self.user = user
         self.title = title
         self.url = url
         self.time = time
+        self.updated_time = updated_time
         self.comments = comments
         self.image = image
         self.last_comment = last_comment
@@ -358,6 +359,7 @@ class BaseReview(object):
             'url': self.url,
             'relative_time': self.since,
             'time': time.mktime(self.time.timetuple()),
+            'updated_time': time.mktime(self.updated_time.timetuple()),
             'comments': self.comments,
             'type': type(self).__name__,
             'image': self.image,
