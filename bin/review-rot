@@ -145,7 +145,7 @@ def main(cli_args, valid_choices):
 
         # x02 is for bold formatting in irc
         irc_bot.send_msg(
-            '\x02{0} Code Review Reminder {0}\x02'.format('-' * 45)
+            '\x02{0} Code Review Reminder {0}\x02'.format('*' * 45)
         )
         # output maximum 20 merge requests
         for result in sorted_results[:20]:
@@ -153,13 +153,13 @@ def main(cli_args, valid_choices):
 
         if len(sorted_results) > 20:
             irc_bot.send_msg(
-                '----- there are more than 20 MR,'
+                '***** there are more than 20 MR,'
                 ' if you want to see all of them please'
-                ' use -- email configuration ----'
+                ' use --email configuration *****'
             )
 
         irc_bot.send_msg(
-            '\x02{}\x02'.format('-' * 112)
+            '\x02{}\x02'.format('*' * 112)
         )
         irc_bot.quit()
 
