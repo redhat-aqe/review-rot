@@ -271,7 +271,7 @@ class BaseReview(object):
             string += ", {} comments".format(self.comments)
 
         if self.last_comment:
-            string += ", last comment by \x02{}\x02 {} ago".format(
+            string += ", last comment by {} {} ago".format(
                 self.last_comment.author,
                 self.format_duration(self.last_comment.created_at),
             )
@@ -300,7 +300,7 @@ class BaseReview(object):
             string += "\n\t{} comments".format(self.comments)
 
         if self.last_comment:
-            string += ", last comment by \x02{}\x02 {} ago".format(
+            string += ", last comment by {} {} ago".format(
                 self.last_comment.author,
                 self.format_duration(self.last_comment.created_at),
             )
