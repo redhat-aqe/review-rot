@@ -134,7 +134,7 @@ def main(cli_args, valid_choices):
     formatting = arguments.get('format', 'oneline')
 
     email = arguments.get('email')
-    if email:
+    if email and sorted_results:
         mailer_configuration = config.get('mailer')
         log.debug('SENDING MAIL')
 
@@ -185,7 +185,7 @@ def main(cli_args, valid_choices):
         )
         irc_bot.quit()
 
-    if not email and not irc:
+    if not email and not irc and sorted_results:
         print(report_prefixes[formatting])
         for i, result in enumerate(sorted_results):
             print(result.format(
