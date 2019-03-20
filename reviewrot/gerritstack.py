@@ -14,7 +14,8 @@ class GerritService(BaseService):
     def __init__(self):
         self.session = requests.session()
         self.header = {'Accept': 'application/json'}
-        self.host_exists = dict()  # {host: host_response, ...}
+        self.url = None
+        self.host_exists = None
 
     def request_reviews(self, host, repo_name, state_=None,
                         user_name=None, token=None, value=None,
@@ -44,20 +45,19 @@ class GerritService(BaseService):
             response (list): Returns list of list of pull requests for
                              specified repo name
         """
-        self.url = host
         reviews = None
 
-        # Checks gerrit host url. Keep response to avoid check on known
-        # existing hosts.
-        if not self.host_exists.get(host):
-            host_response = self.get_response(method='HEAD', url=self.url,
-                                              ssl_verify=ssl_verify)
-            self.host_exists[host] = host_response
+        # If the request for reviews is on a different host than the previous
+        # request, update the URL and check if the new host exists.
+        if self.url != host:
+            self.url = host
+            self.host_exists = self.get_response(method='HEAD', url=self.url,
+                                                 ssl_verify=ssl_verify)
 
         # checks if specified repo exists
         repo_exists = self.check_repo_exists(repo_name, ssl_verify)
 
-        if self.host_exists[host] and repo_exists:
+        if self.host_exists and repo_exists:
             request_url = "{}/changes/?q=project:{}+status:open&" \
                           "o=DETAILED_ACCOUNTS".format(self.url, repo_name)
             log.debug('Looking for change requests for %s -> %s',
