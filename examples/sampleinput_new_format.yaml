@@ -36,3 +36,4 @@ arguments:
   duration: d
   cacert: ~/cacert_location
   ignore_wip: true
+  age: "older 5d 4h"

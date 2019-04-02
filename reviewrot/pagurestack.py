@@ -17,8 +17,7 @@ class PagureService(BaseService):
         self.instance = "https://pagure.io"
         self.header = None
 
-    def request_reviews(self, user_name, repo_name=None, state_=None,
-                        value=None, duration=None,
+    def request_reviews(self, user_name, repo_name=None, age=None,
                         show_last_comment=None, host=None, token=None,
                         ssl_verify=True, **kwargs):
         """
@@ -30,13 +29,8 @@ class PagureService(BaseService):
             user_name (str): Pagure username or organization name
             repo_name (str): Pagure repository name for specified
                              username or organization
-            state_ (str): The filter(state) for pull requests, e.g, older
-                          or newer
-            value (int): The value in terms of duration for requests
-                         to be older or newer than
-            duration (str): The duration in terms of period(year, month,
-                            hour, minute) for requests to be older or
-                            newer than
+            age (Age): Contains the filter state for pull requests,
+                       e.g, older or newer and date
             show_last_comment (int): Show text of last comment and
                                      filter out pull requests in which
                                      last comments are newer than
@@ -106,11 +100,10 @@ class PagureService(BaseService):
 
             """ check if review request is older/newer than specified time
             interval"""
-            result = self.check_request_state(date,
-                                              state_, value, duration)
+            result = self.check_request_state(date, age)
             if result is False:
                 log.debug("pull request '%s' is not %s than specified"
-                          " time interval", res['title'], state_)
+                          " time interval", res['title'], age.state)
                 continue
 
             if last_comment and show_last_comment:

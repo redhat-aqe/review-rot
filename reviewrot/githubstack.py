@@ -11,8 +11,7 @@ class GithubService(BaseService):
     This class represents Github. The reference can be found here:
     https://developer.github.com/v3/
     """
-    def request_reviews(self, user_name, repo_name=None, state_=None,
-                        value=None, duration=None,
+    def request_reviews(self, user_name, repo_name=None, age=None,
                         show_last_comment=None, token=None, host=None,
                         **kwargs):
         """
@@ -25,12 +24,8 @@ class GithubService(BaseService):
             user_name (str): Github username or organization name
             repo_name (str): Github repository name for specified
                              username or organization
-            state_ (str): The filter state for pull requests, e.g, older
-                          or newer
-            value (int): The value in terms of duration for requests
-                         to be older or newer than
-            duration (str): The duration in terms of period(year, month, hour,
-                            minute) for requests to be older or newer than
+            age (Age): Contains the filter state for pull requests,
+                       e.g, older or newer and date
             show_last_comment (int): Show text of last comment and
                                      filter out pull requests in which
                                      last comments are newer than
@@ -57,8 +52,7 @@ class GithubService(BaseService):
         if repo_name is not None:
             # get pull requests for specified username and repo name
             res = self.get_reviews(uname=uname, repo_name=repo_name,
-                                   state_=state_, value=value,
-                                   duration=duration,
+                                   age=age,
                                    show_last_comment=show_last_comment)
             # extend incase of a non empty result
             if res:
@@ -74,16 +68,14 @@ class GithubService(BaseService):
             """
             for repo in repo_list:
                 res = self.get_reviews(uname=uname, repo_name=repo.name,
-                                       state_=state_, value=value,
-                                       duration=duration,
+                                       age=age,
                                        show_last_comment=show_last_comment)
                 # extend incase of a non empty result
                 if res:
                     response.extend(res)
         return response
 
-    def get_reviews(self, uname, repo_name, state_=None,
-                    value=None, duration=None, show_last_comment=None):
+    def get_reviews(self, uname, repo_name, age=None, show_last_comment=None):
         """
         Fetches pull requests for specified username and repo name.
         Formats the pull requests details and print it on console.
@@ -92,13 +84,8 @@ class GithubService(BaseService):
             user_name (str): Github username or organization name
             repo_name (str): Github repository name for specified
                              username or organization
-            state_ (str): The filter(state) for pull requests, e.g, older
-                        or newer
-            value (int): The value in terms of duration for requests
-                         to be older or newer than
-            duration (str): The duration in terms of period(year,
-                            month, hour, minute) for requests to be
-                            older or newer than
+            age (Age): Contains the filter state for pull requests,
+                       e.g, older or newer and date
             show_last_comment (int): Show text of last comment and
                                      filter out pull requests in which
                                      last comments are newer than
@@ -129,13 +116,12 @@ class GithubService(BaseService):
 
             """ check if review request is older/newer than specified time
             interval"""
-            result = self.check_request_state(pr.created_at,
-                                              state_, value, duration)
+            result = self.check_request_state(pr.created_at, age)
 
             if result is False:
                 # skip the current pull request
                 log.debug("review request '%s' is not %s than specified"
-                          " time interval", pr.title, state_)
+                          " time interval", pr.title, age.state)
                 continue
 
             if last_comment and show_last_comment:

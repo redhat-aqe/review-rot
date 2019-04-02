@@ -10,84 +10,30 @@ from dateutil.relativedelta import relativedelta
 log = logging.getLogger(__name__)
 
 LastComment = namedtuple('LastComment', ('author', 'body', 'created_at'))
+Age = namedtuple('Age', ('date', 'state'))
 
 
 class BaseService(object):
-    def check_request_state(self, created_at,
-                            state_, value, duration):
+    def check_request_state(self, created_at, age):
         """
         Checks if the review request is older or newer than specified
         time interval.
         Args:
             created_at (str): the date review request was filed
-            state_ (str): state for review requests, e.g, older
-                          or newer
-            value (int): The value in terms of duration for requests
-                         to be older or newer than
-            duration (str): The duration in terms of period(year, month, hour
-                            minute) for requests to be older or newer than
-
+            age (Age): Contains the filter state for pull requests,
+                       e.g, older or newer and date
         Returns:
-            True if the review request is older or newer than
-            specified time interval, False otherwise
+            True if the review request is older/newer than
+            specified date, False otherwise
         """
-        if state_ is not None and value is not None\
-                and duration is not None:
-            """
-            find the relative time difference between now and
-            review request filed to retrieve relative information
-            """
-            rel_diff = relativedelta(datetime.datetime.utcnow(),
-                                     created_at)
-            """
-            find the absolute time difference between now and
-            review request filed to retrieve absolute information
-            """
-            abs_diff = datetime.datetime.utcnow() - created_at
 
-            if state_ not in ('older', 'newer'):
-                raise ValueError('Invalid state value: %s' % state_)
-            if duration == 'y':
-                """ use rel_diff to retrieve absolute year since
-                value of absolute and relative year is same."""
-                if state_ == 'older' and rel_diff.years < value:
-                    return False
-                elif state_ == 'newer' and rel_diff.years >= value:
-                    return False
-            elif duration == 'm':
-                """ use rel_diff to calculate absolute time difference
-                in months """
-                abs_month = (rel_diff.years * 12) + rel_diff.months
-                if state_ == 'older' and abs_month < value:
-                    return False
-                elif state_ == 'newer' and abs_month >= value:
-                    return False
-            elif duration == 'd':
-                """ use abs_diff to retrieve absolute time difference
-                in days """
-                if state_ == 'older' and abs_diff.days < value:
-                    return False
-                elif state_ == 'newer' and abs_diff.days >= value:
-                    return False
-            elif duration == 'h':
-                """ use abs_diff to calculate absolute time difference
-                in hours """
-                abs_hour = abs_diff.total_seconds() / 3600
-                if state_ == 'older' and abs_hour < value:
-                    return False
-                elif state_ == 'newer' and abs_hour >= value:
-                    return False
-            elif duration == 'min':
-                """ use abs_diff to calculate absolute time difference
-                in minutes """
-                abs_min = abs_diff.total_seconds() / 60
-                if state_ == 'older' and abs_min < value:
-                    return False
-                elif state_ == 'newer' and abs_min >= value:
-                    return False
-            else:
-                raise ValueError("Invalid duration type: %s" % duration)
-        return True
+        if age is None:
+            return True
+
+        if (age.state == 'newer' and created_at > age.date) or (age.state == 'older' and created_at < age.date):
+            return True
+
+        return False
 
     def has_new_comments(self, last_activity, days):
         """

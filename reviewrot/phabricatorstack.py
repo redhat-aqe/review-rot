@@ -15,8 +15,7 @@ class PhabricatorService(BaseService):
     """
         This class represents Phabricator Service for Review Rot.
     """
-    def request_reviews(self, host, token, user_names=None, state_=None,
-                        value=None, duration=None, show_last_comment=None,
+    def request_reviews(self, host, token, user_names=None, age=None, show_last_comment=None,
                         **kwargs):
         """
         Returns revision requests for specified username and repo name.
@@ -27,12 +26,8 @@ class PhabricatorService(BaseService):
             token (str): Phabricator token for authentication
                             (Looks like 'api-1234567890x')
             user_names (lst(str)): Phabricator user names we want to query
-            state_ (str): The filter state for pull requests, e.g, older
-                          or newer
-            value (int): The value in terms of duration for requests
-                         to be older or newer than
-            duration (str): The duration in terms of period(year, month, hour,
-                            minute) for requests to be older or newer than
+            age (Age): Contains the filter state for pull requests,
+                       e.g, older or newer and date
             show_last_comment (int): Show text of last comment and
                                      filter out pull requests in which
                                      last comments are newer than
@@ -74,8 +69,7 @@ class PhabricatorService(BaseService):
         res = self.get_reviews(phab=phab, reviews=reviews,
                                raw_response=raw_response,
                                host=host,
-                               state_=state_, value=value,
-                               duration=duration,
+                               age=age,
                                show_last_comment=show_last_comment)
         # extend in case of non-empty results
         # If we've come across a revision that's dated < duration
@@ -87,8 +81,7 @@ class PhabricatorService(BaseService):
         return response
 
     def get_reviews(self, phab, reviews, raw_response,
-                    host, state_=None,value=None,
-                    duration=None, show_last_comment=None):
+                    host, age=None, show_last_comment=None):
         """
         Fetches pull requests for specified username and repo name.
         Formats the pull requests details and print it on console.
@@ -98,13 +91,8 @@ class PhabricatorService(BaseService):
                 raw_response (lst(dict)): The raw data in the query, to use be used
                                           later to minimize API calls
                 host (str): The host Phabricator server url
-                state_ (str): The filter(state) for pull requests, e.g, older
-                                or newer
-                value (int): The value in terms of duration for requests
-                                 to be older or newer than
-                duration (str): The duration in terms of period(year,
-                                    month, hour, minute) for requests to be
-                                    older or newer than
+                age (Age): Contains the filter state for pull requests,
+                           e.g, older or newer and date
                 show_last_comment (int): Show text of last comment and
                                              filter out pull requests in which
                                              last comments are newer than
@@ -126,14 +114,13 @@ class PhabricatorService(BaseService):
             date_created = self.time_from_epoch(review['dateCreated'])
             date_modified = self.time_from_epoch(review['dateModified'])
 
-            result = self.check_request_state(
-                date_created, state_, value, duration)
+            result = self.check_request_state(date_created, age)
 
             # Check if review should be looked at
             if result is False:
                 # Skip the current review
                 log.debug("review request '%s' is not %s than specified"
-                          " time interval", review['title'], state_)
+                          " time interval", review['title'], age.state)
                 continue
 
             if last_comment and show_last_comment:
