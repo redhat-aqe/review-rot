@@ -230,7 +230,7 @@ class BaseReview(object):
     def since(self):
         return self.format_duration(created_at=self.time)
 
-    def format(self, style, i=None, N=None, show_last_comment=None):
+    def format(self, style, i, N, show_last_comment=None):
         """
         Format the result in a given style.
         Args:
