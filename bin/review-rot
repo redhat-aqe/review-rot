@@ -64,35 +64,52 @@ def main(cli_args, valid_choices):
         """
         if item['repos'] is not None:
             # for each input call specified git service
-            for data in item['repos']:
-                """
-                split and format username and repository name to further
-                request pull requests
-                """
-                res = format_user_repo_name(data, git_service)
-                """
-                get pull/merge/change requests for specified git service
-                """
-                token = item.get('token')
-                # Support pulling a token from an environment variable
-                # If the token value starts with "ENV.", then the value
-                # for the token will be pulled from the environment variable
-                # specified following "ENV."
-                # For example, if the token value specified in the config is
-                # "ENV.FOO", then the real value for the environment variable
-                # will be taken from the environment variable "FOO"
-                if token and token.startswith('ENV.'):
-                    token_env_var = token.split('ENV.')[1]
-                    token = os.environ.get(token_env_var)
+            if not (item['type'] == 'phabricator'):
+                for data in item['repos']:
+                    """
+                    split and format username and repository name to further
+                    request pull requests.
+                    """
+                    res = format_user_repo_name(data, git_service)
+                    """
+                    get pull/merge/change requests for specified git service
+                    """
+                    token = item.get('token')
+                    # Support pulling a token from an environment variable
+                    # If the token value starts with "ENV.", then the value
+                    # for the token will be pulled from the environment variable
+                    # specified following "ENV."
+                    # For example, if the token value specified in the config is
+                    # "ENV.FOO", then the real value for the environment variable
+                    # will be taken from the environment variable "FOO"
+                    if token and token.startswith('ENV.'):
+                        token_env_var = token.split('ENV.')[1]
+                        token = os.environ.get(token_env_var)
+                    results.extend(
+                        git_service.request_reviews(
+                            user_name=res.get('user_name'),
+                            repo_name=res.get('repo_name'),
+                            state_=arguments.get('state'),
+                            value=arguments.get('value'),
+                            duration=arguments.get('duration'),
+                            show_last_comment=arguments.get('show_last_comment'),
+                            token=token,
+                            host=remove_trailing_slash_from_url(item.get('host')),
+                            ssl_verify=arguments.get('ssl_verify'),
+                        )
+                    )
+            else:
+                # If we are parsing from phabricator, we do not need
+                # to loop through users, rather we can pass all
+                # users as a list
                 results.extend(
                     git_service.request_reviews(
-                        user_name=res.get('user_name'),
-                        repo_name=res.get('repo_name'),
+                        user_names=item['repos'],
                         state_=arguments.get('state'),
                         value=arguments.get('value'),
                         duration=arguments.get('duration'),
                         show_last_comment=arguments.get('show_last_comment'),
-                        token=token,
+                        token=item.get('token'),
                         host=remove_trailing_slash_from_url(item.get('host')),
                         ssl_verify=arguments.get('ssl_verify'),
                     )

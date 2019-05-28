@@ -21,6 +21,7 @@ setup(name='review-rot',
           'python-gitlab>=1.6.0',
           'six',
           'Jinja2',
+          'phabricator>=0.7.0',
       ],
       tests_require=[
           'nose',

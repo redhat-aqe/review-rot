@@ -1,5 +1,7 @@
+### New: Phabricator support (check examples/sampleinput_phabricator.yaml )
+
 # review-rot
-reviewrot is a CLI tool, that helps to list down open review requests from github, gitlab, pagure and gerrit.
+reviewrot is a CLI tool, that helps to list down open review requests from github, gitlab, pagure, gerrit and phabricator.
 
 ## Sample I/P:
 Create '~/.reviewrot.yaml'. browse the [examples](https://github.com/nirzari/review-rot/tree/master/examples/) for content. 

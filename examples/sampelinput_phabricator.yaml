@@ -1,0 +1,7 @@
+- type: phabricator
+  token: my_phabricator_token
+  host: my_phabricator_host
+  repos:
+    - user_1
+    - user_2
+    - user_3
