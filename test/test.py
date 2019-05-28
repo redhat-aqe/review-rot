@@ -27,7 +27,7 @@ class GithubTest(TestCase):
     def setUp(self):
         filename = join(dirname(__file__), "test_githubtest.yaml")
         with open(filename, "r") as f:
-            self.config = yaml.load(f)
+            self.config = yaml.safe_load(f)
 
     def test_object_create(self):
         self.assertTrue(isinstance((get_git_service("github")), GithubService))
@@ -193,7 +193,7 @@ class GitlabTest(TestCase):
     def setUp(self):
         filename = join(dirname(__file__), "test_gitlabtest.yaml")
         with open(filename, "r") as f:
-            self.config = yaml.load(f)
+            self.config = yaml.safe_load(f)
 
     def test_gitlab_object_create(self):
         self.assertTrue(isinstance((get_git_service("gitlab")), GitlabService))
@@ -305,7 +305,7 @@ class PagureTest(TestCase):
     def setUp(self):
         filename = join(dirname(__file__), "test_paguretest.yaml")
         with open(filename, "r") as f:
-            self.config = yaml.load(f)
+            self.config = yaml.safe_load(f)
 
     @mock.patch("reviewrot.pagurestack.PagureService._call_api")
     def test_pagure_missing_avatar(self, mock_call_api):
@@ -378,7 +378,7 @@ class GerritTest(TestCase):
     def setUp(self):
         filename = join(dirname(__file__), "test_gerrittest.yaml")
         with open(filename, "r") as f:
-            self.config = yaml.load(f)
+            self.config = yaml.safe_load(f)
 
     def test_gerrit_object_create(self):
         self.assertTrue(isinstance((get_git_service("gerrit")), GerritService))
@@ -476,7 +476,7 @@ class CommandLineParserTest(TestCase):
     def setUpClass(cls):
         filename = join(dirname(__file__), "test_command_line.yaml")
         with open(filename, "r") as f:
-            cls.config = yaml.load(f)
+            cls.config = yaml.safe_load(f)
 
         duration_choices = ["y", "m", "d", "h", "min"]
         state_choices = ["older", "newer"]
@@ -764,7 +764,7 @@ class CommandLineParserTest(TestCase):
         # Load the old style config file and don't convert it to
         # new style dict format.
         with open(filename, "r") as f:
-            new_config = yaml.load(f)
+            new_config = yaml.safe_load(f)
 
         arguments_present = "arguments" not in new_config
         git_services_present = "type" in new_config[0]
@@ -781,7 +781,7 @@ class CommandLineParserTest(TestCase):
         # Load the old style config file and converts it to new style
         # dict format. Also creates backup file before converting.
         with open(filename, "r") as f:
-            new_config = yaml.load(f)
+            new_config = yaml.safe_load(f)
 
         backup_config_file_exist = os.path.exists(filename + ".backup")
         arguments_present = "arguments" in new_config

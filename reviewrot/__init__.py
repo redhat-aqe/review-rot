@@ -259,5 +259,5 @@ def load_ordered_config(config_path):
 
     # read input from home directory for pull requests
     with open(config_path, 'r') as f:
-        config = yaml.load(f)
+        config = yaml.safe_load(f)
     return config

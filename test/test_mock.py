@@ -8,10 +8,10 @@ from collections import namedtuple
 
 
 with open(join(dirname(__file__), "test_githubtest.yaml"), "r") as f:
-    github_config = yaml.load(f)
+    github_config = yaml.safe_load(f)
 
 with open(join(dirname(__file__), "test_gitlabtest.yaml"), "r") as f:
-    gitlab_config = yaml.load(f)
+    gitlab_config = yaml.safe_load(f)
 
 # github
 
