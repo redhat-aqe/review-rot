@@ -170,8 +170,9 @@ def main(cli_args, valid_choices):
             '\x02{0} Code Review Reminder {0}\x02'.format('*' * 45)
         )
         # output maximum 20 merge requests
-        for result in sorted_results[:20]:
-            irc_bot.send_msg(result.format(style="irc"))
+        N = 20
+        for i, result in enumerate(sorted_results[:N]):
+            irc_bot.send_msg(result.format(style="irc", i=i, N=N))
 
         if len(sorted_results) > 20:
             irc_bot.send_msg(
