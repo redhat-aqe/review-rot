@@ -16,7 +16,8 @@ from reviewrot import (
     get_arguments,
     load_config_file,
     parse_cli_args,
-    CHOICES
+    CHOICES,
+    remove_wip
 )
 
 try:
@@ -117,6 +118,9 @@ def main():
                         ssl_verify=arguments.get('ssl_verify'),
                     )
                 )
+
+    if arguments.get('ignore_wip'):
+        results = remove_wip(results)
 
     # With the --sort argument, --comment-sort is kept for backwards
     # compatibility. Equivalent to --sort commented

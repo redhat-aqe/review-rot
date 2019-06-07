@@ -2,6 +2,7 @@ import collections
 import logging
 import os
 import argparse
+import re
 from os.path import expanduser, expandvars
 from shutil import copyfile
 from six.moves import input
@@ -355,3 +356,24 @@ def load_ordered_config(config_path):
     with open(config_path, 'r') as f:
         config = yaml.safe_load(f)
     return config
+
+
+def remove_wip(results):
+    """
+    Removes WIP reviews from results
+
+    Args:
+        results (list): list of BaseReview instances
+
+    Returns:
+        res (list): list of BaseReview instances with WIP
+                    reviews removed
+    """
+
+    res = []
+    for result in results:
+        match = re.match(r'^(\[WIP\]\s*|WIP:\s*|WIP\s+)+\s*', str(result.title), re.IGNORECASE)
+        if not match:
+            res.append(result)
+
+    return res

@@ -5,6 +5,7 @@ import mock
 import yaml
 import test_mock
 import unittest
+import datetime
 from os.path import join, dirname
 from unittest import TestCase
 from six.moves import urllib
@@ -13,10 +14,9 @@ from reviewrot.gitlabstack import GitlabService
 from reviewrot.pagurestack import PagureService
 from reviewrot.gerritstack import GerritService
 from reviewrot.phabricatorstack import PhabricatorService
-from reviewrot import get_git_service, get_arguments, load_config_file
+from reviewrot import get_git_service, get_arguments, load_config_file, remove_wip
 from github.GithubException import BadCredentialsException
 from reviewrot.basereview import LastComment
-import datetime
 from phabricator import Phabricator
 
 
@@ -1161,6 +1161,32 @@ class CommandLineParserTest(TestCase):
         if os.path.exists(filename):
             os.remove(filename)
             os.rename(backup_filename, filename)
+
+
+class IgnoreWIPTest(unittest.TestCase):
+
+    def test_remove_wip(self):
+        results = [
+            test_mock.FakeReview(title='WIP: add a functionality'),
+            test_mock.FakeReview(title='WIP:fix bug'),
+            test_mock.FakeReview(title='wip:fix bug #3'),
+            test_mock.FakeReview(title='wip: fix bug #4'),
+            test_mock.FakeReview(title='[WIP] refactor'),
+            test_mock.FakeReview(title='[WIP]refactor #2'),
+            test_mock.FakeReview(title='[wip]refactor #3'),
+            test_mock.FakeReview(title='[wip] refactor #4'),
+            test_mock.FakeReview(
+                title='[WIPER] Add the possibility of ignoring WIP PRs/MRs'
+            )
+        ]
+        updated_results = remove_wip(results)
+
+        # check that results with WIP in the title are removed
+        self.assertEqual(len(updated_results), 1)
+        self.assertEqual(
+            updated_results[0].title,
+            '[WIPER] Add the possibility of ignoring WIP PRs/MRs'
+        )
 
 
 if __name__ == "__main__":

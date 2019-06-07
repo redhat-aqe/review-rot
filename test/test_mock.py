@@ -370,3 +370,12 @@ def mock_phabricator_update_interfaces():
 
 def mock_phabricator_time_from_epoch(epoch_time):
     return datetime.datetime.strptime('16Sep2012', '%d%b%Y')
+
+
+class FakeReview:
+    """
+    Mocks small part of BaseReview
+    """
+
+    def __init__(self, title):
+        self.title = title
