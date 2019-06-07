@@ -1,17 +1,23 @@
 #!/usr/bin/env python
-import argparse
 import logging
 import operator
 import datetime
 import os
 import pkg_resources
+import sys
 
 from jinja2 import FileSystemLoader, Environment
 from reviewrot.mailer import Mailer
-from reviewrot import GerritService, get_git_service
-from reviewrot import get_arguments, load_config_file
 from reviewrot.basereview import BaseReview
 from reviewrot.irc import IRC
+from reviewrot import (
+    GerritService,
+    get_git_service,
+    get_arguments,
+    load_config_file,
+    parse_cli_args,
+    CHOICES
+)
 
 try:
     import urllib.parse as urllib  # Python 3
@@ -27,21 +33,18 @@ report_prefixes = {'oneline': '', 'indented': '', 'json': '['}
 report_suffixes = {'oneline': '', 'indented': '', 'json': ']'}
 
 
-def main(cli_args, valid_choices):
+def main():
     """
-    Reads input configuration file.
+    Reads arguments from CLI and configuration file.
     Calls appropriate git service with suitable inputs.
-    Args:
-        cli_args (argparse.Namespace): Arguments provided by command line
-                                       interface
-        valid_choices (dict): valid values of choices for arguments
     """
+
+    cli_args = parse_cli_args(sys.argv[1:])
     config = load_config_file(cli_args.config)
 
     arguments = get_arguments(
         cli_args,
         config,
-        valid_choices
     )
 
     if arguments.get('debug'):
@@ -123,7 +126,7 @@ def main(cli_args, valid_choices):
     # Now, with all results in place, sort them and print
     # If sort is not passed or not provided as configuration argument, use the
     # first element of the sort choices list as default.
-    sort_by = arguments.get('sort', choices['sort'][0])
+    sort_by = arguments.get('sort', CHOICES['sort'][0])
 
     if sort_by == 'commented':
         sorting_key = sort_by_last_comment
@@ -275,92 +278,4 @@ def format_user_repo_name(data, git_service):
 
 
 if __name__ == '__main__':
-
-    duration_choices = ['y', 'm', 'd', 'h', 'min']
-    state_choices = ['older', 'newer']
-    format_choices = ['oneline', 'indented', 'json']
-
-    choices = {
-        'duration': duration_choices,
-        'state': state_choices,
-        'format': format_choices,
-        'sort': ['submitted', 'updated', 'commented'],
-    }
-
-    parser = argparse.ArgumentParser(
-        description='Lists pull/merge/change requests for github, gitlab,'
-                    ' pagure and gerrit')
-    default_config = os.path.expanduser('~/.reviewrot.yaml')
-    parser.add_argument('-c', '--config',
-                        default=default_config,
-                        help='Configuration file to use')
-    parser.add_argument('-s', '--state',
-                        default=None,
-                        choices=state_choices,
-                        help="Pull requests state 'older' or 'newer'"
-                        )
-    parser.add_argument('-v', '--value',
-                        default=None,
-                        type=int,
-                        help='Pull requests duration in terms of value(int)'
-                        )
-    parser.add_argument('-d', '--duration',
-                        default=None,
-                        choices=duration_choices,
-                        help='Pull requests duration in terms of y=years,'
-                             'm=months, d=days, h=hours, min=minutes')
-    parser.add_argument('-f', '--format',
-                        default=None,
-                        choices=format_choices,
-                        help='Choose from one of a few different styles')
-    parser.add_argument('--show-last-comment',
-                        nargs='?',
-                        metavar="DAYS",
-                        default=None,
-                        const=0,
-                        type=int,
-                        help='Show text of last comment and '
-                             'filter out pull requests in which '
-                             'last comments are newer than '
-                             'specified number of days')
-    parser.add_argument('--reverse', action='store_true',
-                        help='Display results with the most recent first')
-    # With --sort argument added,  --comment-sort is kept for backwards
-    # compatibility. Use --sort commented instead.
-    parser.add_argument('--comment-sort', action='store_true',
-                        help=argparse.SUPPRESS)
-    # Default value is left as None to ensure that the argument passed here
-    # takes precedence over the value in configuration arguments.
-    parser.add_argument('--sort',
-                        default=None,
-                        choices=choices['sort'],
-                        help=('Display results sorted by the chosen event '
-                              'time. Defaults to '
-                              '{}').format(choices['sort'][0]))
-    parser.add_argument('--debug', action='store_true',
-                        help='Display debug logs on console')
-    parser.add_argument('--email', nargs="+",
-                        default=None,
-                        help='send output to list of email adresses')
-    parser.add_argument('--irc', nargs='+',
-                        metavar="CHANNEL",
-                        default=None,
-                        help='send output to list of irc channels')
-
-    ssl_group = parser.add_argument_group('SSL')
-    ssl_group.add_argument('-k', '--insecure',
-                           default=False,
-                           action='store_true',
-                           help='Disable SSL certificate verification '
-                                '(not recommended)')
-    ssl_group.add_argument('--cacert',
-                           default=None,
-                           help='Path to CA certificate to use for SSL '
-                                'certificate verification')
-
-    args = parser.parse_args()
-    options = (args.state, args.value, args.duration)
-    if any(options) and not all(options):
-        parser.error('Either no or all arguments are required')
-
-    main(args, choices)
+    main()

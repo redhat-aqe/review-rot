@@ -625,16 +625,6 @@ class CommandLineParserTest(TestCase):
         with open(filename, "r") as f:
             cls.config = yaml.safe_load(f)
 
-        duration_choices = ["y", "m", "d", "h", "min"]
-        state_choices = ["older", "newer"]
-        format_choices = ["oneline", "indented", "json"]
-
-        cls.choices = {
-            "duration": duration_choices,
-            "state": state_choices,
-            "format": format_choices,
-        }
-
     def test_args_from_config(self):
         cli_args = argparse.Namespace(
             cacert=None,
@@ -651,7 +641,7 @@ class CommandLineParserTest(TestCase):
         config = self.config["test1"]
         config_args = self.config["test1"]["arguments"]
         arguments = get_arguments(
-            cli_args, config, self.choices
+            cli_args, config
         )
         # arguments must contains values from config arguments
 
@@ -690,7 +680,7 @@ class CommandLineParserTest(TestCase):
 
         config = self.config["test2"]
         arguments = get_arguments(
-            cli_args, config, self.choices
+            cli_args, config
         )
         # arguments must contains values from cli arguments
 
@@ -732,7 +722,7 @@ class CommandLineParserTest(TestCase):
         config = self.config["test3"]
         config_args = self.config["test3"]["arguments"]
         arguments = get_arguments(
-            cli_args, config, self.choices
+            cli_args, config
         )
         # All arguments must contains values from cli arguments except 'format'
         # It should be from config file
@@ -770,7 +760,7 @@ class CommandLineParserTest(TestCase):
 
         config = self.config["test4"]
         arguments = get_arguments(
-            cli_args, config, self.choices
+            cli_args, config
         )
         # Only 'state' and 'duration' is given in config, but 'value' is not.
         # So value of all grouped arguments should be None
@@ -798,7 +788,7 @@ class CommandLineParserTest(TestCase):
         config = self.config["test5"]
         config_args = self.config["test5"]["arguments"]
         arguments = get_arguments(
-            cli_args, config, self.choices
+            cli_args, config
         )
         # Arguments 'state', 'duration' and 'value' are given in config. So
         # value of all grouped arguments should taken from config file. Grouped
@@ -825,7 +815,7 @@ class CommandLineParserTest(TestCase):
 
         config = self.config["test6"]
         arguments = get_arguments(
-            cli_args, config, choices=self.choices
+            cli_args, config
         )
         # Arguments 'state', 'duration' and 'value' is given in config. Grouped
         # argument (state', 'duration', 'value) values are also given as CLI
@@ -854,7 +844,7 @@ class CommandLineParserTest(TestCase):
         config = self.config["test7"]
         with self.assertRaises(IOError) as context:
             get_arguments(
-                cli_args, config, self.choices
+                cli_args, config
             )
             msg = "No certificate file found "
             self.assertTrue(
@@ -876,7 +866,7 @@ class CommandLineParserTest(TestCase):
         config = self.config["test8"]
         with self.assertRaises(IOError) as context:
             get_arguments(
-                cli_args, config, self.choices
+                cli_args, config
             )
             msg = "No certificate file found "
             self.assertTrue(
@@ -897,7 +887,7 @@ class CommandLineParserTest(TestCase):
         config = self.config["test9"]
         with self.assertRaises(ValueError) as context:
             get_arguments(
-                cli_args, config, self.choices
+                cli_args, config
             )
             msg = "Certificate file can't be used with insecure flag"
             self.assertTrue(
@@ -948,7 +938,6 @@ class CommandLineParserTest(TestCase):
             get_arguments(
                 cli_arguments=cli_args,
                 config={},
-                choices=self.choices,
             )
             msg = "No format should be specified when selecting email output"
 
@@ -965,7 +954,6 @@ class CommandLineParserTest(TestCase):
             get_arguments(
                 cli_arguments=cli_args,
                 config={},
-                choices=self.choices,
             )
             msg = "No format should be specified when selecting email output"
 
@@ -978,7 +966,6 @@ class CommandLineParserTest(TestCase):
             get_arguments(
                 cli_arguments=cli_args,
                 config={},
-                choices=self.choices,
             )
             msg = "No format should be specified when selecting email output"
 
@@ -997,7 +984,6 @@ class CommandLineParserTest(TestCase):
             get_arguments(
                 cli_arguments=cli_args,
                 config=config,
-                choices=self.choices,
             )
             msg = "No format should be specified when selecting email output"
 
@@ -1015,7 +1001,6 @@ class CommandLineParserTest(TestCase):
             get_arguments(
                 cli_arguments=cli_args,
                 config=config,
-                choices=self.choices,
             )
             msg = "No format should be specified when selecting email output"
 
@@ -1031,7 +1016,6 @@ class CommandLineParserTest(TestCase):
             get_arguments(
                 cli_arguments=cli_args,
                 config=config,
-                choices=self.choices,
             )
             msg = "No format should be specified when selecting email output"
 
@@ -1054,7 +1038,7 @@ class CommandLineParserTest(TestCase):
         }
 
         arguments = get_arguments(
-            cli_args, config, self.choices
+            cli_args, config
         )
 
         self.assertEqual(
@@ -1077,7 +1061,7 @@ class CommandLineParserTest(TestCase):
 
         with self.assertRaises(ValueError) as context:
             get_arguments(
-                cli_args, config, choices=self.choices
+                cli_args, config
             )
             msg = "Missing mailer configuration. " \
                   "Check examples/sampleinput_email.yaml " \
@@ -1093,7 +1077,6 @@ class CommandLineParserTest(TestCase):
             get_arguments(
                 cli_arguments=cli_args,
                 config={},
-                choices=self.choices,
             )
             msg = "No format should be specified when selecting irc output"
 
@@ -1116,7 +1099,6 @@ class CommandLineParserTest(TestCase):
             get_arguments(
                 cli_arguments=cli_args,
                 config=config,
-                choices=self.choices,
             )
             msg = "No format should be specified when selecting irc output"
 
@@ -1132,7 +1114,7 @@ class CommandLineParserTest(TestCase):
 
         with self.assertRaises(ValueError) as context:
             get_arguments(
-                cli_args, config, choices=self.choices
+                cli_args, config
             )
             msg = "Missing irc configuration. " \
                   "Check examples/sampleinput_irc.yaml " \
@@ -1157,7 +1139,7 @@ class CommandLineParserTest(TestCase):
         }
 
         arguments = get_arguments(
-            cli_args, config, self.choices
+            cli_args, config
         )
 
         self.assertEqual(

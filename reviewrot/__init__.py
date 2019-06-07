@@ -1,6 +1,7 @@
 import collections
 import logging
 import os
+import argparse
 from os.path import expanduser, expandvars
 from shutil import copyfile
 from six.moves import input
@@ -15,6 +16,13 @@ from reviewrot.phabricatorstack import PhabricatorService
 import yaml
 
 log = logging.getLogger(__name__)
+
+CHOICES = {
+    'duration': ['y', 'm', 'd', 'h', 'min'],
+    'state': ['older', 'newer'],
+    'format': ['oneline', 'indented', 'json'],
+    'sort': ['submitted', 'updated', 'commented'],
+}
 
 
 def get_git_service(git):
@@ -41,7 +49,7 @@ def get_git_service(git):
         raise ValueError('requested git service %s is not valid' % (git))
 
 
-def get_arguments(cli_arguments, config, choices):
+def get_arguments(cli_arguments, config):
     """
        Parse the arguments provided in configuration file
        and command line arguments
@@ -49,7 +57,6 @@ def get_arguments(cli_arguments, config, choices):
             cli_arguments (argparse.Namespace): Arguments provided by command
                                                 line interface
             config (dict): Configuration from file
-            choices (dict): valid values of choices for arguments
        Returns:
              arguments (dict): Returns the parsed arguments
      """
@@ -85,7 +92,7 @@ def get_arguments(cli_arguments, config, choices):
                 (argument in grouped_arguments and
                  grouped_arguments.issubset(config_arguments.keys())):
                 config_value = config_arguments.get(argument)
-                if is_valid_choice(argument, config_value, choices):
+                if is_valid_choice(argument, config_value):
                     parsed_arguments[argument] = config_value
                 else:
                     log.warn("Invalid choice '%s' provided for '%s' in"
@@ -180,17 +187,101 @@ def get_arguments(cli_arguments, config, choices):
     return parsed_arguments
 
 
-def is_valid_choice(argument, value, choices):
+def parse_cli_args(args):
+
+    parser = argparse.ArgumentParser(
+        description='Lists pull/merge/change requests for github, gitlab,'
+                    ' pagure, gerrit and phabricator')
+    default_config = os.path.expanduser('~/.reviewrot.yaml')
+    parser.add_argument('-c', '--config',
+                        default=default_config,
+                        help='Configuration file to use')
+    parser.add_argument('-s', '--state',
+                        default=None,
+                        choices=CHOICES['state'],
+                        help="Pull requests state 'older' or 'newer'"
+                        )
+    parser.add_argument('-v', '--value',
+                        default=None,
+                        type=int,
+                        help='Pull requests duration in terms of value(int)'
+                        )
+    parser.add_argument('-d', '--duration',
+                        default=None,
+                        choices=CHOICES['duration'],
+                        help='Pull requests duration in terms of y=years,'
+                             'm=months, d=days, h=hours, min=minutes')
+    parser.add_argument('-f', '--format',
+                        default=None,
+                        choices=CHOICES['format'],
+                        help='Choose from one of a few different styles')
+    parser.add_argument('--show-last-comment',
+                        nargs='?',
+                        metavar="DAYS",
+                        default=None,
+                        const=0,
+                        type=int,
+                        help='Show text of last comment and '
+                             'filter out pull requests in which '
+                             'last comments are newer than '
+                             'specified number of days')
+    parser.add_argument('--reverse', action='store_true',
+                        help='Display results with the most recent first')
+    # With --sort argument added,  --comment-sort is kept for backwards
+    # compatibility. Use --sort commented instead.
+    parser.add_argument('--comment-sort', action='store_true',
+                        help=argparse.SUPPRESS)
+    # Default value is left as None to ensure that the argument passed here
+    # takes precedence over the value in configuration arguments.
+    parser.add_argument('--sort',
+                        default=None,
+                        choices=CHOICES['sort'],
+                        help=('Display results sorted by the chosen event '
+                              'time. Defaults to '
+                              '{}').format(CHOICES['sort'][0]))
+    parser.add_argument('--debug', action='store_true',
+                        help='Display debug logs on console')
+    parser.add_argument('--email', nargs="+",
+                        default=None,
+                        help='send output to list of email adresses')
+    parser.add_argument('--irc', nargs='+',
+                        metavar="CHANNEL",
+                        default=None,
+                        help='send output to list of irc channels')
+
+    ssl_group = parser.add_argument_group('SSL')
+    ssl_group.add_argument('-k', '--insecure',
+                           default=False,
+                           action='store_true',
+                           help='Disable SSL certificate verification '
+                                '(not recommended)')
+    ssl_group.add_argument('--cacert',
+                           default=None,
+                           help='Path to CA certificate to use for SSL '
+                                'certificate verification')
+
+    parsed_args = parser.parse_args(args)
+    options = (
+        parsed_args.state,
+        parsed_args.value,
+        parsed_args.duration
+    )
+    if any(options) and not all(options):
+        parser.error('Either no or all arguments are required')
+
+    return parsed_args
+
+
+def is_valid_choice(argument, value):
     """
        Checks if value is valid choice or not for given argument
        Args:
             value (str): argument value
-            choices (dict): valid values of choices for arguments
             argument (str): argument as key
        Returns:
              Returns boolean value
      """
-    if choices.get(argument) is None or value in choices.get(argument):
+    if CHOICES.get(argument) is None or value in CHOICES.get(argument):
             return True
     return False
 
