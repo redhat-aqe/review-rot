@@ -1,0 +1,5 @@
+token: api-xxxxxxxxxxxxxxxxxxx
+host: testhost.com/api/
+msg1: "user_name filed 'Title 1' dummy.url 6 years 8 months 22 days 15 hours ago, 2 comments, last comment by user_name 6 years 8 months 22 days 15 hours ago"
+msg2: "dummy_user filed 'Title 1' dummy.url 6 years 8 months 22 days 15 hours ago, 1 comment, last comment by user_name 8 months 22 days 15 hours ago"
+msg3: "dummy_user filed 'Title 1' dummy.url 6 years 8 months 22 days 15 hours ago, 3 comments, last comment by user_name 8 months 22 days 15 hours ago"
