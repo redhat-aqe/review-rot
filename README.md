@@ -1,4 +1,6 @@
-### New: Phabricator support (check examples/sampleinput_phabricator.yaml )
+### New: 
+- Phabricator support (check examples/sampleinput_phabricator.yaml )
+- Possibility of omitting WIP pull requests/merge requests in output with *--ignore-wip* argument
 
 # review-rot
 reviewrot is a CLI tool, that helps to list down open review requests from github, gitlab, pagure, gerrit and phabricator.
@@ -39,7 +41,7 @@ usage: review-rot [-h] [-c CONFIG] [-s {older,newer}] [-v VALUE]
                   [--show-last-comment [DAYS]] [--reverse]
                   [--sort {submitted, updated, commented}] [--debug]
                   [--email EMAIL [EMAIL ...]] [--irc CHANNEL [CHANNEL ...]]
-                  [-k] [--cacert CACERT]
+                  [--ignore-wip] [-k] [--cacert CACERT]
 
 Lists pull/merge/change requests for github, gitlab, pagure and gerrit
 
@@ -69,6 +71,7 @@ optional arguments:
                         send output to list of email adresses
   --irc CHANNEL [CHANNEL ...]
                         send output to list of irc channels
+  --ignore-wip          Omit WIP PRs/MRs from output
 
 SSL:
   -k, --insecure        Disable SSL certificate verification (not recommended)
