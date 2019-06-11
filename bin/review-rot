@@ -34,6 +34,22 @@ report_prefixes = {'oneline': '', 'indented': '', 'json': '['}
 report_suffixes = {'oneline': '', 'indented': '', 'json': ']'}
 
 
+def _get_token(item):
+    """ Extract token from config, or environment as necessary. """
+    token = item.get('token')
+    # Support pulling a token from an environment variable
+    # If the token value starts with "ENV.", then the value
+    # for the token will be pulled from the environment variable
+    # specified following "ENV."
+    # For example, if the token value specified in the config is
+    # "ENV.FOO", then the real value for the environment variable
+    # will be taken from the environment variable "FOO"
+    if token and token.startswith('ENV.'):
+        token_env_var = token.split('ENV.')[1]
+        token = os.environ.get(token_env_var)
+    return token
+
+
 def main():
     """
     Reads arguments from CLI and configuration file.
@@ -78,17 +94,6 @@ def main():
                     """
                     get pull/merge/change requests for specified git service
                     """
-                    token = item.get('token')
-                    # Support pulling a token from an environment variable
-                    # If the token value starts with "ENV.", then the value
-                    # for the token will be pulled from the environment variable
-                    # specified following "ENV."
-                    # For example, if the token value specified in the config is
-                    # "ENV.FOO", then the real value for the environment variable
-                    # will be taken from the environment variable "FOO"
-                    if token and token.startswith('ENV.'):
-                        token_env_var = token.split('ENV.')[1]
-                        token = os.environ.get(token_env_var)
                     results.extend(
                         git_service.request_reviews(
                             user_name=res.get('user_name'),
@@ -97,7 +102,7 @@ def main():
                             value=arguments.get('value'),
                             duration=arguments.get('duration'),
                             show_last_comment=arguments.get('show_last_comment'),
-                            token=token,
+                            token=_get_token(item),
                             host=remove_trailing_slash_from_url(item.get('host')),
                             ssl_verify=arguments.get('ssl_verify'),
                         )
@@ -113,7 +118,7 @@ def main():
                         value=arguments.get('value'),
                         duration=arguments.get('duration'),
                         show_last_comment=arguments.get('show_last_comment'),
-                        token=item.get('token'),
+                        token=_get_token(item),
                         host=remove_trailing_slash_from_url(item.get('host')),
                         ssl_verify=arguments.get('ssl_verify'),
                     )
