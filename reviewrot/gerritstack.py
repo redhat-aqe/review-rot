@@ -1,7 +1,7 @@
 import logging
 from datetime import datetime
 import requests
-from reviewrot.basereview import BaseReview, BaseService, LastComment
+from reviewrot.basereview import BaseReview, BaseService, LastComment, gravatar
 
 log = logging.getLogger(__name__)
 
@@ -198,6 +198,13 @@ class GerritService(BaseService):
 
             owner = decoded_response['owner']
             change_number = decoded_response['_number']
+
+            # Use the gerrit logo by default
+            image = GerritReview.logo
+            # Otherwise, if we have an owner email, use their gravatar.
+            if owner.get('email'):
+                image = gravatar(owner['email'])
+
             res = GerritReview(user=owner.get('username', owner.get('email')),
                                title=decoded_response['subject'],
                                url="{}/{}".format(self.url,
@@ -208,14 +215,11 @@ class GerritService(BaseService):
                                    comments_response),
                                last_comment=last_comment,
                                project_name=decoded_response['project'],
-                               # XXX - I don't know how to find gerrit avatars
-                               # for now.  Can we figure this out later?
-                               image=GerritReview.logo)
+                               image=image)
             res_.append(res)
         return res_
 
 
 class GerritReview(BaseReview):
-    # XXX - Here just until we figure out how to do gerrit avatars.
     logo = 'http://electric-cloud.com/wp-content/uploads/2014/09/EC-Gerrit.png'
     pass
