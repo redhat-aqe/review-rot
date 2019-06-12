@@ -1,4 +1,5 @@
 import datetime
+import hashlib
 import json
 import logging
 import time
@@ -10,6 +11,13 @@ from dateutil.relativedelta import relativedelta
 log = logging.getLogger(__name__)
 
 LastComment = namedtuple('LastComment', ('author', 'body', 'created_at'))
+
+
+def gravatar(email):
+    """ Return the url to the public gravatar for an email. """
+    digest = hashlib.md5(email.strip().lower().encode('utf-8')).hexdigest()
+    default = "?default=retro"
+    return "https://www.gravatar.com/avatar/" + digest + default
 
 
 class BaseService(object):
