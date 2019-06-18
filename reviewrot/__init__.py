@@ -1,26 +1,28 @@
 import collections
 import logging
 import os
-import argparse
+import datetime
 import re
+import argparse
+import yaml
+
 from os.path import expanduser, expandvars
 from shutil import copyfile
 from six.moves import input
 from six import iteritems
-
+from dateutil.relativedelta import relativedelta
 from reviewrot.gerritstack import GerritService
 from reviewrot.githubstack import GithubService
 from reviewrot.gitlabstack import GitlabService
 from reviewrot.pagurestack import PagureService
 from reviewrot.phabricatorstack import PhabricatorService
+from reviewrot.basereview import Age
 
-import yaml
 
 log = logging.getLogger(__name__)
 
+# Valid values of choices for arguments
 CHOICES = {
-    'duration': ['y', 'm', 'd', 'h', 'min'],
-    'state': ['older', 'newer'],
     'format': ['oneline', 'indented', 'json'],
     'sort': ['submitted', 'updated', 'commented'],
 }
@@ -126,6 +128,11 @@ def get_arguments(cli_arguments, config):
             channel.strip() for channel in irc_in_config.split(',')
         ]
 
+    age_in_config = config_arguments.get('age')
+    if age_in_config:
+        values = age_in_config.split(" ")
+        parsed_arguments['age'] = ParseAge.parse(values)
+
     parsed_arguments['ssl_verify'] = False if cli_arguments.insecure \
         else cli_arguments.cacert
 
@@ -188,7 +195,60 @@ def get_arguments(cli_arguments, config):
     return parsed_arguments
 
 
+class ParseAge(argparse.Action):
+    """
+    Custom argument parsing class that handles
+    the --age argument
+    """
+
+    def __call__(self, parser, namespace, values, option_string=None):
+
+        setattr(namespace, self.dest, self.parse(values))
+
+    @staticmethod
+    def parse(values):
+
+        if len(values) < 2:
+            raise ValueError("Missing arguments")
+
+        if values[0] not in ['older', 'newer']:
+            raise ValueError("Wrong or missing state, only older/newer is allowed")
+
+        state = values[0]
+        values = values[1:]
+
+        regex = re.compile(r'^(?P<value>\d+)(?P<unit>y|m|d|h|min)$')
+        parts = {}
+        unit_mapping = {
+            "y": "years",
+            "m": "months",
+            "d": "days",
+            "h": "hours",
+            "min": "minutes",
+        }
+        for v in values:
+            part = regex.search(v)
+            if part is None:
+                raise ValueError("Invalid unit " + v)
+
+            unit = unit_mapping[part.group('unit')]
+            parts[unit] = int(part.group('value'))
+
+        delta = relativedelta(**parts)
+        date = datetime.datetime.now() - delta
+
+        return Age(date=date, state=state)
+
+
 def parse_cli_args(args):
+    """
+       Parsing of command line arguments
+       Args:
+           args (list): arguments passed to review-rot on command line
+
+       Returns:
+           parsed arguments (argparse.Namespace): Returns the parsed arguments
+       """
 
     parser = argparse.ArgumentParser(
         description='Lists pull/merge/change requests for github, gitlab,'
@@ -197,21 +257,9 @@ def parse_cli_args(args):
     parser.add_argument('-c', '--config',
                         default=default_config,
                         help='Configuration file to use')
-    parser.add_argument('-s', '--state',
-                        default=None,
-                        choices=CHOICES['state'],
-                        help="Pull requests state 'older' or 'newer'"
-                        )
-    parser.add_argument('-v', '--value',
-                        default=None,
-                        type=int,
-                        help='Pull requests duration in terms of value(int)'
-                        )
-    parser.add_argument('-d', '--duration',
-                        default=None,
-                        choices=CHOICES['duration'],
-                        help='Pull requests duration in terms of y=years,'
-                             'm=months, d=days, h=hours, min=minutes')
+    parser.add_argument('--age', default=None, nargs="+", action=ParseAge,
+                        help='Filter pull request based on their relative age',
+                        metavar=('{older,newer}', '#y #m #d #h #min'))
     parser.add_argument('-f', '--format',
                         default=None,
                         choices=CHOICES['format'],
@@ -261,16 +309,7 @@ def parse_cli_args(args):
                            help='Path to CA certificate to use for SSL '
                                 'certificate verification')
 
-    parsed_args = parser.parse_args(args)
-    options = (
-        parsed_args.state,
-        parsed_args.value,
-        parsed_args.duration
-    )
-    if any(options) and not all(options):
-        parser.error('Either no or all arguments are required')
-
-    return parsed_args
+    return parser.parse_args(args)
 
 
 def is_valid_choice(argument, value):

@@ -17,9 +17,8 @@ class GerritService(BaseService):
         self.url = None
         self.host_exists = None
 
-    def request_reviews(self, host, repo_name, state_=None,
-                        user_name=None, token=None, value=None,
-                        duration=None, show_last_comment=None,
+    def request_reviews(self, host, repo_name, age=None,
+                        user_name=None, token=None, show_last_comment=None,
                         ssl_verify=True):
         """
         Creates a Gerrit object.
@@ -27,13 +26,9 @@ class GerritService(BaseService):
         Args:
             host (str): Gerrit Host URL
             repo_name (str): Gerrit repository name
+            age (Age): Contains the filter state for pull requests,
+                       e.g, older or newer and date
             user_name(str): This will be None in case of Gerrit
-            state_ (str): The filter state for pull requests, e.g, older
-                          or newer
-            value (int): The value in terms of duration for requests
-                         to be older or newer than
-            duration (str): The duration in terms of period(year, month, hour,
-                            minute) for requests to be older or newer than
             show_last_comment (int): Show text of last comment and
                                      filter out pull requests in which
                                      last comments are newer than
@@ -64,8 +59,7 @@ class GerritService(BaseService):
                       self.url, repo_name)
             review_response = self._call_api(url=request_url,
                                              ssl_verify=ssl_verify)
-            reviews = self.format_response(review_response, state_, value,
-                                           duration, show_last_comment)
+            reviews = self.format_response(review_response, age, show_last_comment)
         return reviews
 
     def check_repo_exists(self, repo_name, ssl_verify):
@@ -146,18 +140,13 @@ class GerritService(BaseService):
             # find last comment in list of comments
             return max(comments, key=lambda c: c.created_at)
 
-    def format_response(self, decoded_responses, state_,
-                        value, duration, show_last_comment):
+    def format_response(self, decoded_responses, age, show_last_comment):
         """
         Formats the pull requests details and print it on console.
         Args:
             decoded_responses (list): Response from REST api call to Gerrit
-            state_ (str): The filter state for pull requests, e.g, older
-                          or newer
-            value (int): The value in terms of duration for requests
-                         to be older or newer than
-            duration (str): The duration in terms of period(year, month, hour,
-                            minute) for requests to be older or newer than
+            age (Age): Contains the filter state for pull requests,
+                       e.g, older or newer and date
             show_last_comment (int): Show text of last comment and
                                      filter out pull requests in which
                                      last comments are newer than
@@ -174,8 +163,7 @@ class GerritService(BaseService):
                                              time_format)
             updated_date = datetime.strptime(decoded_response['updated'][:-3],
                                              time_format)
-            result = self.check_request_state(created_date, state_, value,
-                                              duration)
+            result = self.check_request_state(created_date, age)
 
             comments_request_url = "{}/changes/{}/comments".format(
                 self.url, str(decoded_response['id']))
@@ -186,7 +174,7 @@ class GerritService(BaseService):
 
             if result is False:
                 log.debug("Change request '%s' is not %s than specified "
-                          "time interval", decoded_response['subject'], state_)
+                          "time interval", decoded_response['subject'], age.state)
                 continue
 
             if last_comment and show_last_comment:

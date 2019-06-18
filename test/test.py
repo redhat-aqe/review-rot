@@ -14,10 +14,18 @@ from reviewrot.gitlabstack import GitlabService
 from reviewrot.pagurestack import PagureService
 from reviewrot.gerritstack import GerritService
 from reviewrot.phabricatorstack import PhabricatorService
-from reviewrot import get_git_service, get_arguments, load_config_file, remove_wip
 from github.GithubException import BadCredentialsException
-from reviewrot.basereview import LastComment
 from phabricator import Phabricator
+from dateutil.relativedelta import relativedelta
+from reviewrot.basereview import LastComment, BaseService, Age
+from reviewrot import (
+    get_git_service,
+    get_arguments,
+    load_config_file,
+    remove_wip,
+    ParseAge,
+    parse_cli_args,
+)
 
 
 # Disable logging to avoid messing up test output
@@ -632,9 +640,7 @@ class CommandLineParserTest(TestCase):
             format=None,
             insecure=False,
             reverse=False,
-            duration=None,
-            state=None,
-            value=None,
+            age=None,
             sort=None,
         )
 
@@ -649,19 +655,15 @@ class CommandLineParserTest(TestCase):
         format_result = arguments.get("format") == config_args.get("format")
         ssl_result = arguments.get("ssl_verify") != config_args.get("insecure")
         reverse_result = arguments.get("reverse") == config_args.get("reverse")
-        group_arguments = (
-            arguments.get("state") is None
-            and arguments.get("duration") is None
-            and arguments.get("value") is None
-        )
+        age_result = arguments.get('age') == config_args.get('age')
         sort_result = arguments.get("sort") == config_args.get("sort")
 
         self.assertTrue(
             debug_result
             and reverse_result
             and format_result
+            and age_result
             and ssl_result
-            and group_arguments
             and sort_result
         )
 
@@ -672,9 +674,7 @@ class CommandLineParserTest(TestCase):
             format="json",
             insecure=True,
             reverse=True,
-            duration=None,
-            state=None,
-            value=None,
+            age=None,
             sort='updated',
         )
 
@@ -690,11 +690,7 @@ class CommandLineParserTest(TestCase):
         reverse_result = arguments.get("reverse") == vars(cli_args).get(
             "reverse"
         )
-        group_arguments = (
-            arguments.get("state") is None
-            and arguments.get("duration") is None
-            and arguments.get("value") is None
-        )
+        age = arguments.get('age') is None
         sort_result = arguments.get("sort") == vars(cli_args).get('sort')
 
         self.assertTrue(
@@ -702,7 +698,7 @@ class CommandLineParserTest(TestCase):
             and reverse_result
             and format_result
             and ssl_result
-            and group_arguments
+            and age
             and sort_result
         )
 
@@ -713,9 +709,7 @@ class CommandLineParserTest(TestCase):
             format=None,
             insecure=False,
             reverse=True,
-            duration=None,
-            state=None,
-            value=None,
+            age=None,
             sort=None,
         )
 
@@ -731,11 +725,7 @@ class CommandLineParserTest(TestCase):
         format_result = arguments.get("format") == config_args.get("format")
         ssl_result = arguments.get("ssl_verify") is True
         reverse_result = arguments.get("reverse") is True
-        group_arguments = (
-            arguments.get("state") is None
-            and arguments.get("duration") is None
-            and arguments.get("value") is None
-        )
+        age = arguments.get('age') is None
         sort_result = arguments.get('sort') is None
 
         self.assertTrue(
@@ -743,91 +733,10 @@ class CommandLineParserTest(TestCase):
             and reverse_result
             and format_result
             and ssl_result
-            and group_arguments
+            and age
+            and sort_result
         )
 
-    def test_grouped_args_is_none(self):
-        cli_args = argparse.Namespace(
-            cacert=None,
-            debug=True,
-            format=None,
-            insecure=False,
-            reverse=True,
-            duration=None,
-            state=None,
-            value=None,
-        )
-
-        config = self.config["test4"]
-        arguments = get_arguments(
-            cli_args, config
-        )
-        # Only 'state' and 'duration' is given in config, but 'value' is not.
-        # So value of all grouped arguments should be None
-
-        group_arguments = (
-            arguments.get("state") is None
-            and arguments.get("duration") is None
-            and arguments.get("value") is None
-        )
-
-        self.assertTrue(group_arguments)
-
-    def test_grouped_args_from_config(self):
-        cli_args = argparse.Namespace(
-            cacert=None,
-            debug=True,
-            format=None,
-            insecure=False,
-            reverse=True,
-            duration=None,
-            state=None,
-            value=None,
-        )
-
-        config = self.config["test5"]
-        config_args = self.config["test5"]["arguments"]
-        arguments = get_arguments(
-            cli_args, config
-        )
-        # Arguments 'state', 'duration' and 'value' are given in config. So
-        # value of all grouped arguments should taken from config file. Grouped
-        # argument's (state', 'duration', 'value) values given by CLI are None
-        group_arguments = (
-            arguments.get("state") == config_args.get("state")
-            and arguments.get("duration") == config_args.get("duration")
-            and arguments.get("value") == config_args.get("value")
-        )
-
-        self.assertTrue(group_arguments)
-
-    def test_grouped_args_from_command_line(self):
-        cli_args = argparse.Namespace(
-            cacert=None,
-            debug=True,
-            format=None,
-            insecure=False,
-            reverse=True,
-            duration=10,
-            state="older",
-            value="m",
-        )
-
-        config = self.config["test6"]
-        arguments = get_arguments(
-            cli_args, config
-        )
-        # Arguments 'state', 'duration' and 'value' is given in config. Grouped
-        # argument (state', 'duration', 'value) values are also given as CLI
-        # arguments. So value of all grouped arguments should taken from CLI
-
-        group_arguments = (
-            arguments.get("state") == vars(cli_args).get("state")
-            and arguments.get("duration") == vars(cli_args).get("duration")
-            and arguments.get("value") == vars(cli_args).get("value")
-        )
-
-        self.assertTrue(group_arguments)
 
     def test_args_ca_certi_invalid_path_from_config(self):
         cli_args = argparse.Namespace(
@@ -836,12 +745,10 @@ class CommandLineParserTest(TestCase):
             format=None,
             insecure=False,
             reverse=False,
-            duration=None,
-            state=None,
-            value=None,
+            age=None,
         )
 
-        config = self.config["test7"]
+        config = self.config["test4"]
         with self.assertRaises(IOError) as context:
             get_arguments(
                 cli_args, config
@@ -858,12 +765,10 @@ class CommandLineParserTest(TestCase):
             format=None,
             insecure=False,
             reverse=False,
-            duration=None,
-            state=None,
-            value=None,
+            age=None,
         )
 
-        config = self.config["test8"]
+        config = self.config["test5"]
         with self.assertRaises(IOError) as context:
             get_arguments(
                 cli_args, config
@@ -880,11 +785,9 @@ class CommandLineParserTest(TestCase):
             format=None,
             insecure=False,
             reverse=False,
-            duration=None,
-            state=None,
-            value=None,
+            age=None,
         )
-        config = self.config["test9"]
+        config = self.config["test6"]
         with self.assertRaises(ValueError) as context:
             get_arguments(
                 cli_args, config
@@ -937,7 +840,7 @@ class CommandLineParserTest(TestCase):
         with self.assertRaises(ValueError) as context:
             get_arguments(
                 cli_arguments=cli_args,
-                config={},
+                config={}
             )
             msg = "No format should be specified when selecting email output"
 
@@ -953,7 +856,7 @@ class CommandLineParserTest(TestCase):
         with self.assertRaises(ValueError) as context:
             get_arguments(
                 cli_arguments=cli_args,
-                config={},
+                config={}
             )
             msg = "No format should be specified when selecting email output"
 
@@ -965,7 +868,7 @@ class CommandLineParserTest(TestCase):
         with self.assertRaises(ValueError) as context:
             get_arguments(
                 cli_arguments=cli_args,
-                config={},
+                config={}
             )
             msg = "No format should be specified when selecting email output"
 
@@ -983,7 +886,7 @@ class CommandLineParserTest(TestCase):
         with self.assertRaises(ValueError) as context:
             get_arguments(
                 cli_arguments=cli_args,
-                config=config,
+                config=config
             )
             msg = "No format should be specified when selecting email output"
 
@@ -1000,7 +903,7 @@ class CommandLineParserTest(TestCase):
         with self.assertRaises(ValueError) as context:
             get_arguments(
                 cli_arguments=cli_args,
-                config=config,
+                config=config
             )
             msg = "No format should be specified when selecting email output"
 
@@ -1015,7 +918,7 @@ class CommandLineParserTest(TestCase):
         with self.assertRaises(ValueError) as context:
             get_arguments(
                 cli_arguments=cli_args,
-                config=config,
+                config=config
             )
             msg = "No format should be specified when selecting email output"
 
@@ -1076,7 +979,7 @@ class CommandLineParserTest(TestCase):
         with self.assertRaises(ValueError) as context:
             get_arguments(
                 cli_arguments=cli_args,
-                config={},
+                config={}
             )
             msg = "No format should be specified when selecting irc output"
 
@@ -1098,7 +1001,7 @@ class CommandLineParserTest(TestCase):
         with self.assertRaises(ValueError) as context:
             get_arguments(
                 cli_arguments=cli_args,
-                config=config,
+                config=config
             )
             msg = "No format should be specified when selecting irc output"
 
@@ -1152,6 +1055,37 @@ class CommandLineParserTest(TestCase):
             ],
         )
 
+    def test_age_argument_in_command_line_valid(self):
+
+        now = datetime.datetime.now()
+        expected_date = (now - relativedelta(days=5, hours=4))
+
+        args = parse_cli_args(['--age', 'older', '5d', '4h'])
+
+        self.assertEqual(args.age.state, 'older')
+        self.assertEqual(args.age.date.replace(second=0, microsecond=0),
+                         expected_date.replace(second=0, microsecond=0))
+
+    def test_age_argument_in_config(self):
+
+        now = datetime.datetime.now()
+        expected_date = (now - relativedelta(days=5, hours=4))
+
+        cli_args = argparse.Namespace(cacert=None, insecure=False)
+        config = {
+            "arguments": {
+                "age": "older 5d 4h"
+            }
+        }
+
+        arguments = get_arguments(
+            cli_args, config
+        )
+        self.assertEqual(arguments.get('age').state, 'older')
+        self.assertEqual(arguments.get('age').date.replace(second=0, microsecond=0),
+                         expected_date.replace(second=0, microsecond=0))
+
+
     @classmethod
     def tearDownClass(cls):
         backup_filename = join(
@@ -1161,6 +1095,80 @@ class CommandLineParserTest(TestCase):
         if os.path.exists(filename):
             os.remove(filename)
             os.rename(backup_filename, filename)
+
+
+class BaseServiceCheckRequestStateTest(unittest.TestCase):
+
+    def test_check_request_state_newer(self):
+        base_service = BaseService()
+        # created four hours ago
+        now = datetime.datetime.now()
+        created_at = now - relativedelta(hours=4)
+
+        # include pull request that have been added in the past day
+        date = now - relativedelta(days=1)
+        age = Age(date=date, state="newer")
+        actual = base_service.check_request_state(created_at, age)
+        self.assertTrue(actual)
+
+        # include pull request that bave been added in the past 3 hours
+        date = now - relativedelta(hours=3)
+        age = Age(date=date, state="newer")
+        actual = base_service.check_request_state(created_at, age)
+        self.assertFalse(actual)
+
+    def test_check_request_state_older(self):
+        base_service = BaseService()
+        now = datetime.datetime.now()
+        # created four hours ago
+        created_at = now - relativedelta(hours=4)
+
+        # include pull request that are older than 1 day
+        date = now - relativedelta(days=1)
+        age = Age(date=date, state="older")
+        actual = base_service.check_request_state(created_at, age)
+        self.assertFalse(actual)
+
+        # include pull request that ale older than 3 hours
+        date = now - relativedelta(hours=3)
+        age = Age(date=date, state="older")
+        actual = base_service.check_request_state(created_at, age)
+        self.assertTrue(actual)
+
+    def test_check_request_state_age_is_none(self):
+        base_service = BaseService()
+        now = datetime.datetime.now()
+        # created four hours ago
+        created_at = now - relativedelta(hours=4)
+
+        # No filtering
+        actual = base_service.check_request_state(created_at, None)
+        self.assertTrue(actual)
+
+
+class ParseAgeTest(unittest.TestCase):
+
+    def test_missing_state(self):
+
+        with self.assertRaises(ValueError) as context:
+            ParseAge.parse(['5d', '4h'])
+        self.assertTrue("Wrong or missing state, only older/newer is allowed" in str(context.exception))
+
+    def test_missing_relative_age(self):
+
+        with self.assertRaises(ValueError) as context:
+            ParseAge.parse(['newer'])
+        self.assertTrue("Missing arguments" in str(context.exception))
+
+    def test_wrong_state(self):
+        with self.assertRaises(ValueError) as context:
+            ParseAge.parse(['oldnew', '5d', '4h'])
+        self.assertTrue("Wrong or missing state, only older/newer is allowed" in str(context.exception))
+
+    def test_invalid_unit(self):
+        with self.assertRaises(ValueError) as context:
+            ParseAge.parse(['older', '5', '4x'])
+        self.assertTrue("Invalid unit" in str(context.exception))
 
 
 class IgnoreWIPTest(unittest.TestCase):

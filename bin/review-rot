@@ -98,9 +98,7 @@ def main():
                         git_service.request_reviews(
                             user_name=res.get('user_name'),
                             repo_name=res.get('repo_name'),
-                            state_=arguments.get('state'),
-                            value=arguments.get('value'),
-                            duration=arguments.get('duration'),
+                            age=arguments.get('age'),
                             show_last_comment=arguments.get('show_last_comment'),
                             token=_get_token(item),
                             host=remove_trailing_slash_from_url(item.get('host')),
@@ -114,9 +112,7 @@ def main():
                 results.extend(
                     git_service.request_reviews(
                         user_names=item['repos'],
-                        state_=arguments.get('state'),
-                        value=arguments.get('value'),
-                        duration=arguments.get('duration'),
+                        age=arguments.get('age'),
                         show_last_comment=arguments.get('show_last_comment'),
                         token=_get_token(item),
                         host=remove_trailing_slash_from_url(item.get('host')),

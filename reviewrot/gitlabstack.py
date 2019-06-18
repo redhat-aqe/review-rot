@@ -14,8 +14,7 @@ class GitlabService(BaseService):
     This class represents Gitlab. The reference can be found here:
      https://docs.gitlab.com/ee/api/
     """
-    def request_reviews(self, user_name, repo_name=None, state_=None,
-                        value=None, duration=None,
+    def request_reviews(self, user_name, repo_name=None, age=None,
                         show_last_comment=None, token=None, host=None,
                         ssl_verify=True, **kwargs):
         """
@@ -28,13 +27,8 @@ class GitlabService(BaseService):
             user_name (str): Gitlab namespace
             repo_name (str): Gitlab project name for specified
                           namespace
-            state_ (str): The state for pull requests, e.g, older
-                        or newer
-            value (int): The value in terms of duration for requests
-                         to be older or newer than
-            duration (str): The duration in terms of period(year, month,
-                            hour, minute) for requests to be older or
-                            newer than
+            age (Age): Contains the filter state for pull requests,
+                       e.g, older or newer and date
             show_last_comment (int): Show text of last comment and
                                      filter out pull requests in which
                                      last comments are newer than
@@ -69,8 +63,7 @@ class GitlabService(BaseService):
                                 % (repo_name, user_name))
             # get merge requests for specified username and project name
             res = self.get_reviews(uname=user_name, project=project,
-                                   state_=state_, value=value,
-                                   duration=duration,
+                                   age=age,
                                    show_last_comment=show_last_comment)
             # extend in case of a non empty result
             if res:
@@ -95,32 +88,25 @@ class GitlabService(BaseService):
 
                 project = gl.projects.get(group_project.id)
                 res = self.get_reviews(uname=user_name, project=project,
-                                       state_=state_, value=value,
-                                       duration=duration)
+                                       age=age)
 
                 # extend in case of a non empty result
                 if res:
                     response.extend(res)
         return response
 
-    def get_reviews(self, uname, project, state_=None,
-                    value=None, duration=None, show_last_comment=None):
+    def get_reviews(self, uname, project, age=None, show_last_comment=None):
         """
         Fetches merge requests for specified username(groupname)
         and repo(project) name.
         Formats the merge requests details and print it on console.
 
         Args:
-            user_name (str): Gitlab namespace
-            repo_name (str): Gitlab project name for specified
-                             namespace
-            state_ (str): The state for pull requests, e.g, older
-                        or newer
-            value (str): The value in terms of duration for requests
-                         to be older or newer than
-            duration (str): The duration in terms of period(year, month,
-                            hour, minute) for requests to be older or
-                            newer than.
+            uname (str): Gitlab namespace
+            project (str): Gitlab project name for specified
+                           namespace
+            age (Age): Contains the filter state for pull requests,
+                       e.g, older or newer and date
             show_last_comment (int): Show text of last comment and
                                      filter out pull requests in which
                                      last comments are newer than
@@ -164,11 +150,11 @@ class GitlabService(BaseService):
 
             """ check if review request is older/newer than specified time
             interval"""
-            result = self.check_request_state(mr_date, state_, value, duration)
+            result = self.check_request_state(mr_date, age)
 
             if result is False:
                 log.debug("merge request '%s' is not %s than specified"
-                          " time interval", mr.title, state_)
+                          " time interval", mr.title, age.state)
                 continue
 
             if last_comment and show_last_comment:

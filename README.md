@@ -1,6 +1,7 @@
 ### New: 
 - Phabricator support (check examples/sampleinput_phabricator.yaml )
 - Possibility of omitting WIP pull requests/merge requests in output with *--ignore-wip* argument
+- Replace *-s, -v, -d* arguments with one argument *--age*
 
 # review-rot
 reviewrot is a CLI tool, that helps to list down open review requests from github, gitlab, pagure, gerrit and phabricator.
@@ -36,10 +37,10 @@ detox
 ```shell
 > review-rot --help
 
-usage: review-rot [-h] [-c CONFIG] [-s {older,newer}] [-v VALUE]
-                  [-d {y,m,d,h,min}] [-f {oneline,indented,json}]
-                  [--show-last-comment [DAYS]] [--reverse]
-                  [--sort {submitted, updated, commented}] [--debug]
+usage: review-rot [-h] [-c CONFIG]
+                  [--age {older,newer} [#y #m #d #h #min ...]]
+                  [-f {oneline,indented,json}] [--show-last-comment [DAYS]]
+                  [--reverse] [--sort {submitted,updated,commented}] [--debug]
                   [--email EMAIL [EMAIL ...]] [--irc CHANNEL [CHANNEL ...]]
                   [--ignore-wip] [-k] [--cacert CACERT]
 
@@ -49,13 +50,8 @@ optional arguments:
   -h, --help            show this help message and exit
   -c CONFIG, --config CONFIG
                         Configuration file to use
-  -s {older,newer}, --state {older,newer}
-                        Pull requests state 'older' or 'newer'
-  -v VALUE, --value VALUE
-                        Pull requests duration in terms of value(int)
-  -d {y,m,d,h,min}, --duration {y,m,d,h,min}
-                        Pull requests duration in terms of y=years,m=months,
-                        d=days, h=hours, min=minutes
+  --age {older,newer} [#y #m #d #h #min ...]
+                        Filter pull request based on their relative age
   -f {oneline,indented,json}, --format {oneline,indented,json}
                         Choose from one of a few different styles
   --show-last-comment [DAYS]
@@ -78,7 +74,18 @@ SSL:
   --cacert CACERT       Path to CA certificate to use for SSL certificate
                         verification
 
+
 ```
+
+You can filter MRs/PRs based on their relative age
+```
+review-rot --age older 5d 10h
+```
+outputs MRs/PRs which were submitted more than 5 days and 10 hours ago
+```
+review-rot --age newer 5d 10h
+```
+outputs MRs/PRs which submitted in the last 5 days and 10 hours
 
 You can use **--show-last-comment** flag to include the text of last comment with formats:
 - json

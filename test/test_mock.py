@@ -40,9 +40,7 @@ def mock_get_repos():
 def mock_github_get_reviews(
     uname,
     repo_name,
-    state_=None,
-    value=None,
-    duration=None,
+    age=None,
     show_last_comment=None,
 ):
     msg = [github_config["msg"]]
@@ -113,9 +111,7 @@ def mock_groups_search(user_name):
 def mock_gitlab_get_reviews(
     uname,
     project,
-    state_=None,
-    value=None,
-    duration=None,
+    age=None,
     show_last_comment=None,
 ):
     msg = [gitlab_config["msg"]]
@@ -222,8 +218,7 @@ def mock_phabricator_get_comments_(id, phab):
         ]
 
 
-def mock_phabricator_get_reviews(phab, reviews, host, state_,
-                                 value, duration, show_last_comment,
+def mock_phabricator_get_reviews(phab, reviews, host, age, show_last_comment,
                                  raw_response):
     res = []
     date_created = datetime.datetime.strptime('16Sep2012', '%d%b%Y')
