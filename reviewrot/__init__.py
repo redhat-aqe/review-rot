@@ -297,7 +297,9 @@ def parse_cli_args(args):
                         metavar="CHANNEL",
                         default=None,
                         help='send output to list of irc channels')
-
+    parser.add_argument('--ignore-wip',
+                        help='Omit WIP PRs/MRs from output',
+                        action='store_true')
     ssl_group = parser.add_argument_group('SSL')
     ssl_group.add_argument('-k', '--insecure',
                            default=False,
