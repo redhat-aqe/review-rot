@@ -46,7 +46,7 @@ class GitlabService(BaseService):
         try:
             gl.auth()
         except SSLError as e:
-            log.exception('Error during authentification: %s', e.message)
+            log.exception('Error during authentification: %s', str(e))
 
 
         log.debug('Gitlab instance created: %s', gl)
