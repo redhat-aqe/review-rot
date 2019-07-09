@@ -27,75 +27,168 @@ from reviewrot import (
 logging.disable(logging.CRITICAL)
 
 
-class PagureTest(TestCase):
+class GithubTest(TestCase):
     def setUp(self):
-        filename = join(dirname(__file__), "test_paguretest.yaml")
+        filename = join(dirname(__file__), "test_githubtest.yaml")
         with open(filename, "r") as f:
             self.config = yaml.safe_load(f)
 
-    @mock.patch("reviewrot.pagurestack.PagureService._call_api")
-    def test_pagure_missing_avatar(self, mock_call_api):
-        mock_call_api.return_value = {}
-        expected = (
-            "https://seccdn.libravatar.org/avatar/"
-            "9c9f7784935381befc302fe3c814f9136e7a33953d0318761669b8643f4df55c"
-        )
-        actual = PagureService()._avatar("ralph")
-        self.assertEqual(actual.split("?")[0], expected)
+    def test_object_create(self):
+        self.assertTrue(isinstance((get_git_service("github")), GithubService))
 
-    @mock.patch("reviewrot.pagurestack.PagureService._call_api")
-    def test_pagure_missing_avatar(self, mock_call_api):
-        base_avatar_url = (
-            "https://seccdn.libravatar.org/avatar/"
-            "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabbbbbbbbbbbbbbbbbbccccccccccccccc"
-        )
-        pagure_avatar_url = base_avatar_url + "?s=16&d=retro"
-        mock_call_api.return_value = {'user': {'avatar_url': pagure_avatar_url}}
-
-        expected_query = "s=64&d=retro"
-        expected = base_avatar_url + "?" + expected_query
-
-        actual = PagureService()._avatar("ralph")
-        self.assertEqual(actual.split("?")[0], base_avatar_url)
-        actual_query = urllib.parse.parse_qs(urllib.parse.urlparse(actual).query)
-        self.assertEqual(actual_query, urllib.parse.parse_qs(expected_query))
-
-    def test_pagure_object_create(self):
-        self.assertTrue(isinstance((get_git_service("pagure")), PagureService))
-
-    def test_request_review_incorrect_project_with_repo(self):
-        pagure = PagureService()
-        with self.assertRaises(Exception) as context:
-            pagure.request_reviews(
-                user_name=self.config["user_name"],
-                repo_name=self.config["repo_name"],
+    def test_request_review_token(self):
+        github = GithubService()
+        with self.assertRaises(BadCredentialsException) as context:
+            github.request_reviews(
+                user_name=self.config["user_name"], token=self.config["token"]
             )
-            self.assertIn("Page not found", str(context.exception))
+        self.assertTrue("Bad credentials" in str(context.exception))
 
-    def test_get_last_comment(self):
-        pagure = PagureService()
-        res = {
-            "comments": [
-                {
-                    "comment": "first comment",
-                    "date_created": "1539776992",
-                    "user1": {"name": "username"},
-                },
-                {
-                    "comment": "last comment",
-                    "date_created": "1539777081",
-                    "user": {"name": "user2"},
-                },
-            ]
-        }
+    @mock.patch("github.Github.get_user", side_effect=test_mock.mock_get_user)
+    def test_request_reviews_get_user(self, mock_get_user):
+        with self.assertRaises(Exception) as context:
+            GithubService().request_reviews(
+                user_name=self.config["user_name"], token=self.config["token"]
+            )
+        msg = "Invalid username/organizaton: %s" % self.config["user_name"]
+        self.assertTrue(msg in str(context.exception))
 
-        last_comment = pagure.get_last_comment(res)
+    @mock.patch("github.Github.get_user", side_effect=test_mock.mock_get_user_)
+    @mock.patch(
+        "reviewrot.githubstack.GithubService.get_reviews",
+        side_effect=test_mock.mock_github_get_reviews,
+    )
+    def test_request_reviews_with_repo(
+        self, mock_get_user_, mock_github_get_reviews
+    ):
+        res = GithubService().request_reviews(
+            user_name=self.config["user_name"],
+            token=self.config["token"],
+            repo_name=self.config["repo_name"],
+        )
+        self.assertEqual([self.config["msg"]], res)
+
+    @mock.patch("github.Github.get_user", side_effect=test_mock.mock_get_user_)
+    @mock.patch(
+        "github.NamedUser.NamedUser.get_repos",
+        side_effect=test_mock.mock_get_repos,
+    )
+    @mock.patch(
+        "reviewrot.githubstack.GithubService.get_reviews",
+        side_effect=test_mock.mock_github_get_reviews,
+    )
+    def test_request_reviews_without_repo(
+        self, mock_get_user_, mock_github_get_reviews, mock_get_repos
+    ):
+        res = GithubService().request_reviews(
+            user_name=self.config["user_name"], token=self.config["token"]
+        )
+        self.assertEqual([self.config["msg"]], res)
+
+    @mock.patch(
+        "github.NamedUser.NamedUser.get_repo",
+        side_effect=test_mock.mock_get_repo,
+    )
+    def test_get_reviews_get_repo_not_found(self, mock_get_repo):
+        with self.assertRaises(Exception) as context:
+            uname = test_mock.mock_get_user_(self.config["user_name"])
+            GithubService().get_reviews(
+                uname=uname, repo_name=self.config["repo_name"]
+            )
+        msg = "Repository %s not found for user %s" % (
+            self.config["repo_name"],
+            uname.login,
+        )
+        self.assertTrue(msg in str(context.exception))
+
+    @mock.patch(
+        "github.NamedUser.NamedUser.get_repo",
+        side_effect=test_mock.mock_get_repo_,
+    )
+    @mock.patch(
+        "github.Repository.Repository.get_pulls",
+        side_effect=test_mock.mock_get_pulls,
+    )
+    def test_get_reviews_get_repo(self, mock_get_pulls, mock_get_repo_):
+        uname = test_mock.mock_get_user_(self.config["user_name"])
+        res = GithubService().get_reviews(
+            uname=uname, repo_name=self.config["repo_name"]
+        )
+        self.assertEqual(res, [])
+
+    @mock.patch("github.PullRequest")
+    def test_get_last_comment_containing_review_comment(self, mock_pr):
+        github = GithubService()
+        now = datetime.datetime.now()
+
+        review_comment = test_mock.FakeGithubComment(
+            author="user", body="a review comment", created_at=now
+        )
+
+        mock_pr.get_comments.return_value = test_mock.FakeGithubPaginatedList(
+            comments=[review_comment]
+        )
+        mock_pr.get_issue_comments.return_value = test_mock.FakeGithubPaginatedList(
+            comments=[]
+        )
+
+        last_comment = github.get_last_comment(mock_pr)
         self.assertEqual(
             last_comment,
             LastComment(
-                author="user2",
-                body="last comment",
-                created_at=datetime.datetime.utcfromtimestamp(1539777081),
+                author="user", body="a review comment", created_at=now
+            ),
+        )
+
+    @mock.patch("github.PullRequest")
+    def test_get_last_comment_containing_issue_comment(self, mock_pr):
+        github = GithubService()
+        now = datetime.datetime.now()
+
+        issue_comment = test_mock.FakeGithubComment(
+            author="user", body="a issue comment", created_at=now
+        )
+
+        mock_pr.get_comments.return_value = test_mock.FakeGithubPaginatedList(
+            comments=[]
+        )
+        mock_pr.get_issue_comments.return_value = test_mock.FakeGithubPaginatedList(
+            comments=[issue_comment]
+        )
+
+        last_comment = github.get_last_comment(mock_pr)
+        self.assertEqual(
+            last_comment,
+            LastComment(author="user", body="a issue comment", created_at=now),
+        )
+
+    @mock.patch("github.PullRequest")
+    def test_get_last_comment_containing_both_types_of_comments(self, mock_pr):
+
+        github = GithubService()
+        now = datetime.datetime.now()
+
+        review_comment = test_mock.FakeGithubComment(
+            author="user",
+            body="a review comment",
+            created_at=now - datetime.timedelta(minutes=1),
+        )
+        issue_comment = test_mock.FakeGithubComment(
+            author="user2", body="last issue comment", created_at=now
+        )
+
+        mock_pr.get_comments.return_value = test_mock.FakeGithubPaginatedList(
+            comments=[review_comment]
+        )
+        mock_pr.get_issue_comments.return_value = test_mock.FakeGithubPaginatedList(
+            comments=[issue_comment]
+        )
+
+        last_comment = github.get_last_comment(mock_pr)
+        self.assertEqual(
+            last_comment,
+            LastComment(
+                author="user2", body="last issue comment", created_at=now
             ),
         )
 
