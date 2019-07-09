@@ -3,18 +3,12 @@ import argparse
 import os
 import mock
 import yaml
-import test_mock
 import unittest
 import datetime
 from os.path import join, dirname
 from unittest import TestCase
-from six.moves import urllib
-from reviewrot.pagurestack import PagureService
-from reviewrot.gerritstack import GerritService
 from dateutil.relativedelta import relativedelta
-from reviewrot.basereview import LastComment, BaseService, Age
 from reviewrot import (
-    get_git_service,
     get_arguments,
     load_config_file,
     remove_wip,
@@ -27,172 +21,6 @@ from reviewrot import (
 logging.disable(logging.CRITICAL)
 
 
-class GithubTest(TestCase):
-    def setUp(self):
-        filename = join(dirname(__file__), "test_githubtest.yaml")
-        with open(filename, "r") as f:
-            self.config = yaml.safe_load(f)
-
-    def test_object_create(self):
-        self.assertTrue(isinstance((get_git_service("github")), GithubService))
-
-    def test_request_review_token(self):
-        github = GithubService()
-        with self.assertRaises(BadCredentialsException) as context:
-            github.request_reviews(
-                user_name=self.config["user_name"], token=self.config["token"]
-            )
-        self.assertTrue("Bad credentials" in str(context.exception))
-
-    @mock.patch("github.Github.get_user", side_effect=test_mock.mock_get_user)
-    def test_request_reviews_get_user(self, mock_get_user):
-        with self.assertRaises(Exception) as context:
-            GithubService().request_reviews(
-                user_name=self.config["user_name"], token=self.config["token"]
-            )
-        msg = "Invalid username/organizaton: %s" % self.config["user_name"]
-        self.assertTrue(msg in str(context.exception))
-
-    @mock.patch("github.Github.get_user", side_effect=test_mock.mock_get_user_)
-    @mock.patch(
-        "reviewrot.githubstack.GithubService.get_reviews",
-        side_effect=test_mock.mock_github_get_reviews,
-    )
-    def test_request_reviews_with_repo(
-        self, mock_get_user_, mock_github_get_reviews
-    ):
-        res = GithubService().request_reviews(
-            user_name=self.config["user_name"],
-            token=self.config["token"],
-            repo_name=self.config["repo_name"],
-        )
-        self.assertEqual([self.config["msg"]], res)
-
-    @mock.patch("github.Github.get_user", side_effect=test_mock.mock_get_user_)
-    @mock.patch(
-        "github.NamedUser.NamedUser.get_repos",
-        side_effect=test_mock.mock_get_repos,
-    )
-    @mock.patch(
-        "reviewrot.githubstack.GithubService.get_reviews",
-        side_effect=test_mock.mock_github_get_reviews,
-    )
-    def test_request_reviews_without_repo(
-        self, mock_get_user_, mock_github_get_reviews, mock_get_repos
-    ):
-        res = GithubService().request_reviews(
-            user_name=self.config["user_name"], token=self.config["token"]
-        )
-        self.assertEqual([self.config["msg"]], res)
-
-    @mock.patch(
-        "github.NamedUser.NamedUser.get_repo",
-        side_effect=test_mock.mock_get_repo,
-    )
-    def test_get_reviews_get_repo_not_found(self, mock_get_repo):
-        with self.assertRaises(Exception) as context:
-            uname = test_mock.mock_get_user_(self.config["user_name"])
-            GithubService().get_reviews(
-                uname=uname, repo_name=self.config["repo_name"]
-            )
-        msg = "Repository %s not found for user %s" % (
-            self.config["repo_name"],
-            uname.login,
-        )
-        self.assertTrue(msg in str(context.exception))
-
-    @mock.patch(
-        "github.NamedUser.NamedUser.get_repo",
-        side_effect=test_mock.mock_get_repo_,
-    )
-    @mock.patch(
-        "github.Repository.Repository.get_pulls",
-        side_effect=test_mock.mock_get_pulls,
-    )
-    def test_get_reviews_get_repo(self, mock_get_pulls, mock_get_repo_):
-        uname = test_mock.mock_get_user_(self.config["user_name"])
-        res = GithubService().get_reviews(
-            uname=uname, repo_name=self.config["repo_name"]
-        )
-        self.assertEqual(res, [])
-
-    @mock.patch("github.PullRequest")
-    def test_get_last_comment_containing_review_comment(self, mock_pr):
-        github = GithubService()
-        now = datetime.datetime.now()
-
-        review_comment = test_mock.FakeGithubComment(
-            author="user", body="a review comment", created_at=now
-        )
-
-        mock_pr.get_comments.return_value = test_mock.FakeGithubPaginatedList(
-            comments=[review_comment]
-        )
-        mock_pr.get_issue_comments.return_value = test_mock.FakeGithubPaginatedList(
-            comments=[]
-        )
-
-        last_comment = github.get_last_comment(mock_pr)
-        self.assertEqual(
-            last_comment,
-            LastComment(
-                author="user", body="a review comment", created_at=now
-            ),
-        )
-
-    @mock.patch("github.PullRequest")
-    def test_get_last_comment_containing_issue_comment(self, mock_pr):
-        github = GithubService()
-        now = datetime.datetime.now()
-
-        issue_comment = test_mock.FakeGithubComment(
-            author="user", body="a issue comment", created_at=now
-        )
-
-        mock_pr.get_comments.return_value = test_mock.FakeGithubPaginatedList(
-            comments=[]
-        )
-        mock_pr.get_issue_comments.return_value = test_mock.FakeGithubPaginatedList(
-            comments=[issue_comment]
-        )
-
-        last_comment = github.get_last_comment(mock_pr)
-        self.assertEqual(
-            last_comment,
-            LastComment(author="user", body="a issue comment", created_at=now),
-        )
-
-    @mock.patch("github.PullRequest")
-    def test_get_last_comment_containing_both_types_of_comments(self, mock_pr):
-
-        github = GithubService()
-        now = datetime.datetime.now()
-
-        review_comment = test_mock.FakeGithubComment(
-            author="user",
-            body="a review comment",
-            created_at=now - datetime.timedelta(minutes=1),
-        )
-        issue_comment = test_mock.FakeGithubComment(
-            author="user2", body="last issue comment", created_at=now
-        )
-
-        mock_pr.get_comments.return_value = test_mock.FakeGithubPaginatedList(
-            comments=[review_comment]
-        )
-        mock_pr.get_issue_comments.return_value = test_mock.FakeGithubPaginatedList(
-            comments=[issue_comment]
-        )
-
-        last_comment = github.get_last_comment(mock_pr)
-        self.assertEqual(
-            last_comment,
-            LastComment(
-                author="user2", body="last issue comment", created_at=now
-            ),
-        )
-
-
 class CommandLineParserTest(TestCase):
     """
     Command Line Interface (CLI) Arguments will have higher precedence
@@ -203,7 +31,7 @@ class CommandLineParserTest(TestCase):
 
     @classmethod
     def setUpClass(cls):
-        filename = join(dirname(__file__), "test_command_line.yaml")
+        filename = join(dirname(__file__), "yaml/test_command_line.yaml")
         with open(filename, "r") as f:
             cls.config = yaml.safe_load(f)
 
@@ -311,7 +139,6 @@ class CommandLineParserTest(TestCase):
             and sort_result
         )
 
-
     def test_args_ca_certi_invalid_path_from_config(self):
         cli_args = argparse.Namespace(
             cacert=None,
@@ -373,7 +200,7 @@ class CommandLineParserTest(TestCase):
 
     @mock.patch("reviewrot.input", return_value="n")
     def test_load_config_file_re_write_no(self, mocked_input):
-        filename = join(dirname(__file__), "test_old_format.yaml")
+        filename = join(dirname(__file__), "yaml/test_old_format.yaml")
         load_config_file(filename)
         # Load the old style config file and don't convert it to
         # new style dict format.
@@ -390,7 +217,7 @@ class CommandLineParserTest(TestCase):
 
     @mock.patch("reviewrot.input", return_value="y")
     def test_load_config_file_re_write_yes(self, mocked_input):
-        filename = join(dirname(__file__), "test_old_format.yaml")
+        filename = join(dirname(__file__), "yaml/test_old_format.yaml")
         load_config_file(filename)
         # Load the old style config file and converts it to new style
         # dict format. Also creates backup file before converting.
@@ -659,65 +486,15 @@ class CommandLineParserTest(TestCase):
         self.assertEqual(arguments.get('age').date.replace(second=0, microsecond=0),
                          expected_date.replace(second=0, microsecond=0))
 
-
     @classmethod
     def tearDownClass(cls):
         backup_filename = join(
-            dirname(__file__), "test_old_format.yaml.backup"
+            dirname(__file__), "yaml/test_old_format.yaml.backup"
         )
-        filename = join(dirname(__file__), "test_old_format.yaml")
+        filename = join(dirname(__file__), "yaml/test_old_format.yaml")
         if os.path.exists(filename):
             os.remove(filename)
             os.rename(backup_filename, filename)
-
-
-class BaseServiceCheckRequestStateTest(unittest.TestCase):
-
-    def test_check_request_state_newer(self):
-        base_service = BaseService()
-        # created four hours ago
-        now = datetime.datetime.now()
-        created_at = now - relativedelta(hours=4)
-
-        # include pull request that have been added in the past day
-        date = now - relativedelta(days=1)
-        age = Age(date=date, state="newer")
-        actual = base_service.check_request_state(created_at, age)
-        self.assertTrue(actual)
-
-        # include pull request that bave been added in the past 3 hours
-        date = now - relativedelta(hours=3)
-        age = Age(date=date, state="newer")
-        actual = base_service.check_request_state(created_at, age)
-        self.assertFalse(actual)
-
-    def test_check_request_state_older(self):
-        base_service = BaseService()
-        now = datetime.datetime.now()
-        # created four hours ago
-        created_at = now - relativedelta(hours=4)
-
-        # include pull request that are older than 1 day
-        date = now - relativedelta(days=1)
-        age = Age(date=date, state="older")
-        actual = base_service.check_request_state(created_at, age)
-        self.assertFalse(actual)
-
-        # include pull request that ale older than 3 hours
-        date = now - relativedelta(hours=3)
-        age = Age(date=date, state="older")
-        actual = base_service.check_request_state(created_at, age)
-        self.assertTrue(actual)
-
-    def test_check_request_state_age_is_none(self):
-        base_service = BaseService()
-        now = datetime.datetime.now()
-        # created four hours ago
-        created_at = now - relativedelta(hours=4)
-
-        # No filtering
-        actual = base_service.check_request_state(created_at, None)
-        self.assertTrue(actual)
 
 
 class ParseAgeTest(unittest.TestCase):
@@ -726,7 +503,8 @@ class ParseAgeTest(unittest.TestCase):
 
         with self.assertRaises(ValueError) as context:
             ParseAge.parse(['5d', '4h'])
-        self.assertTrue("Wrong or missing state, only older/newer is allowed" in str(context.exception))
+        self.assertTrue("Wrong or missing state, only older/newer is allowed"
+                        in str(context.exception))
 
     def test_missing_relative_age(self):
 
@@ -737,7 +515,8 @@ class ParseAgeTest(unittest.TestCase):
     def test_wrong_state(self):
         with self.assertRaises(ValueError) as context:
             ParseAge.parse(['oldnew', '5d', '4h'])
-        self.assertTrue("Wrong or missing state, only older/newer is allowed" in str(context.exception))
+        self.assertTrue("Wrong or missing state, only older/newer is allowed"
+                        in str(context.exception))
 
     def test_invalid_unit(self):
         with self.assertRaises(ValueError) as context:
@@ -749,15 +528,15 @@ class IgnoreWIPTest(unittest.TestCase):
 
     def test_remove_wip(self):
         results = [
-            test_mock.FakeReview(title='WIP: add a functionality'),
-            test_mock.FakeReview(title='WIP:fix bug'),
-            test_mock.FakeReview(title='wip:fix bug #3'),
-            test_mock.FakeReview(title='wip: fix bug #4'),
-            test_mock.FakeReview(title='[WIP] refactor'),
-            test_mock.FakeReview(title='[WIP]refactor #2'),
-            test_mock.FakeReview(title='[wip]refactor #3'),
-            test_mock.FakeReview(title='[wip] refactor #4'),
-            test_mock.FakeReview(
+            FakeReview(title='WIP: add a functionality'),
+            FakeReview(title='WIP:fix bug'),
+            FakeReview(title='wip:fix bug #3'),
+            FakeReview(title='wip: fix bug #4'),
+            FakeReview(title='[WIP] refactor'),
+            FakeReview(title='[WIP]refactor #2'),
+            FakeReview(title='[wip]refactor #3'),
+            FakeReview(title='[wip] refactor #4'),
+            FakeReview(
                 title='[WIPER] Add the possibility of ignoring WIP PRs/MRs'
             )
         ]
@@ -769,6 +548,15 @@ class IgnoreWIPTest(unittest.TestCase):
             updated_results[0].title,
             '[WIPER] Add the possibility of ignoring WIP PRs/MRs'
         )
+
+
+class FakeReview:
+    """
+    Mocks small part of BaseReview
+    """
+
+    def __init__(self, title):
+        self.title = title
 
 
 if __name__ == "__main__":

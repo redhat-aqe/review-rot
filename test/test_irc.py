@@ -22,7 +22,8 @@ class IRCNotificationTest(unittest.TestCase):
         irc_bot.irc.connect.assert_called_with(('irc.example.com', 12345))
 
         expected_calls = [
-            mock.call(b'USER review_rot_bot review_rot_bot review_rot_bot review_rot_bot\r\n'),
+            mock.call(b'USER review_rot_bot review_rot_bot'
+                      b' review_rot_bot review_rot_bot\r\n'),
             mock.call(b'NICK review_rot_bot\r\n'),
             mock.call(b'JOIN #testChannel\r\n'),
             mock.call(b'PONG 1\r\n'),

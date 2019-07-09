@@ -12,7 +12,7 @@ except ImportError:
     from mock import MagicMock  # noqa: F401
 
 from reviewrot.gerritstack import GerritService
-import mock_gerrit
+from . import mock_gerrit
 
 PATH = 'reviewrot.gerritstack.'
 

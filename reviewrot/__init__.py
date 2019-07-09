@@ -173,12 +173,13 @@ def get_arguments(cli_arguments, config):
             'No format should be specified when selecting email output'
         )
 
-    if email and any(property not in config_mailer for property in ['server', 'sender']):
-            raise ValueError(
-                'Missing mailer configuration.'
-                ' Check examples/sampleinput_email.yaml '
-                'for correct configuration.'
-            )
+    if email and any(property not in config_mailer
+                     for property in ['server', 'sender']):
+        raise ValueError(
+            'Missing mailer configuration.'
+            ' Check examples/sampleinput_email.yaml '
+            'for correct configuration.'
+        )
 
     if irc and format:
         raise ValueError(
@@ -324,7 +325,7 @@ def is_valid_choice(argument, value):
              Returns boolean value
      """
     if CHOICES.get(argument) is None or value in CHOICES.get(argument):
-            return True
+        return True
     return False
 
 
@@ -413,7 +414,8 @@ def remove_wip(results):
 
     res = []
     for result in results:
-        match = re.match(r'^(\[WIP\]\s*|WIP:\s*|WIP\s+)+\s*', str(result.title), re.IGNORECASE)
+        match = re.match(r'^(\[WIP\]\s*|WIP:\s*|WIP\s+)+\s*',
+                         str(result.title), re.IGNORECASE)
         if not match:
             res.append(result)
 
