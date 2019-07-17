@@ -142,7 +142,7 @@ class GitlabTest(TestCase):
     def test_get_reviews_ValueError(self, mock_GitlabReview,
                                     mock_has_new_comments,
                                     mock_check_request_state,
-                                                mock_get_last_comment):
+                                    mock_get_last_comment):
         """
         Test 'get_reviews' where we have no age and no last comment
         and datetime.strptime throws a ValueError

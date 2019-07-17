@@ -1,4 +1,5 @@
 ### New: 
+- Refactoring all tests & Tox support 
 - Phabricator support (check examples/sampleinput_phabricator.yaml )
 - Possibility of omitting WIP pull requests/merge requests in output with *--ignore-wip* argument
 - Replace *-s, -v, -d* arguments with one argument *--age*
@@ -19,17 +20,14 @@ Alternatively, for development:
 python setup.py develop
 ```
 
-## Tests
-To run the tests in your virtualenv, execute:
-```shell
-python setup.py test
-```
-
-Alternatively, you can use `tox` or `detox` to run the tests against multiple versions of python:
+## [NEW] Tests
+You can use `tox` or `detox` to run the tests against multiple versions of python:
 ```shell
 sudo dnf install python-detox
 detox
 ```
+Test outputs are stored under the [htmlcov-py27](htmlcov-py27) and [htmlcov-py36](htmlcov-py36) directory as 
+HTML files for Python versions 2.7 and 3.6 respectively. 
 
 ## Script:
 

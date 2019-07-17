@@ -38,7 +38,8 @@ class BaseService(object):
         if age is None:
             return True
 
-        if (age.state == 'newer' and created_at > age.date) or (age.state == 'older' and created_at < age.date):
+        if (age.state == 'newer' and created_at > age.date) or \
+                (age.state == 'older' and created_at < age.date):
             return True
 
         return False

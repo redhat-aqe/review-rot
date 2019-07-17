@@ -48,7 +48,6 @@ class GitlabService(BaseService):
         except SSLError as e:
             log.exception('Error during authentification: %s', str(e))
 
-
         log.debug('Gitlab instance created: %s', gl)
         response = []
         # if Repository name is explicitly provided

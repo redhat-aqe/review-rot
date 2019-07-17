@@ -15,7 +15,8 @@ class PhabricatorService(BaseService):
     """
         This class represents Phabricator Service for Review Rot.
     """
-    def request_reviews(self, host, token, user_names=None, age=None, show_last_comment=None,
+    def request_reviews(self, host, token, user_names=None,
+                        age=None, show_last_comment=None,
                         **kwargs):
         """
         Returns revision requests for specified username and repo name.
@@ -189,7 +190,8 @@ class PhabricatorService(BaseService):
                                 (>=0.7.0)
 
         Returns:
-                list_of_all_comments (lst): Returns an list representation of all comments
+                list_of_all_comments (lst): Returns an list
+                                            representation of all comments
         """
         # Make API call to get a timeline of review (all events)
         timeline = phab.differential.getrevisioncomments(ids=[int(id)])[id]
@@ -218,9 +220,10 @@ class PhabricatorService(BaseService):
         """
         if len(comments) > 0:
             # Get the username for the last comment
-            author, raw_response = self.author_data(author_phid=comments[0]['authorPHID'],
-                                                   phab=phab,
-                                                   raw_response=raw_response)
+            author, raw_response = self.author_data(
+                author_phid=comments[0]['authorPHID'],
+                phab=phab,
+                raw_response=raw_response)
             # Convert the timestamp to datetime
             createdAt = self.time_from_epoch(comments[0]['dateCreated'])
 
@@ -318,6 +321,7 @@ class PhabricatorService(BaseService):
         """
         return phab.differential.query(status=status,
                                        responsibleUsers=responsibleUsers)
+
     def time_from_epoch(self, epoch):
         """
         Helper function to convert epoch time to datetime object
@@ -330,6 +334,7 @@ class PhabricatorService(BaseService):
         """
         return datetime.datetime.fromtimestamp(
                 float(epoch))
+
 
 class PhabricatorReview(BaseReview):
     pass

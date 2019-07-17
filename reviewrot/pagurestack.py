@@ -121,7 +121,8 @@ class PagureService(BaseService):
                                time=date,
                                updated_time=updated_time,
                                comments=len(res['comments']),
-                               image=self._avatar(res['user']['name'], ssl_verify=ssl_verify),
+                               image=self._avatar(res['user']['name'],
+                                                  ssl_verify=ssl_verify),
                                last_comment=last_comment,
                                project_name=repo_reference,
                                project_url=project_url)
@@ -186,7 +187,8 @@ class PagureService(BaseService):
             url_query = urllib.parse.parse_qs(url_parts.query)
             url_query.update(avatar_query)
             url_query = urllib.parse.urlencode(url_query, doseq=True)
-            avatar_url = urllib.parse.urlunparse(url_parts[:4] + (url_query,) + url_parts[5:])
+            avatar_url = urllib.parse.urlunparse(
+                url_parts[:4] + (url_query,) + url_parts[5:])
         else:
             log.debug("Pagure instance does not expose user's avatar URL. "
                       "Fallback to construct based on username")
