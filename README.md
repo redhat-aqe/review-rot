@@ -21,13 +21,11 @@ python setup.py develop
 ```
 
 ## [NEW] Tests
-You can use `tox` or `detox` to run the tests against multiple versions of python:
+You can use `tox` or `detox` to run the tests against Python 3.6 and 3.7:
 ```shell
 sudo dnf install python-detox
 detox
 ```
-Test outputs are stored under the [htmlcov-py27](htmlcov-py27) and [htmlcov-py36](htmlcov-py36) directory as 
-HTML files for Python versions 2.7 and 3.6 respectively. 
 
 ## Script:
 

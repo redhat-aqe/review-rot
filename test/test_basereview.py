@@ -314,8 +314,9 @@ class BaseReviewTest(TestCase):
         )
 
         # Validate function calls and response
-        self.assertEqual("mock_user filed 'mock_title' mock_url mock_duration ago, "
-                         "10 comments, last comment by mock_author mock_duration ago",
+        self.assertEqual("mock_user filed 'mock_title' mock_url"
+                         " mock_duration ago, 10 comments, "
+                         "last comment by mock_author mock_duration ago",
                          response)
 
     @patch(PATH + 'BaseReview.format_duration')
@@ -331,7 +332,7 @@ class BaseReviewTest(TestCase):
 
         # Call the function
         response = service._format_indented(
-            1, 1
+            1, 1, False
         )
 
         # Validate function calls and response
@@ -358,13 +359,15 @@ class BaseReviewTest(TestCase):
 
         # Call the function
         response = service._format_indented(
-            1, 1
+            1, 1, True
         )
 
         # Validate function calls and response
-        self.assertEqual("mock_user filed 'mock_title'\n\tmock_url\n\t"
-                         "mock_duration ago\n\t10 comments, last comment"
-                         " by mock_author mock_duration ago",
+        self.assertEqual("mock_user filed 'mock_title'"
+                         "\n\tmock_url\n\tmock_duration"
+                         " ago\n\t10 comments, last "
+                         "comment by mock_author mock_"
+                         "duration ago\n",
                          response)
 
     @patch(PATH + 'json')

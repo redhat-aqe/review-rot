@@ -6,5 +6,3 @@ omit=reviewrot/mailer.py
 [report]
 fail_under=60
 
-[html]
-directory=./coverage_report
