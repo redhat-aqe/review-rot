@@ -158,7 +158,7 @@ def get_arguments(cli_arguments, config):
 
     format = parsed_arguments.get('format')
     show_last_comment = parsed_arguments.get('show_last_comment')
-    if (format in ['oneline', 'indented'] and
+    if (format in ['oneline'] and
             show_last_comment is not None):
         raise ValueError(
             '{} format doesn\'t support last comment functionality'.format(

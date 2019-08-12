@@ -3,6 +3,7 @@ import hashlib
 import json
 import logging
 import time
+import textwrap
 
 from collections import OrderedDict, namedtuple
 
@@ -198,7 +199,7 @@ class BaseReview(object):
         """
         lookup = {
             'oneline': self._format_oneline(i, N),
-            'indented': self._format_indented(i, N),
+            'indented': self._format_indented(i, N, show_last_comment),
             'json': self._format_json(i, N, show_last_comment),
             'irc': self._format_irc(),
         }
@@ -233,7 +234,7 @@ class BaseReview(object):
 
         return string
 
-    def _format_indented(self, i, N):
+    def _format_indented(self, i, N, show_last_comment):
         """
         Format the result in indented style.
         Args:
@@ -241,6 +242,7 @@ class BaseReview(object):
                     in all the formatting methods
             N(int): Not used in this method, added to have same parameters
                     in all the formatting methods
+            show_last_comment (int): show last_comment text in output
         Return:
             formatted_string(str): Formatted string as per style
         """
@@ -260,6 +262,14 @@ class BaseReview(object):
                 self.format_duration(self.last_comment.created_at),
             )
 
+        if show_last_comment and self.last_comment:
+            # Wrap and indent lines to fit in a terminal, preserving newlines
+            lines = self.last_comment.body.split('\n')
+            lines = sum([textwrap.wrap(line) for line in lines], [])
+            comment = "\n".join(lines)
+            comment = textwrap.indent(comment, '\t\t')
+            string += "\n{}".format(comment)
+
         return string
 
     def _format_json(self, i, N, show_last_comment):
@@ -268,7 +278,7 @@ class BaseReview(object):
         Args:
             i(int): position in a list.
             N(int): length of the list.
-            show_last_comment (int): show last_comment text in output
+            show_last_comment (bool): show last_comment text in output
         Return:
             formatted_string(str): Formatted string as per style
         """
