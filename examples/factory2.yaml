@@ -28,7 +28,7 @@
 
 - type: gitlab
   host: https://gitlab.cee.redhat.com
-  # Get the token at https://gitlab.cee.redhat.com/profile/account
+  # Get the token at https://gitlab.cee.redhat.com/profile/personal_access_tokens
   token: GET_YOUR_TOKEN_AND_PUT_IT_HERE
   repos:
       - rad/mars
@@ -40,7 +40,7 @@
 # configuration issue.
 #- type: gitlab
 #  host: https://gitlab.infra.prod.eng.rdu2.redhat.com
-#  # Get the token at https://gitlab.infra.prod.eng.rdu2.redhat.com/profile/account
+#  # Get the token at https://gitlab.infra.prod.eng.rdu2.redhat.com/profile/personal_access_tokens
 #  token: GET_YOUR_TOKEN_AND_PUT_IT_HERE
 #  repos:
 #      - eng-ops/ansible
