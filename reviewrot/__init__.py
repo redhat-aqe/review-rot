@@ -4,6 +4,7 @@ import datetime
 import re
 import argparse
 import yaml
+import requests
 
 from os.path import exists, expanduser, expandvars
 from shutil import copyfile
@@ -140,6 +141,9 @@ def get_arguments(cli_arguments, config):
 
     if insecure:
         parsed_arguments['ssl_verify'] = False
+        requests.packages.urllib3.disable_warnings(
+            requests.packages.urllib3.exceptions.InsecureRequestWarning
+        )
     elif cacert:
         cacert = expanduser(expandvars(cacert))
         if not exists(cacert):
