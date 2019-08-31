@@ -35,7 +35,45 @@ class CommandLineParserTest(TestCase):
         with open(filename, "r") as f:
             cls.config = yaml.safe_load(f)
 
-    def test_args_from_config(self):
+    @mock.patch('reviewrot.exists', return_value=True)
+    def test_arg_cacert_from_config(self, mocked_exists):
+        """Ensure that cacert value from config file is used in
+        ssl_verify argument."""
+
+        cli_args = argparse.Namespace(
+            cacert=None,
+            insecure=False,
+        )
+
+        config_args = {
+            'arguments': {
+                'cacert': 'ca.crt',
+            },
+        }
+
+        arguments = get_arguments(cli_args, config_args)
+
+        self.assertEqual(arguments.get('ssl_verify'), 'ca.crt')
+        assert mocked_exists.called
+
+    @mock.patch('reviewrot.exists', return_value=True)
+    def test_arg_cacert_from_cli(self, mocked_exists):
+        """Ensure that cacert value from cli is used in ssl_verify
+        argument."""
+
+        cli_args = argparse.Namespace(
+            cacert='ca.crt',
+            insecure=False,
+        )
+
+        config_args = {}
+
+        arguments = get_arguments(cli_args, config_args)
+
+        self.assertEqual(arguments.get('ssl_verify'), 'ca.crt')
+        assert mocked_exists.called
+
+    def test_args_from_config_with_insecure(self):
         cli_args = argparse.Namespace(
             cacert=None,
             debug=False,

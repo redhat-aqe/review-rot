@@ -1,12 +1,11 @@
 import collections
 import logging
-import os
 import datetime
 import re
 import argparse
 import yaml
 
-from os.path import expanduser, expandvars
+from os.path import exists, expanduser, expandvars
 from shutil import copyfile
 from six.moves import input
 from six import iteritems
@@ -133,28 +132,21 @@ def get_arguments(cli_arguments, config):
         values = age_in_config.split(" ")
         parsed_arguments['age'] = ParseAge.parse(values)
 
-    parsed_arguments['ssl_verify'] = False if cli_arguments.insecure \
-        else cli_arguments.cacert
+    insecure = cli_arguments.insecure or config_arguments.get('insecure')
+    cacert = cli_arguments.cacert or config_arguments.get('cacert')
 
-    if parsed_arguments.get('ssl_verify') is None:
-        if config_arguments.get('insecure'):
-            parsed_arguments['ssl_verify'] = False
-        elif 'cacert' in config_arguments:
-            # expand ~, environment variables, etc if it's a path
-            parsed_arguments['ssl_verify'] = config_arguments.get('cacert')
-        else:
-            parsed_arguments['ssl_verify'] = True
-
-    if isinstance(parsed_arguments['ssl_verify'], str):
-        parsed_arguments['ssl_verify'] = \
-            expanduser(expandvars(parsed_arguments['ssl_verify']))
-        if not os.path.exists(parsed_arguments['ssl_verify']):
-            raise IOError("No certificate file found at %s "
-                          % parsed_arguments['ssl_verify'])
-
-    if (parsed_arguments.get('insecure') and
-            parsed_arguments.get('cacert', None)):
+    if insecure and cacert:
         raise ValueError("Certificate file can't be used with insecure flag")
+
+    if insecure:
+        parsed_arguments['ssl_verify'] = False
+    elif cacert:
+        cacert = expanduser(expandvars(cacert))
+        if not exists(cacert):
+            raise IOError("No CA certificate file found at %s" % cacert)
+        parsed_arguments['ssl_verify'] = cacert
+    else:
+        parsed_arguments['ssl_verify'] = True
 
     format = parsed_arguments.get('format')
     show_last_comment = parsed_arguments.get('show_last_comment')
@@ -254,7 +246,7 @@ def parse_cli_args(args):
     parser = argparse.ArgumentParser(
         description='Lists pull/merge/change requests for github, gitlab,'
                     ' pagure, gerrit and phabricator')
-    default_config = os.path.expanduser('~/.reviewrot.yaml')
+    default_config = expanduser('~/.reviewrot.yaml')
     parser.add_argument('-c', '--config',
                         default=default_config,
                         help='Configuration file to use')
@@ -338,7 +330,7 @@ def load_config_file(config_path):
        Returns:
            config(dict): Returns the configurations
        """
-    if not os.path.exists(config_path):
+    if not exists(config_path):
         raise RuntimeError("No config file found at %s" % config_path)
 
     # read input from the config file for pull requests
