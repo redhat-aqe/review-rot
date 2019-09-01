@@ -16,13 +16,34 @@ class GerritService(BaseService):
         self.header = {'Accept': 'application/json'}
         self.url = None
         self.host_exists = None
+        self.ssl_verify = None
 
     def request_reviews(self, host, repo_name, age=None,
                         user_name=None, token=None, show_last_comment=None,
-                        ssl_verify=True):
+                        ssl_verify=True, reviewers_config=None):
         """
         Creates a Gerrit object.
         Requests pull requests for specified repo name.
+
+        If reviewers_config argument is used, changes without users
+        invited to review are skipped. Users can be excluded from the
+        reviewers list, for example, to avoid having bots counted as
+        reviewers.
+
+        reviewers_config = {
+            'ensure': bool,
+            'excluded': List[str],  # List of user ID values
+            'id_key': str,  # Reviewer ID key, AccountInfo FieldName
+        }
+
+        Reviewer ID keys are the same as AccountInfo FieldNames:
+        https://gerrit-review.googlesource.com/Documentation/rest-api-accounts.html#account-info
+
+        Users invited to review are included in the change response if
+        DETAILED_LABELS option is used in the request. Otherwise,
+        reviewers endpoint can be used:
+        https://gerrit-review.googlesource.com/Documentation/rest-api-changes.html#list-reviewers
+
         Args:
             host (str): Gerrit Host URL
             repo_name (str): Gerrit repository name
@@ -36,10 +57,14 @@ class GerritService(BaseService):
             token (str): This will be None in case of Gerrit
             ssl_verify (bool/str): Whether or not to verify SSL certificates,
                                    or a path to a CA file to use.
+            reviewers_config (Optional[Dict]): Controls excluding changes
+                based on invited reviewers.
         Returns:
             response (list): Returns list of list of pull requests for
                              specified repo name
         """
+
+        self.ssl_verify = ssl_verify
 
         # If the request for reviews is on a different host than the previous
         # request, update the URL and check if the new host exists.
@@ -55,11 +80,76 @@ class GerritService(BaseService):
             return
 
         request_url = ("{}/changes/?q=project:{}+status:open"
-                       "&o=DETAILED_ACCOUNTS").format(self.url, repo_name)
+                       "&o=DETAILED_ACCOUNTS"
+                       "&o=DETAILED_LABELS").format(self.url, repo_name)
         log.debug('Looking for change requests for %s -> %s', self.url, repo_name)
         review_response = self._call_api(url=request_url, ssl_verify=ssl_verify)
 
+        if not review_response:
+            return []
+
+        # Assume that reviewers should be enforced if there is some
+        # config and ensure is not explicitly False.
+        if reviewers_config and reviewers_config.get('ensure', True):
+            review_response = self._filter_invited(
+                review_response, **reviewers_config
+            )
+
         return self.format_response(review_response, age, show_last_comment)
+
+    def _filter_invited(self, changes, **kwargs):
+        """Filter out changes without users invited to review.
+
+        Arguments:
+            changes (List[dict]): List of Gerrit changes.
+
+        Keyword arguments:
+            excluded (List[str]): List of reviewer ID values to exclude
+                from reviewers list
+            id_key (str): Reviewer ID key for values in excluded.
+
+        Returns:
+           (List[Dict]) List of changes with users invited to review.
+        """
+
+        excluded = kwargs.pop('excluded', None)
+        id_key = kwargs.pop('id_key', None)
+
+        def has_reviewers(change):
+            reviewers = self._get_change_reviewers(
+                change, excluded=excluded, id_key=id_key
+            )
+
+            if not reviewers:
+                log.debug(
+                    'No reviewers invited to "%s" in %s',
+                    change['subject'],
+                    change['project'],
+                )
+
+            return bool(reviewers)
+
+        return [c for c in changes if has_reviewers(c)]
+
+    def _get_change_reviewers(self, change, excluded=None, id_key=None):
+        """Get list of users invited to review the change.
+
+        Arguments:
+            change (Dict): Gerrit change
+            excluded (Optional[List[str]]): List of reviewer ID values
+            id_key (Optional[str]): Reviewer ID key for excluded values
+
+        Returns:
+            (List(Dict)): List of reviewers
+        """
+
+        reviewers = change.get('reviewers', {}).get('REVIEWER', [])
+
+        if reviewers and excluded:
+            id_key = id_key or 'username'
+            reviewers = [r for r in reviewers if r.get(id_key) not in excluded]
+
+        return reviewers
 
     def check_repo_exists(self, repo_name, ssl_verify):
         """

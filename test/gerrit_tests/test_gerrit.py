@@ -295,9 +295,13 @@ class GerritTest(TestCase):
             'mock_repo',
             True
         )
+
+        changes_url = ('mock_host/changes/?q=project:mock_repo+status:open'
+                       '&o=DETAILED_ACCOUNTS'
+                       '&o=DETAILED_LABELS')
+
         mock_call_api.assert_called_with(
-            url='mock_host/changes/?q=project:'
-                'mock_repo+status:open&o=DETAILED_ACCOUNTS',
+            url=changes_url,
             ssl_verify=True
         )
         mock_format_response.assert_called_with(
@@ -340,8 +344,13 @@ class GerritTest(TestCase):
             'mock_repo',
             True
         )
+
+        changes_url = ('None/changes/?q=project:mock_repo+status:open'
+                       '&o=DETAILED_ACCOUNTS'
+                       '&o=DETAILED_LABELS')
+
         mock_call_api.assert_called_with(
-            url='None/changes/?q=project:mock_repo+status:open&o=DETAILED_ACCOUNTS',
+            url=changes_url,
             ssl_verify=True
         )
         mock_format_response.assert_called_with(
@@ -387,6 +396,145 @@ class GerritTest(TestCase):
         mock_call_api.assert_not_called()
         mock_format_response.assert_not_called()
         self.assertEqual(None, response)
+
+    @patch(PATH + 'GerritService.format_response')
+    @patch(PATH + 'GerritService._filter_invited', return_value=[])
+    @patch(PATH + 'GerritService._call_api')
+    @patch(PATH + 'GerritService.get_response', return_value=True)
+    @patch(PATH + 'requests')
+    def test_request_reviews_with_reviewers_config(self,
+                                                   mocked_requests,
+                                                   mocked_get_response,
+                                                   mocked_call_api,
+                                                   mocked_filter_invited,
+                                                   mocked_format_response):
+        """Ensure _filter_invited is called when reviewers config is
+        provided."""
+
+        mocked_call_api.return_value = [
+            {'id': 'change_id'},
+        ]
+
+        reviewers_config = {
+            'excluded': []
+        }
+
+        service = GerritService()
+
+        service.request_reviews(
+            'host', 'repo', reviewers_config=reviewers_config
+        )
+
+        assert mocked_requests.session.called
+        assert mocked_get_response.called
+        assert mocked_filter_invited.called
+        called_args, _ = mocked_filter_invited.call_args
+        assert [{'id': 'change_id'}] == called_args[0]
+        assert mocked_format_response.called
+
+    @patch(PATH + 'GerritService.format_response')
+    @patch(PATH + 'GerritService._filter_invited', return_value=[])
+    @patch(PATH + 'GerritService._call_api')
+    @patch(PATH + 'GerritService.get_response', return_value=True)
+    @patch(PATH + 'requests')
+    def test_request_reviews_without_reviewers_config(self,
+                                                      mocked_requests,
+                                                      mocked_get_response,
+                                                      mocked_call_api,
+                                                      mocked_filter_invited,
+                                                      mocked_format_response):
+        """Ensure _filter_invited is not called if there is no reviewers
+        config."""
+
+        mocked_call_api.return_value = [{'id': 'change_id'}]
+
+        reviewers_config = {}
+
+        service = GerritService()
+
+        service.request_reviews(
+            'host', 'repo', reviewers_config=reviewers_config
+        )
+
+        assert mocked_requests.session.called
+        assert mocked_get_response.called
+        assert not mocked_filter_invited.called
+        assert mocked_format_response.called
+
+    @patch(PATH + 'requests')
+    def test_filter_invited_no_excluded(self, mocked_requests):
+        """Ensure changes without reviewers are filtered out from the
+        change list."""
+
+        reviewers_config = {'ensure': True}
+
+        changes = [
+            {
+                'id': 'change1',
+                'project': 'the-project-1',
+                'subject': 'the subject 1',
+                'reviewers': {'REVIEWER': []},
+            },
+            {
+                'id': 'change2',
+                'project': 'the-project-2',
+                'subject': 'the subject 2',
+                'reviewers': {'REVIEWER': [{'email': 'reviewer@example.com'}]},
+            }
+        ]
+
+        service = GerritService()
+
+        assert mocked_requests.session.called
+        filtered_changes = service._filter_invited(changes, **reviewers_config)
+
+        assert len(filtered_changes) == 1
+        assert filtered_changes[0]['id'] == 'change2'
+
+    @patch(PATH + 'requests')
+    def test_filter_invited_excluded(self, mocked_requests):
+        """Ensure changes with only excluded reviewers are filtered out
+        from the change list."""
+
+        reviewers_config = {
+            'id_key': 'email',
+            'excluded': [
+                'bot@example.com',
+            ],
+        }
+
+        changes = [
+            {
+                'id': 'change1',
+                'project': 'the-project-1',
+                'subject': 'the subject 1',
+                'reviewers': {'REVIEWER': []},
+            },
+            {
+                'id': 'change2',
+                'project': 'the-project-2',
+                'subject': 'the subject 2',
+                'reviewers': {'REVIEWER': [{'email': 'bot@example.com'}]},
+            },
+            {
+                'id': 'change3',
+                'project': 'the-project-3',
+                'subject': 'the subject 3',
+                'reviewers': {
+                    'REVIEWER': [
+                        {'email': 'reviewer@example.com'},
+                        {'email': 'bot@example.com'}
+                    ]
+                },
+            }
+        ]
+
+        service = GerritService()
+
+        assert mocked_requests.session.called
+        filtered_changes = service._filter_invited(changes, **reviewers_config)
+        assert len(filtered_changes) == 1
+        assert filtered_changes[0]['id'] == 'change3'
 
     def test_get_comments_count(self):
         """
