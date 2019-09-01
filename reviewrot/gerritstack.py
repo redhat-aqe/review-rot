@@ -40,7 +40,6 @@ class GerritService(BaseService):
             response (list): Returns list of list of pull requests for
                              specified repo name
         """
-        reviews = None
 
         # If the request for reviews is on a different host than the previous
         # request, update the URL and check if the new host exists.
@@ -52,15 +51,15 @@ class GerritService(BaseService):
         # checks if specified repo exists
         repo_exists = self.check_repo_exists(repo_name, ssl_verify)
 
-        if self.host_exists and repo_exists:
-            request_url = "{}/changes/?q=project:{}+status:open&" \
-                          "o=DETAILED_ACCOUNTS".format(self.url, repo_name)
-            log.debug('Looking for change requests for %s -> %s',
-                      self.url, repo_name)
-            review_response = self._call_api(url=request_url,
-                                             ssl_verify=ssl_verify)
-            reviews = self.format_response(review_response, age, show_last_comment)
-        return reviews
+        if not (self.host_exists and repo_exists):
+            return
+
+        request_url = ("{}/changes/?q=project:{}+status:open"
+                       "&o=DETAILED_ACCOUNTS").format(self.url, repo_name)
+        log.debug('Looking for change requests for %s -> %s', self.url, repo_name)
+        review_response = self._call_api(url=request_url, ssl_verify=ssl_verify)
+
+        return self.format_response(review_response, age, show_last_comment)
 
     def check_repo_exists(self, repo_name, ssl_verify):
         """
