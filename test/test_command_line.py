@@ -252,7 +252,8 @@ class CommandLineParserTest(TestCase):
     ):
 
         cli_args = argparse.Namespace(
-            format="oneline", show_last_comment=0, insecure=False, cacert=None
+            format="oneline", email='demo@gmail.com', show_last_comment=0,
+            insecure=False, cacert=None
         )
         with self.assertRaises(ValueError) as context:
             get_arguments(
@@ -264,7 +265,8 @@ class CommandLineParserTest(TestCase):
             self.assertTrue(msg in str(context.exception))
 
         cli_args = argparse.Namespace(
-            format="indented", show_last_comment=0, insecure=False, cacert=None
+            format="indented", email='demo@gmail.com',
+            show_last_comment=0, insecure=False, cacert=None
         )
         with self.assertRaises(ValueError) as context:
             get_arguments(
@@ -298,7 +300,8 @@ class CommandLineParserTest(TestCase):
         config = {
             "arguments": {
                 "format": "oneline",
-                "show_last_comment": 0
+                "show_last_comment": 0,
+                "email": "demo@gmail.com"
             }
         }
         with self.assertRaises(ValueError) as context:
@@ -313,7 +316,8 @@ class CommandLineParserTest(TestCase):
         config = {
             "arguments": {
                 "format": "indented",
-                "show_last_comment": 0
+                "show_last_comment": 0,
+                "email": "demo@gmail.com"
             }
         }
         with self.assertRaises(ValueError) as context:
@@ -322,7 +326,6 @@ class CommandLineParserTest(TestCase):
                 config=config
             )
             msg = "No format should be specified when selecting email output"
-
             self.assertTrue(msg in str(context.exception))
 
     def test_email_argument_in_config(self):

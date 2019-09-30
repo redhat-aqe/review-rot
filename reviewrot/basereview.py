@@ -269,7 +269,6 @@ class BaseReview(object):
             comment = "\n".join(lines)
             comment = textwrap.indent(comment, '\t\t')
             string += "\n{}".format(comment)
-
         return string
 
     def _format_json(self, i, N, show_last_comment):
