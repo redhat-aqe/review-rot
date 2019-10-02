@@ -421,16 +421,17 @@ class GerritTest(TestCase):
 
         service = GerritService()
 
+        mocked_requests.session.assert_called()
+
         service.request_reviews(
             'host', 'repo', reviewers_config=reviewers_config
         )
 
-        assert mocked_requests.session.called
-        assert mocked_get_response.called
-        assert mocked_filter_invited.called
-        called_args, _ = mocked_filter_invited.call_args
-        assert [{'id': 'change_id'}] == called_args[0]
-        assert mocked_format_response.called
+        mocked_get_response.assert_called()
+        mocked_filter_invited.assert_called_once_with(
+            [{'id': 'change_id'}], excluded=[]
+        )
+        mocked_format_response.assert_called()
 
     @patch(PATH + 'GerritService.format_response')
     @patch(PATH + 'GerritService._filter_invited', return_value=[])
@@ -452,14 +453,15 @@ class GerritTest(TestCase):
 
         service = GerritService()
 
+        mocked_requests.session.assert_called()
+
         service.request_reviews(
             'host', 'repo', reviewers_config=reviewers_config
         )
 
-        assert mocked_requests.session.called
-        assert mocked_get_response.called
-        assert not mocked_filter_invited.called
-        assert mocked_format_response.called
+        mocked_get_response.assert_called()
+        mocked_filter_invited.assert_not_called()
+        mocked_format_response.assert_called()
 
     @patch(PATH + 'requests')
     def test_filter_invited_no_excluded(self, mocked_requests):
@@ -485,11 +487,15 @@ class GerritTest(TestCase):
 
         service = GerritService()
 
-        assert mocked_requests.session.called
+        mocked_requests.session.assert_called()
+
         filtered_changes = service._filter_invited(changes, **reviewers_config)
 
-        assert len(filtered_changes) == 1
-        assert filtered_changes[0]['id'] == 'change2'
+        changes_count = len(filtered_changes)
+        self.assertEqual(changes_count, 1)
+
+        change_id = filtered_changes[0]['id']
+        self.assertEqual(change_id, 'change2')
 
     @patch(PATH + 'requests')
     def test_filter_invited_excluded(self, mocked_requests):
@@ -531,10 +537,15 @@ class GerritTest(TestCase):
 
         service = GerritService()
 
-        assert mocked_requests.session.called
+        mocked_requests.session.assert_called()
+
         filtered_changes = service._filter_invited(changes, **reviewers_config)
-        assert len(filtered_changes) == 1
-        assert filtered_changes[0]['id'] == 'change3'
+
+        changes_count = len(filtered_changes)
+        self.assertEqual(changes_count, 1)
+
+        change_id = filtered_changes[0]['id']
+        self.assertEqual(change_id, 'change3')
 
     def test_get_comments_count(self):
         """
