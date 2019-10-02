@@ -76,7 +76,7 @@ class GerritService(BaseService):
         # checks if specified repo exists
         repo_exists = self.check_repo_exists(repo_name, ssl_verify)
 
-        if not (self.host_exists and repo_exists):
+        if not self.host_exists or not repo_exists:
             return
 
         request_url = ("{}/changes/?q=project:{}+status:open"
