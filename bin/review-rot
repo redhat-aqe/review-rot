@@ -78,6 +78,12 @@ def main():
         # get git service
         git_service = get_git_service(item['type'])
 
+        # Reviewers config for Gerrit service only
+        if type(git_service) == GerritService:
+            reviewers_config = item.get('reviewers')
+        else:
+            reviewers_config = None
+
         """
         check if username and/or repository information is given for
         specified git service
@@ -103,6 +109,7 @@ def main():
                             token=_get_token(item),
                             host=remove_trailing_slash_from_url(item.get('host')),
                             ssl_verify=arguments.get('ssl_verify'),
+                            reviewers_config=reviewers_config,
                         )
                     )
             else:

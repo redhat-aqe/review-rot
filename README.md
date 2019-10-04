@@ -1,4 +1,5 @@
 ### New: 
+- Exclude Gerrit changes with no reviewers invited
 - Refactoring all tests & Tox support 
 - Phabricator support (check examples/sampleinput_phabricator.yaml )
 - Possibility of omitting WIP pull requests/merge requests in output with *--ignore-wip* argument
@@ -148,3 +149,33 @@ Or in command line:
 review-rot --irc '#channel1' '#channel2'
 review-rot --irc \#channel1 \#channel2
 ```
+
+## Gerrit service
+
+### [NEW] Exclude changes with no reviewers invited:
+
+```
+git_services:
+  - type: gerrit
+    reviewers:
+      ensure: True
+```
+
+User accounts can be excluded from the reviewers list for the change, for example, to not count bot accounts as reviewers:
+
+```
+git_services:
+  - type: gerrit
+    reviewers:
+      id_key: email
+      excluded:
+        - the.bot@example.com
+```
+
+`id_key` is the `FieldName` to get the value to identify the reviewer. If not set defaults to `username`.
+
+`excluded` is a list of reviewers, identified by their `id_key` in the reviewers entity.
+
+If `reviewers` is not empty and `ensure` is not defined, it's implicitly True.
+
+ID values for `excluded` and `id_key` are the same as for [AccountInfo](https://gerrit-review.googlesource.com/Documentation/rest-api-accounts.html#account-info).
