@@ -17,15 +17,15 @@ except IOError:
 
 setup(name='review-rot',
       version='1.0',
-      author='Nirzari Iyer, Sid Premkumar, Pavlina Bortlova,'
-             ' Maximilian Kosiarcik',
-      author_email='niyer@redhat.com, sid.premkumar@gmail.com, '
-                   'pbortlov@redhat.com, mkosiarc@redhat.com',
+      author='Maximilian Kosiarcik, Nirzari Iyer, Pavlina Bortlova,'
+             ' Sid Premkumar',
+      author_email='mkosiarc@redhat.com, niyer@redhat.com, '
+                   'pbortlov@redhat.com, sid.premkumar@gmail.com',
       description=('CLI tool to list review(pull) requests from '
-                   'github, gitlab and pagure'),
+                   'gerrit, github, gitlab, pagure and phabricator'),
       long_description=long_description,
       license='GPLv3',
-      url='https://github.com/nirzari/review-rot',
+      url='https://github.com/redhat-aqe/review-rot',
       packages=find_packages(),
       install_requires=install_requires,
       tests_require=tests_require,
