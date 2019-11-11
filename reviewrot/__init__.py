@@ -76,8 +76,6 @@ def get_arguments(cli_arguments, config):
 
     parsed_arguments = {}
     command_line_args = vars(cli_arguments)
-    grouped_arguments = {'state', 'duration', 'value'}
-    logged_error = False
 
     for arg in command_line_args:
         if command_line_args.get(arg) is not None:
@@ -86,25 +84,19 @@ def get_arguments(cli_arguments, config):
     for argument in config_arguments:
         # Explicitly commandline arguments cannot be specified
         # false or none.
-        if command_line_args.get(argument) is None or \
-           command_line_args.get(argument) is False:
-            # if argument is present in grouped_arguments,
-            # all the associated arguments should also
-            # be specified in the config file
-            if argument not in grouped_arguments or \
-                (argument in grouped_arguments and
-                 grouped_arguments.issubset(config_arguments.keys())):
-                config_value = config_arguments.get(argument)
-                if is_valid_choice(argument, config_value):
-                    parsed_arguments[argument] = config_value
-                else:
-                    log.warn("Invalid choice '%s' provided for '%s' in"
-                             " config file" %
-                             (config_value, argument))
-            elif not logged_error:
-                log.warn("Either no or all arguments (state, duration "
-                         "and value) are required in config file")
-                logged_error = True
+        if (
+                command_line_args.get(argument) is None
+                or command_line_args.get(argument) is False
+        ):
+
+            config_value = config_arguments.get(argument)
+            if is_valid_choice(argument, config_value):
+                parsed_arguments[argument] = config_value
+            else:
+                log.warn(
+                    "Invalid choice '%s' provided for '%s' in"
+                    " config file" % (config_value, argument)
+                )
 
     # --debug, --reverse and --insecure or --cacert flags are used to
     # specify arguments from command line. If not specified, value will
