@@ -87,7 +87,7 @@ class BaseServiceTest(TestCase):
         are NOT none
         """
         # Set up mock return values and side effects
-        mock_last_activity = datetime(2018, 2, 3)
+        mock_last_activity = datetime.now() - relativedelta(days=599)
 
         # Call the function
         response = BaseService().has_new_comments(
