@@ -31,9 +31,6 @@ arguments:
   reverse: true
   ssl_verfiy: false
   debug: true
-  state: newer
-  value: 2
-  duration: d
   cacert: ~/cacert_location
   ignore_wip: true
   age: "older 5d 4h"
