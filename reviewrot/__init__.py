@@ -27,6 +27,8 @@ CHOICES = {
     'sort': ['submitted', 'updated', 'commented'],
 }
 
+DEFAULT_SUBJECT = 'review-rot notification'
+
 
 def get_git_service(git):
     """
@@ -113,6 +115,9 @@ def get_arguments(cli_arguments, config):
         parsed_arguments['email'] = [
             email.strip() for email in email_in_config.split(',')
         ]
+
+    if 'subject' not in parsed_arguments and 'subject' in config_arguments:
+        parsed_arguments['subject'] = config_arguments['subject']
 
     irc_in_config = config_arguments.get('irc')
     if irc_in_config:
@@ -282,6 +287,8 @@ def parse_cli_args(args):
     parser.add_argument('--email', nargs="+",
                         default=None,
                         help='send output to list of email adresses')
+    parser.add_argument('--subject',
+                        help='Email subject text')
     parser.add_argument('--irc', nargs='+',
                         metavar="CHANNEL",
                         default=None,

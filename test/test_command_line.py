@@ -116,6 +116,7 @@ class CommandLineParserTest(TestCase):
             reverse=True,
             age=None,
             sort='updated',
+            subject='Test notification (subject from args)',
         )
 
         config = self.config["test2"]
@@ -132,6 +133,7 @@ class CommandLineParserTest(TestCase):
         )
         age = arguments.get('age') is None
         sort_result = arguments.get("sort") == vars(cli_args).get('sort')
+        subject_result = arguments.get("subject") == vars(cli_args).get("subject")
 
         self.assertTrue(
             debug_result
@@ -140,6 +142,7 @@ class CommandLineParserTest(TestCase):
             and ssl_result
             and age
             and sort_result
+            and subject_result
         )
 
     def test_args_from_command_line_except_format(self):
@@ -533,7 +536,7 @@ class CommandLineParserTest(TestCase):
             dirname(__file__), "yaml/test_old_format.yaml.backup"
         )
         filename = join(dirname(__file__), "yaml/test_old_format.yaml")
-        if os.path.exists(filename):
+        if os.path.exists(backup_filename) and os.path.exists(filename):
             os.remove(filename)
             os.rename(backup_filename, filename)
 

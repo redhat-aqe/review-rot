@@ -17,6 +17,7 @@ from reviewrot import (
     load_config_file,
     parse_cli_args,
     CHOICES,
+    DEFAULT_SUBJECT,
     remove_wip
 )
 
@@ -185,9 +186,10 @@ def main():
             sender=mailer_configuration['sender'],
             server=mailer_configuration['server']
         )
+        subject = str(arguments.get('subject') or DEFAULT_SUBJECT)
         mailer.send(
             email,
-            'review-rot notification',
+            subject,
             output_text
         )
         log.debug('EMAIL SENT')

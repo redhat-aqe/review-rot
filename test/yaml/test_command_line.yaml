@@ -12,6 +12,7 @@ test2:
     insecure: False
     reverse: False
     debug: False
+    subject: Test notification (subject from config)
 
 test3:
   arguments:
