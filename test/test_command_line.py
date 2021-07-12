@@ -577,6 +577,7 @@ class IgnoreWIPTest(unittest.TestCase):
             FakeReview(title='[WIP]refactor #2'),
             FakeReview(title='[wip]refactor #3'),
             FakeReview(title='[wip] refactor #4'),
+            FakeReview(title='Draft: fix bug #3'),
             FakeReview(
                 title='[WIPER] Add the possibility of ignoring WIP PRs/MRs'
             )
