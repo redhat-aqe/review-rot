@@ -402,7 +402,7 @@ def remove_wip(results):
 
     res = []
     for result in results:
-        match = re.match(r'^(\[WIP\]\s*|WIP:\s*|WIP\s+)+\s*',
+        match = re.match(r'^(\[WIP\]\s*|WIP:\s*|WIP\s+|Draft:)+\s*',
                          str(result.title), re.IGNORECASE)
         if not match:
             res.append(result)
