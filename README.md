@@ -33,15 +33,16 @@ detox
 #### review-rot
 ```shell
 > review-rot --help
-
 usage: review-rot [-h] [-c CONFIG]
                   [--age {older,newer} [#y #m #d #h #min ...]]
                   [-f {oneline,indented,json}] [--show-last-comment [DAYS]]
                   [--reverse] [--sort {submitted,updated,commented}] [--debug]
-                  [--email EMAIL [EMAIL ...]] [--irc CHANNEL [CHANNEL ...]]
-                  [--ignore-wip] [-k] [--cacert CACERT]
+                  [--email EMAIL [EMAIL ...]] [--subject SUBJECT]
+                  [--irc CHANNEL [CHANNEL ...]] [--ignore-wip] [-k]
+                  [--cacert CACERT]
 
-Lists pull/merge/change requests for github, gitlab, pagure and gerrit
+Lists pull/merge/change requests for github, gitlab, pagure, gerrit and
+phabricator
 
 optional arguments:
   -h, --help            show this help message and exit
@@ -62,6 +63,7 @@ optional arguments:
   --debug               Display debug logs on console
   --email EMAIL [EMAIL ...]
                         send output to list of email adresses
+  --subject SUBJECT     Email subject text.
   --irc CHANNEL [CHANNEL ...]
                         send output to list of irc channels
   --ignore-wip          Omit WIP PRs/MRs from output
@@ -70,8 +72,6 @@ SSL:
   -k, --insecure        Disable SSL certificate verification (not recommended)
   --cacert CACERT       Path to CA certificate to use for SSL certificate
                         verification
-
-
 ```
 
 You can filter MRs/PRs based on their relative age
