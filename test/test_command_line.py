@@ -1,20 +1,22 @@
-import logging
+"""TODO: docstring goes here."""
 import argparse
-import os
-import mock
-import yaml
-import unittest
 import datetime
-from os.path import join, dirname
+import logging
+import os
+from os.path import dirname, join
+import unittest
 from unittest import TestCase
+
 from dateutil.relativedelta import relativedelta
+import mock
 from reviewrot import (
     get_arguments,
     load_config_file,
-    remove_wip,
-    ParseAge,
     parse_cli_args,
+    ParseAge,
+    remove_wip,
 )
+import yaml
 
 
 # Disable logging to avoid messing up test output
@@ -23,46 +25,44 @@ logging.disable(logging.CRITICAL)
 
 class CommandLineParserTest(TestCase):
     """
-    Command Line Interface (CLI) Arguments will have higher precedence
-    over the config file. By default, CLI arguments has False value
+    CLI Arguments will have higher precedence over the config file.
+
+    By default, CLI arguments has False value
     for boolean expressions. In such cases, if config file arguments
     has boolean 'True' value, then 'True' value will be considered.
     """
 
     @classmethod
     def setUpClass(cls):
+        """TODO: docstring goes here."""
         filename = join(dirname(__file__), "yaml/test_command_line.yaml")
         with open(filename, "r") as f:
             cls.config = yaml.safe_load(f)
 
-    @mock.patch('reviewrot.exists', return_value=True)
+    @mock.patch("reviewrot.exists", return_value=True)
     def test_arg_cacert_from_config(self, mocked_exists):
-        """Ensure that cacert value from config file is used in
-        ssl_verify argument."""
-
+        """Ensure that cacert value from config file is used in ssl_verify argument."""
         cli_args = argparse.Namespace(
             cacert=None,
             insecure=False,
         )
 
         config_args = {
-            'arguments': {
-                'cacert': 'ca.crt',
+            "arguments": {
+                "cacert": "ca.crt",
             },
         }
 
         arguments = get_arguments(cli_args, config_args)
 
-        self.assertEqual(arguments.get('ssl_verify'), 'ca.crt')
+        self.assertEqual(arguments.get("ssl_verify"), "ca.crt")
         assert mocked_exists.called
 
-    @mock.patch('reviewrot.exists', return_value=True)
+    @mock.patch("reviewrot.exists", return_value=True)
     def test_arg_cacert_from_cli(self, mocked_exists):
-        """Ensure that cacert value from cli is used in ssl_verify
-        argument."""
-
+        """Ensure that cacert value from cli is used in ssl_verify argument."""
         cli_args = argparse.Namespace(
-            cacert='ca.crt',
+            cacert="ca.crt",
             insecure=False,
         )
 
@@ -70,10 +70,11 @@ class CommandLineParserTest(TestCase):
 
         arguments = get_arguments(cli_args, config_args)
 
-        self.assertEqual(arguments.get('ssl_verify'), 'ca.crt')
+        self.assertEqual(arguments.get("ssl_verify"), "ca.crt")
         assert mocked_exists.called
 
     def test_args_from_config_with_insecure(self):
+        """TODO: docstring goes here."""
         cli_args = argparse.Namespace(
             cacert=None,
             debug=False,
@@ -86,16 +87,14 @@ class CommandLineParserTest(TestCase):
 
         config = self.config["test1"]
         config_args = self.config["test1"]["arguments"]
-        arguments = get_arguments(
-            cli_args, config
-        )
+        arguments = get_arguments(cli_args, config)
         # arguments must contains values from config arguments
 
         debug_result = arguments.get("debug") == config_args.get("debug")
         format_result = arguments.get("format") == config_args.get("format")
         ssl_result = arguments.get("ssl_verify") != config_args.get("insecure")
         reverse_result = arguments.get("reverse") == config_args.get("reverse")
-        age_result = arguments.get('age') == config_args.get('age')
+        age_result = arguments.get("age") == config_args.get("age")
         sort_result = arguments.get("sort") == config_args.get("sort")
 
         self.assertTrue(
@@ -108,6 +107,7 @@ class CommandLineParserTest(TestCase):
         )
 
     def test_args_from_command_line(self):
+        """TODO: docstring goes here."""
         cli_args = argparse.Namespace(
             cacert=None,
             debug=True,
@@ -115,24 +115,20 @@ class CommandLineParserTest(TestCase):
             insecure=True,
             reverse=True,
             age=None,
-            sort='updated',
-            subject='Test notification (subject from args)',
+            sort="updated",
+            subject="Test notification (subject from args)",
         )
 
         config = self.config["test2"]
-        arguments = get_arguments(
-            cli_args, config
-        )
+        arguments = get_arguments(cli_args, config)
         # arguments must contains values from cli arguments
 
         debug_result = arguments.get("debug") == vars(cli_args).get("debug")
         format_result = arguments.get("format") == vars(cli_args).get("format")
         ssl_result = arguments.get("ssl_verify") is False
-        reverse_result = arguments.get("reverse") == vars(cli_args).get(
-            "reverse"
-        )
-        age = arguments.get('age') is None
-        sort_result = arguments.get("sort") == vars(cli_args).get('sort')
+        reverse_result = arguments.get("reverse") == vars(cli_args).get("reverse")
+        age = arguments.get("age") is None
+        sort_result = arguments.get("sort") == vars(cli_args).get("sort")
         subject_result = arguments.get("subject") == vars(cli_args).get("subject")
 
         self.assertTrue(
@@ -146,6 +142,7 @@ class CommandLineParserTest(TestCase):
         )
 
     def test_args_from_command_line_except_format(self):
+        """TODO: docstring goes here."""
         cli_args = argparse.Namespace(
             cacert=None,
             debug=True,
@@ -158,9 +155,7 @@ class CommandLineParserTest(TestCase):
 
         config = self.config["test3"]
         config_args = self.config["test3"]["arguments"]
-        arguments = get_arguments(
-            cli_args, config
-        )
+        arguments = get_arguments(cli_args, config)
         # All arguments must contains values from cli arguments except 'format'
         # It should be from config file
 
@@ -168,8 +163,8 @@ class CommandLineParserTest(TestCase):
         format_result = arguments.get("format") == config_args.get("format")
         ssl_result = arguments.get("ssl_verify") is True
         reverse_result = arguments.get("reverse") is True
-        age = arguments.get('age') is None
-        sort_result = arguments.get('sort') is None
+        age = arguments.get("age") is None
+        sort_result = arguments.get("sort") is None
 
         self.assertTrue(
             debug_result
@@ -181,6 +176,7 @@ class CommandLineParserTest(TestCase):
         )
 
     def test_args_ca_certi_invalid_path_from_config(self):
+        """TODO: docstring goes here."""
         cli_args = argparse.Namespace(
             cacert=None,
             debug=False,
@@ -192,15 +188,12 @@ class CommandLineParserTest(TestCase):
 
         config = self.config["test4"]
         with self.assertRaises(IOError) as context:
-            get_arguments(
-                cli_args, config
-            )
+            get_arguments(cli_args, config)
             msg = "No certificate file found "
-            self.assertTrue(
-                msg in str(context.exception), msg=context.exception
-            )
+            self.assertTrue(msg in str(context.exception), msg=context.exception)
 
     def test_args_ca_certi_invalid_path_from_command_line(self):
+        """TODO: docstring goes here."""
         cli_args = argparse.Namespace(
             cacert="~/review-rot/",
             debug=False,
@@ -212,15 +205,12 @@ class CommandLineParserTest(TestCase):
 
         config = self.config["test5"]
         with self.assertRaises(IOError) as context:
-            get_arguments(
-                cli_args, config
-            )
+            get_arguments(cli_args, config)
             msg = "No certificate file found "
-            self.assertTrue(
-                msg in str(context.exception), msg=context.exception
-            )
+            self.assertTrue(msg in str(context.exception), msg=context.exception)
 
     def test_args_cacert_with_insecure(self):
+        """TODO: docstring goes here."""
         cli_args = argparse.Namespace(
             cacert=None,
             debug=False,
@@ -231,16 +221,13 @@ class CommandLineParserTest(TestCase):
         )
         config = self.config["test6"]
         with self.assertRaises(ValueError) as context:
-            get_arguments(
-                cli_args, config
-            )
+            get_arguments(cli_args, config)
             msg = "Certificate file can't be used with insecure flag"
-            self.assertTrue(
-                msg in str(context.exception), msg=context.exception
-            )
+            self.assertTrue(msg in str(context.exception), msg=context.exception)
 
     @mock.patch("reviewrot.input", return_value="n")
     def test_load_config_file_re_write_no(self, mocked_input):
+        """TODO: docstring goes here."""
         filename = join(dirname(__file__), "yaml/test_old_format.yaml")
         load_config_file(filename)
         # Load the old style config file and don't convert it to
@@ -251,13 +238,12 @@ class CommandLineParserTest(TestCase):
         arguments_present = "arguments" not in new_config
         git_services_present = "type" in new_config[0]
         self.assertTrue(
-            isinstance(new_config, list)
-            and arguments_present
-            and git_services_present
+            isinstance(new_config, list) and arguments_present and git_services_present
         )
 
     @mock.patch("reviewrot.input", return_value="y")
     def test_load_config_file_re_write_yes(self, mocked_input):
+        """TODO: docstring goes here."""
         filename = join(dirname(__file__), "yaml/test_old_format.yaml")
         load_config_file(filename)
         # Load the old style config file and converts it to new style
@@ -276,80 +262,67 @@ class CommandLineParserTest(TestCase):
         )
 
     def test_invalid_combination_format_and_email_command_line(self):
+        """TODO: docstring goes here."""
         cli_args = argparse.Namespace(
             format="json", email="some@email.com", insecure=False, cacert=None
         )
         with self.assertRaises(ValueError) as context:
-            get_arguments(
-                cli_arguments=cli_args,
-                config={}
-            )
+            get_arguments(cli_arguments=cli_args, config={})
             msg = "No format should be specified when selecting email output"
 
             self.assertTrue(msg in str(context.exception))
 
-    def test_invalid_combination_format_and_show_last_comment_command_line(
-        self
-    ):
-
+    def test_invalid_combination_format_and_show_last_comment_command_line(self):
+        """TODO: docstring goes here."""
         cli_args = argparse.Namespace(
-            format="oneline", email='demo@gmail.com', show_last_comment=0,
-            insecure=False, cacert=None
+            format="oneline",
+            email="demo@gmail.com",
+            show_last_comment=0,
+            insecure=False,
+            cacert=None,
         )
         with self.assertRaises(ValueError) as context:
-            get_arguments(
-                cli_arguments=cli_args,
-                config={}
-            )
+            get_arguments(cli_arguments=cli_args, config={})
             msg = "No format should be specified when selecting email output"
 
             self.assertTrue(msg in str(context.exception))
 
         cli_args = argparse.Namespace(
-            format="indented", email='demo@gmail.com',
-            show_last_comment=0, insecure=False, cacert=None
+            format="indented",
+            email="demo@gmail.com",
+            show_last_comment=0,
+            insecure=False,
+            cacert=None,
         )
         with self.assertRaises(ValueError) as context:
-            get_arguments(
-                cli_arguments=cli_args,
-                config={}
-            )
+            get_arguments(cli_arguments=cli_args, config={})
             msg = "No format should be specified when selecting email output"
 
             self.assertTrue(msg in str(context.exception))
 
     def test_invalid_combination_format_and_email_config_file(self):
+        """TODO: docstring goes here."""
         cli_args = argparse.Namespace(insecure=False, cacert=None)
 
-        config = {
-            "arguments": {
-                "email": "some@email",
-                "format": "json"
-            }
-        }
+        config = {"arguments": {"email": "some@email", "format": "json"}}
         with self.assertRaises(ValueError) as context:
-            get_arguments(
-                cli_arguments=cli_args,
-                config=config
-            )
+            get_arguments(cli_arguments=cli_args, config=config)
             msg = "No format should be specified when selecting email output"
 
             self.assertTrue(msg in str(context.exception))
 
     def test_invalid_combination_format_and_show_last_comment_configfile(self):
+        """TODO: docstring goes here."""
         cli_args = argparse.Namespace(insecure=False, cacert=None)
         config = {
             "arguments": {
                 "format": "oneline",
                 "show_last_comment": 0,
-                "email": "demo@gmail.com"
+                "email": "demo@gmail.com",
             }
         }
         with self.assertRaises(ValueError) as context:
-            get_arguments(
-                cli_arguments=cli_args,
-                config=config
-            )
+            get_arguments(cli_arguments=cli_args, config=config)
             msg = "No format should be specified when selecting email output"
 
             self.assertTrue(msg in str(context.exception))
@@ -358,36 +331,30 @@ class CommandLineParserTest(TestCase):
             "arguments": {
                 "format": "indented",
                 "show_last_comment": 0,
-                "email": "demo@gmail.com"
+                "email": "demo@gmail.com",
             }
         }
         with self.assertRaises(ValueError) as context:
-            get_arguments(
-                cli_arguments=cli_args,
-                config=config
-            )
+            get_arguments(cli_arguments=cli_args, config=config)
             msg = "No format should be specified when selecting email output"
             self.assertTrue(msg in str(context.exception))
 
     def test_email_argument_in_config(self):
+        """TODO: docstring goes here."""
         cli_args = argparse.Namespace(cacert=None, insecure=False)
         email_input = (
             "user@example.com, user2@example.com,"
             "       user3@example.com,user4@example.com"
         )
         config = {
-            "arguments": {
-                "email": email_input
-            },
+            "arguments": {"email": email_input},
             "mailer": {
                 "sender": "do-not-reply@example.com",
                 "server": "smtp.example.com",
-            }
+            },
         }
 
-        arguments = get_arguments(
-            cli_args, config
-        )
+        arguments = get_arguments(cli_args, config)
 
         self.assertEqual(
             arguments.get("email"),
@@ -400,95 +367,76 @@ class CommandLineParserTest(TestCase):
         )
 
     def test_email_functionality_without_mailer_configuration(self):
+        """TODO: docstring goes here."""
         cli_args = argparse.Namespace(cacert=None, insecure=False)
-        config = {
-            "arguments": {
-                "email": "email@example.com"
-            }
-        }
+        config = {"arguments": {"email": "email@example.com"}}
 
         with self.assertRaises(ValueError) as context:
-            get_arguments(
-                cli_args, config
+            get_arguments(cli_args, config)
+            msg = (
+                "Missing mailer configuration. "
+                "Check examples/sampleinput_email.yaml "
+                "for correct configuration."
             )
-            msg = "Missing mailer configuration. " \
-                  "Check examples/sampleinput_email.yaml " \
-                  "for correct configuration."
 
             self.assertTrue(msg in str(context.exception))
 
     def test_invalid_combination_format_and_irc_command_line(self):
+        """TODO: docstring goes here."""
         cli_args = argparse.Namespace(
             format="json", irc=True, insecure=False, cacert=None
         )
         with self.assertRaises(ValueError) as context:
-            get_arguments(
-                cli_arguments=cli_args,
-                config={}
-            )
+            get_arguments(cli_arguments=cli_args, config={})
             msg = "No format should be specified when selecting irc output"
 
             self.assertTrue(msg in str(context.exception))
 
     def test_invalid_combination_format_and_irc_config_file(self):
+        """TODO: docstring goes here."""
         cli_args = argparse.Namespace(insecure=False, cacert=None)
 
         config = {
-            "arguments": {
-                "irc": "#channel1",
-                "format": "json"
-            },
+            "arguments": {"irc": "#channel1", "format": "json"},
             "irc": {
                 "server": "irc.example.com",
                 "port": 12345,
-            }
+            },
         }
         with self.assertRaises(ValueError) as context:
-            get_arguments(
-                cli_arguments=cli_args,
-                config=config
-            )
+            get_arguments(cli_arguments=cli_args, config=config)
             msg = "No format should be specified when selecting irc output"
 
             self.assertTrue(msg in str(context.exception))
 
     def test_irc_functionality_without_irc_configuration(self):
+        """TODO: docstring goes here."""
         cli_args = argparse.Namespace(cacert=None, insecure=False)
-        config = {
-            "arguments": {
-                "irc": "#channel1"
-            }
-        }
+        config = {"arguments": {"irc": "#channel1"}}
 
         with self.assertRaises(ValueError) as context:
-            get_arguments(
-                cli_args, config
+            get_arguments(cli_args, config)
+            msg = (
+                "Missing irc configuration. "
+                "Check examples/sampleinput_irc.yaml "
+                "for correct configuration."
             )
-            msg = "Missing irc configuration. " \
-                  "Check examples/sampleinput_irc.yaml " \
-                  "for correct configuration."
 
             self.assertTrue(msg in str(context.exception))
 
     def test_irc_argument_in_config(self):
+        """TODO: docstring goes here."""
         cli_args = argparse.Namespace(cacert=None, insecure=False)
-        irc_channels = (
-            "#channel1, #channel2,"
-            "       #channel3,#channel4"
-        )
+        irc_channels = "#channel1, #channel2," "       #channel3,#channel4"
         config = {
-            "arguments": {
-                "irc": irc_channels
-            },
+            "arguments": {"irc": irc_channels},
             "irc": {
                 "server": "irc.example.com",
                 "port": 12345,
-            }
+            },
         }
 
-        arguments = get_arguments(
-            cli_args, config
-        )
+        arguments = get_arguments(cli_args, config)
 
         self.assertEqual(
             arguments.get("irc"),
@@ -501,40 +449,37 @@ class CommandLineParserTest(TestCase):
         )
 
     def test_age_argument_in_command_line_valid(self):
-
+        """TODO: docstring goes here."""
         now = datetime.datetime.now()
-        expected_date = (now - relativedelta(days=5, hours=4))
+        expected_date = now - relativedelta(days=5, hours=4)
 
-        args = parse_cli_args(['--age', 'older', '5d', '4h'])
+        args = parse_cli_args(["--age", "older", "5d", "4h"])
 
-        self.assertEqual(args.age.state, 'older')
-        self.assertEqual(args.age.date.replace(second=0, microsecond=0),
-                         expected_date.replace(second=0, microsecond=0))
+        self.assertEqual(args.age.state, "older")
+        self.assertEqual(
+            args.age.date.replace(second=0, microsecond=0),
+            expected_date.replace(second=0, microsecond=0),
+        )
 
     def test_age_argument_in_config(self):
-
+        """TODO: docstring goes here."""
         now = datetime.datetime.now()
-        expected_date = (now - relativedelta(days=5, hours=4))
+        expected_date = now - relativedelta(days=5, hours=4)
 
         cli_args = argparse.Namespace(cacert=None, insecure=False)
-        config = {
-            "arguments": {
-                "age": "older 5d 4h"
-            }
-        }
+        config = {"arguments": {"age": "older 5d 4h"}}
 
-        arguments = get_arguments(
-            cli_args, config
+        arguments = get_arguments(cli_args, config)
+        self.assertEqual(arguments.get("age").state, "older")
+        self.assertEqual(
+            arguments.get("age").date.replace(second=0, microsecond=0),
+            expected_date.replace(second=0, microsecond=0),
         )
-        self.assertEqual(arguments.get('age').state, 'older')
-        self.assertEqual(arguments.get('age').date.replace(second=0, microsecond=0),
-                         expected_date.replace(second=0, microsecond=0))
 
     @classmethod
     def tearDownClass(cls):
-        backup_filename = join(
-            dirname(__file__), "yaml/test_old_format.yaml.backup"
-        )
+        """TODO: docstring goes here."""
+        backup_filename = join(dirname(__file__), "yaml/test_old_format.yaml.backup")
         filename = join(dirname(__file__), "yaml/test_old_format.yaml")
         if os.path.exists(backup_filename) and os.path.exists(filename):
             os.remove(filename)
@@ -542,48 +487,55 @@ class CommandLineParserTest(TestCase):
 
 
 class ParseAgeTest(unittest.TestCase):
+    """TODO: docstring goes here."""
 
     def test_missing_state(self):
-
+        """TODO: docstring goes here."""
         with self.assertRaises(ValueError) as context:
-            ParseAge.parse(['5d', '4h'])
-        self.assertTrue("Wrong or missing state, only older/newer is allowed"
-                        in str(context.exception))
+            ParseAge.parse(["5d", "4h"])
+        self.assertTrue(
+            "Wrong or missing state, only older/newer is allowed"
+            in str(context.exception)
+        )
 
     def test_missing_relative_age(self):
-
+        """TODO: docstring goes here."""
         with self.assertRaises(ValueError) as context:
-            ParseAge.parse(['newer'])
+            ParseAge.parse(["newer"])
         self.assertTrue("Missing arguments" in str(context.exception))
 
     def test_wrong_state(self):
+        """TODO: docstring goes here."""
         with self.assertRaises(ValueError) as context:
-            ParseAge.parse(['oldnew', '5d', '4h'])
-        self.assertTrue("Wrong or missing state, only older/newer is allowed"
-                        in str(context.exception))
+            ParseAge.parse(["oldnew", "5d", "4h"])
+        self.assertTrue(
+            "Wrong or missing state, only older/newer is allowed"
+            in str(context.exception)
+        )
 
     def test_invalid_unit(self):
+        """TODO: docstring goes here."""
         with self.assertRaises(ValueError) as context:
-            ParseAge.parse(['older', '5', '4x'])
+            ParseAge.parse(["older", "5", "4x"])
         self.assertTrue("Invalid unit" in str(context.exception))
 
 
 class IgnoreWIPTest(unittest.TestCase):
+    """TODO: docstring goes here."""
 
     def test_remove_wip(self):
+        """TODO: docstring goes here."""
         results = [
-            FakeReview(title='WIP: add a functionality'),
-            FakeReview(title='WIP:fix bug'),
-            FakeReview(title='wip:fix bug #3'),
-            FakeReview(title='wip: fix bug #4'),
-            FakeReview(title='[WIP] refactor'),
-            FakeReview(title='[WIP]refactor #2'),
-            FakeReview(title='[wip]refactor #3'),
-            FakeReview(title='[wip] refactor #4'),
-            FakeReview(title='Draft: fix bug #3'),
-            FakeReview(
-                title='[WIPER] Add the possibility of ignoring WIP PRs/MRs'
-            )
+            FakeReview(title="WIP: add a functionality"),
+            FakeReview(title="WIP:fix bug"),
+            FakeReview(title="wip:fix bug #3"),
+            FakeReview(title="wip: fix bug #4"),
+            FakeReview(title="[WIP] refactor"),
+            FakeReview(title="[WIP]refactor #2"),
+            FakeReview(title="[wip]refactor #3"),
+            FakeReview(title="[wip] refactor #4"),
+            FakeReview(title="Draft: fix bug #3"),
+            FakeReview(title="[WIPER] Add the possibility of ignoring WIP PRs/MRs"),
         ]
         updated_results = remove_wip(results)
 
@@ -591,16 +543,15 @@ class IgnoreWIPTest(unittest.TestCase):
         self.assertEqual(len(updated_results), 1)
         self.assertEqual(
             updated_results[0].title,
-            '[WIPER] Add the possibility of ignoring WIP PRs/MRs'
+            "[WIPER] Add the possibility of ignoring WIP PRs/MRs",
         )
 
 
 class FakeReview:
-    """
-    Mocks small part of BaseReview
-    """
+    """Mocks small part of BaseReview."""
 
     def __init__(self, title):
+        """TODO: docstring goes here."""
         self.title = title
 
 

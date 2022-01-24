@@ -1,21 +1,34 @@
+"""githubstack module."""
 import logging
-from reviewrot.basereview import BaseService, BaseReview, LastComment
+
 from github import Github
 from github.GithubException import UnknownObjectException
+from reviewrot.basereview import BaseReview, BaseService, LastComment
 
 log = logging.getLogger(__name__)
 
 
 class GithubService(BaseService):
     """
-    This class represents Github. The reference can be found here:
+    This class represents Github.
+
+    The reference can be found here:
     https://developer.github.com/v3/
     """
-    def request_reviews(self, user_name, repo_name=None, age=None,
-                        show_last_comment=None, token=None, host=None,
-                        **kwargs):
+
+    def request_reviews(
+        self,
+        user_name,
+        repo_name=None,
+        age=None,
+        show_last_comment=None,
+        token=None,
+        host=None,
+        **kwargs
+    ):
         """
         Creates a github object.
+
         Requests pull requests for specified username and repo name.
         If repo name is not provided then requests pull requests
         for all repos for specified username/organization.
@@ -40,20 +53,23 @@ class GithubService(BaseService):
         """
         # get authenticated github object
         g = Github(token)
-        log.debug('Github instance created: %s', g)
+        log.debug("Github instance created: %s", g)
         try:
             # get user object
             uname = g.get_user(user_name)
         except UnknownObjectException:
-            log.exception('Invalid username/organizaton: %s', user_name)
-            raise Exception('Invalid username/organizaton: %s' % user_name)
+            log.exception("Invalid username/organizaton: %s", user_name)
+            raise Exception("Invalid username/organizaton: %s" % user_name)
         response = []
         # if Repository name is explicitely provided
         if repo_name is not None:
             # get pull requests for specified username and repo name
-            res = self.get_reviews(uname=uname, repo_name=repo_name,
-                                   age=age,
-                                   show_last_comment=show_last_comment)
+            res = self.get_reviews(
+                uname=uname,
+                repo_name=repo_name,
+                age=age,
+                show_last_comment=show_last_comment,
+            )
             # extend incase of a non empty result
             if res:
                 response.extend(res)
@@ -67,9 +83,12 @@ class GithubService(BaseService):
             user/organization
             """
             for repo in repo_list:
-                res = self.get_reviews(uname=uname, repo_name=repo.name,
-                                       age=age,
-                                       show_last_comment=show_last_comment)
+                res = self.get_reviews(
+                    uname=uname,
+                    repo_name=repo.name,
+                    age=age,
+                    show_last_comment=show_last_comment,
+                )
                 # extend incase of a non empty result
                 if res:
                     response.extend(res)
@@ -78,6 +97,7 @@ class GithubService(BaseService):
     def get_reviews(self, uname, repo_name, age=None, show_last_comment=None):
         """
         Fetches pull requests for specified username and repo name.
+
         Formats the pull requests details and print it on console.
 
         Args:
@@ -98,17 +118,20 @@ class GithubService(BaseService):
             # get repository object for given user/organization and repo name
             repo = uname.get_repo(repo_name)
         except UnknownObjectException:
-            log.exception('Repository %s not found for user %s',
-                          repo_name, uname.login)
-            raise Exception('Repository %s not found for user %s'
-                            % (repo_name, uname.login))
-        log.debug('Looking for pull requests for %s -> %s/%s ',
-                  'github', uname.login, repo_name)
+            log.exception("Repository %s not found for user %s", repo_name, uname.login)
+            raise Exception(
+                "Repository %s not found for user %s" % (repo_name, uname.login)
+            )
+        log.debug(
+            "Looking for pull requests for %s -> %s/%s ",
+            "github",
+            uname.login,
+            repo_name,
+        )
         # get list of open pull requests for a given repository
         pull_requests = repo.get_pulls()
         if not pull_requests:
-            log.debug('No open pull requests found for %s/%s ',
-                      uname.login, repo_name)
+            log.debug("No open pull requests found for %s/%s ", uname.login, repo_name)
         res_ = []
 
         for pr in pull_requests:
@@ -120,36 +143,41 @@ class GithubService(BaseService):
 
             if result is False:
                 # skip the current pull request
-                log.debug("review request '%s' is not %s than specified"
-                          " time interval", pr.title, age.state)
+                log.debug(
+                    "review request '%s' is not %s than specified" " time interval",
+                    pr.title,
+                    age.state,
+                )
                 continue
 
             if last_comment and show_last_comment:
-                if self.has_new_comments(last_comment.created_at,
-                                         show_last_comment):
-                    log.debug("Pull request '%s' had "
-                              "new comments in last %s days",
-                              pr.title, show_last_comment)
+                if self.has_new_comments(last_comment.created_at, show_last_comment):
+                    log.debug(
+                        "Pull request '%s' had " "new comments in last %s days",
+                        pr.title,
+                        show_last_comment,
+                    )
                     continue
 
-            res = GithubReview(user=pr.user.login,
-                               title=pr.title,
-                               url=pr.html_url,
-                               time=pr.created_at,
-                               updated_time=pr.updated_at,
-                               comments=pr.review_comments+pr.comments,
-                               image=pr.user.avatar_url,
-                               last_comment=last_comment,
-                               project_name=repo.full_name,
-                               project_url=repo.html_url)
+            res = GithubReview(
+                user=pr.user.login,
+                title=pr.title,
+                url=pr.html_url,
+                time=pr.created_at,
+                updated_time=pr.updated_at,
+                comments=pr.review_comments + pr.comments,
+                image=pr.user.avatar_url,
+                last_comment=last_comment,
+                project_name=repo.full_name,
+                project_url=repo.html_url,
+            )
             log.debug(res)
             res_.append(res)
         return res_
 
     def get_last_comment(self, pr):
         """
-        Returns information about last comment of given
-        pull request
+        Returns information about last comment of given pull request.
 
         Args:
             pr (github.PullRequest.PullRequest): Github pull request
@@ -158,7 +186,6 @@ class GithubService(BaseService):
             last comment (LastComment): Returns namedtuple LastComment
             with data related to last comment
         """
-
         review_comments = pr.get_comments()
         issue_comments = pr.get_issue_comments()
 
@@ -166,10 +193,10 @@ class GithubService(BaseService):
         last_issue_comment = None
         last_comment = None
 
-        if review_comments.totalCount > 0:
+        if review_comments.total_count > 0:
             last_review_comment = review_comments.reversed[0]
 
-        if issue_comments.totalCount > 0:
+        if issue_comments.total_count > 0:
             last_issue_comment = issue_comments.reversed[0]
 
         # check which is newer if pr has both types of comments
@@ -184,10 +211,14 @@ class GithubService(BaseService):
             last_comment = last_issue_comment or last_review_comment
 
         if last_comment:
-            return LastComment(author=last_comment.user.login,
-                               body=last_comment.body,
-                               created_at=last_comment.created_at)
+            return LastComment(
+                author=last_comment.user.login,
+                body=last_comment.body,
+                created_at=last_comment.created_at,
+            )
 
 
 class GithubReview(BaseReview):
+    """TODO: docstring goes here."""
+
     pass
