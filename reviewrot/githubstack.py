@@ -193,10 +193,10 @@ class GithubService(BaseService):
         last_issue_comment = None
         last_comment = None
 
-        if review_comments.total_count > 0:
+        if review_comments.totalCount > 0:
             last_review_comment = review_comments.reversed[0]
 
-        if issue_comments.total_count > 0:
+        if issue_comments.totalCount > 0:
             last_issue_comment = issue_comments.reversed[0]
 
         # check which is newer if pr has both types of comments
