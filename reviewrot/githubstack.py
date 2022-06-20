@@ -4,6 +4,7 @@ import logging
 from github import Github
 from github.GithubException import UnknownObjectException
 from reviewrot.basereview import BaseReview, BaseService, LastComment
+from reviewrot.utils import is_wip
 
 log = logging.getLogger(__name__)
 
@@ -159,9 +160,13 @@ class GithubService(BaseService):
                     )
                     continue
 
+            title = pr.title
+            if pr.draft and not is_wip(title):
+                title = f"WIP: {title}"
+
             res = GithubReview(
                 user=pr.user.login,
-                title=pr.title,
+                title=title,
                 url=pr.html_url,
                 time=pr.created_at,
                 updated_time=pr.updated_at,

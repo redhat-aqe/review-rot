@@ -63,6 +63,7 @@ class MockPull:
     updated_at = "dummy_update"
     review_comments = "dummy_comments"
     comments = "dummy_comments"
+    draft = False
 
 
 class MockRepo:

@@ -15,6 +15,7 @@ from reviewrot.githubstack import GithubService
 from reviewrot.gitlabstack import GitlabService
 from reviewrot.pagurestack import PagureService
 from reviewrot.phabricatorstack import PhabricatorService
+from reviewrot.utils import is_wip
 from six import iteritems
 from six.moves import input
 import yaml
@@ -421,12 +422,8 @@ def remove_wip(results):
         res (list): list of BaseReview instances with WIP
                     reviews removed
     """
-    res = []
-    for result in results:
-        match = re.match(
-            r"^(\[WIP\]\s*|WIP:\s*|WIP\s+|Draft:)+\s*", str(result.title), re.IGNORECASE
-        )
-        if not match:
-            res.append(result)
-
-    return res
+    return [
+        result
+        for result in results
+        if not is_wip(str(result.title))
+    ]
