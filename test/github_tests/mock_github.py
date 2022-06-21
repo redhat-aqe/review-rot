@@ -35,21 +35,21 @@ class MockValueOlder:
 class MockGithubComments:
     """Mocks Github Comments object."""
 
-    total_count = int(1)
+    totalCount = int(1)
     reversed = [MockValue]
 
 
 class MockGithubCommentsOlder:
     """Mocks Github Comments object."""
 
-    total_count = int(1)
+    totalCount = int(1)
     reversed = [MockValueOlder]
 
 
 class MockGithubCommentsEmpty:
     """Mocks Github Comment object with no comments."""
 
-    total_count = 0
+    totalCount = 0
     reversed = [MockValue]
 
 
