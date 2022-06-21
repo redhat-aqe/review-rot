@@ -13,9 +13,9 @@ RUN microdnf update \
         gcc \
         git \
         libyaml-devel \
-        python3-devel \
-        python3-pip \
-        python3-setuptools \
+        python39-devel \
+        python39-pip \
+        python39-setuptools \
     && microdnf clean all
 
 # copy workdir for installation of review-rot
