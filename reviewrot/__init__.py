@@ -400,7 +400,7 @@ def load_ordered_config(config_path):
     #  format the output to print a blank scalar rather than null
     def represent_none(self, _):
         """TODO: docstring goes here."""
-        return self.represent_scalar("tag:yaml.org,2002:null", u"")
+        return self.represent_scalar("tag:yaml.org,2002:null", "")
 
     yaml.add_representer(type(None), represent_none)
 

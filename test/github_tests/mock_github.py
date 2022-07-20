@@ -35,14 +35,14 @@ class MockValueOlder:
 class MockGithubComments:
     """Mocks Github Comments object."""
 
-    totalCount = int(1)
+    totalCount = int(1)  # noqa: N815
     reversed = [MockValue]
 
 
 class MockGithubCommentsOlder:
     """Mocks Github Comments object."""
 
-    totalCount = int(1)
+    totalCount = int(1)  # noqa: N815
     reversed = [MockValueOlder]
 
 
@@ -51,7 +51,7 @@ class MockGithubCommentsEmpty:
 
     # Simulate the bug from the PyGithub package, where
     # totalCount is non-zero when there are no comments.
-    totalCount = int(2)
+    totalCount = int(2)  # noqa: N815
     reversed = []
 
 
