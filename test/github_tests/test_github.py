@@ -75,8 +75,7 @@ class GithubTest(TestCase):
         # Call function
         response = GithubService().get_last_comment(mock_pr)
 
-        # Validate function calls and response
-        mock_lastcomment.assert_not_called()
+        # Validate function response
         self.assertIsNone(response)
 
     @patch(PATH + "GithubService.check_request_state")

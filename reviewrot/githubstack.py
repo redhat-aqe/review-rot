@@ -193,11 +193,19 @@ class GithubService(BaseService):
         last_issue_comment = None
         last_comment = None
 
-        if review_comments.totalCount > 0:
+        try:
+            # review_comments.totalCount may return a non-zero value when
+            # the list of comments is actually empty :(
             last_review_comment = review_comments.reversed[0]
+        except IndexError:
+            pass
 
-        if issue_comments.totalCount > 0:
+        try:
+            # issue_comments.totalCount may return a non-zero value when
+            # the list of comments is actually empty :(
             last_issue_comment = issue_comments.reversed[0]
+        except IndexError:
+            pass
 
         # check which is newer if pr has both types of comments
         if last_issue_comment and last_review_comment:

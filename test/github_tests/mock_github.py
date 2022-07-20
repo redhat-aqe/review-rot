@@ -49,8 +49,10 @@ class MockGithubCommentsOlder:
 class MockGithubCommentsEmpty:
     """Mocks Github Comment object with no comments."""
 
-    totalCount = 0
-    reversed = [MockValue]
+    # Simulate the bug from the PyGithub package, where
+    # totalCount is non-zero when there are no comments.
+    totalCount = int(2)
+    reversed = []
 
 
 class MockPull:
