@@ -206,7 +206,7 @@ def main():
         # output maximum 20 merge requests
         N = 20
         for i, result in enumerate(sorted_results[:N]):
-            irc_bot.send_msg(result.format(style="irc", i=i, N=N))
+            irc_bot.send_msg(result.format(style="irc", i=i, n=N))
 
         if len(sorted_results) > 20:
             irc_bot.send_msg(
@@ -224,7 +224,7 @@ def main():
         print(report_prefixes[formatting])
         for i, result in enumerate(sorted_results):
             print(result.format(
-                style=formatting, i=i, N=len(results),
+                style=formatting, i=i, n=len(results),
                 show_last_comment=arguments.get('show_last_comment')))
         print(report_suffixes[formatting])
 
