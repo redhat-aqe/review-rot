@@ -91,7 +91,6 @@ def get_arguments(cli_arguments, config):
             command_line_args.get(argument) is None
             or command_line_args.get(argument) is False
         ):
-
             config_value = config_arguments.get(argument)
             if is_valid_choice(argument, config_value):
                 parsed_arguments[argument] = config_value
@@ -401,7 +400,7 @@ def load_ordered_config(config_path):
     #  format the output to print a blank scalar rather than null
     def represent_none(self, _):
         """TODO: docstring goes here."""
-        return self.represent_scalar("tag:yaml.org,2002:null", u"")
+        return self.represent_scalar("tag:yaml.org,2002:null", "")
 
     yaml.add_representer(type(None), represent_none)
 
@@ -422,8 +421,4 @@ def remove_wip(results):
         res (list): list of BaseReview instances with WIP
                     reviews removed
     """
-    return [
-        result
-        for result in results
-        if not is_wip(str(result.title))
-    ]
+    return [result for result in results if not is_wip(str(result.title))]

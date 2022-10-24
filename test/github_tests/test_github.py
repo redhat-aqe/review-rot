@@ -408,7 +408,7 @@ class GithubTest(TestCase):
                     uname=mock_uname,
                     repo_name="dummy_repo",
                     age=None,
-                    show_last_comment=None
+                    show_last_comment=None,
                 )
 
                 # Validate function calls and response

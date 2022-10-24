@@ -216,7 +216,7 @@ class PagureService(BaseService):
                 "Fallback to construct based on username"
             )
             query = urllib.parse.urlencode(avatar_query)
-            openid = u"http://%s.id.fedoraproject.org/" % username
+            openid = "http://%s.id.fedoraproject.org/" % username
             idx = hashlib.sha256(openid.encode("utf-8")).hexdigest()
             avatar_url = "https://seccdn.libravatar.org/avatar/%s?%s" % (idx, query)
 

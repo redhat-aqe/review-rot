@@ -25,7 +25,7 @@ class GithubService(BaseService):
         show_last_comment=None,
         token=None,
         host=None,
-        **kwargs
+        **kwargs,
     ):
         """
         Creates a github object.

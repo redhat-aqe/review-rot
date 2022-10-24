@@ -100,7 +100,6 @@ class GitlabService(BaseService):
 
             # get merge requests for all projects for specified group
             for group_project in group_projects:
-
                 project = gl.projects.get(group_project.id)
                 res = self.get_reviews(uname=user_name, project=project, age=age)
 
@@ -146,7 +145,6 @@ class GitlabService(BaseService):
             log.debug("No open merge requests found for %s/%s ", uname, project.name)
         res_ = []
         for mr in merge_requests:
-
             last_comment = self.get_last_comment(mr)
 
             try:

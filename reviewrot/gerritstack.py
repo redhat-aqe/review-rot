@@ -265,7 +265,6 @@ class GerritService(BaseService):
         """
         res_ = []
         for decoded_response in decoded_responses:
-
             time_format = "%Y-%m-%d %H:%M:%S.%f"
             created_date = datetime.strptime(
                 decoded_response["created"][:-3], time_format
