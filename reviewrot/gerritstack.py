@@ -278,7 +278,16 @@ class GerritService(BaseService):
                 self.url, str(decoded_response["id"])
             )
 
-            comments_response = self._call_api(comments_request_url)
+            try:
+                comments_response = self._call_api(comments_request_url)
+            except requests.exceptions.HTTPError as e:
+                if e.response.status_code == 404:
+                    log.warning(
+                        "Reviews with multiple changes are unsupported; got error: %s",
+                        e.response.text,
+                    )
+                    continue
+                raise
 
             last_comment = self.get_last_comment(comments_response)
 
