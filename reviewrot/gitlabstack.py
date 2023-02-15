@@ -222,7 +222,7 @@ class GitlabService(BaseService):
             last comment (LastComment): Returns namedtuple LastComment
             with data related to last comment
         """
-        for note in mr.notes.list():
+        for note in mr.notes.list(iterator=True):
             if not note.system:
                 return LastComment(
                     author=note.author["username"],
