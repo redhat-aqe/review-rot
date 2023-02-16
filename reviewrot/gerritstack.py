@@ -265,7 +265,6 @@ class GerritService(BaseService):
         """
         res_ = []
         for decoded_response in decoded_responses:
-
             time_format = "%Y-%m-%d %H:%M:%S.%f"
             created_date = datetime.strptime(
                 decoded_response["created"][:-3], time_format
@@ -279,7 +278,16 @@ class GerritService(BaseService):
                 self.url, str(decoded_response["id"])
             )
 
-            comments_response = self._call_api(comments_request_url)
+            try:
+                comments_response = self._call_api(comments_request_url)
+            except requests.exceptions.HTTPError as e:
+                if e.response.status_code == 404:
+                    log.warning(
+                        "Reviews with multiple changes are unsupported; got error: %s",
+                        e.response.text,
+                    )
+                    continue
+                raise
 
             last_comment = self.get_last_comment(comments_response)
 

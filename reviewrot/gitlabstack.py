@@ -74,12 +74,17 @@ class GitlabService(BaseService):
                 raise Exception(
                     "Project %s not found for user %s" % (repo_name, user_name)
                 )
+
             # get merge requests for specified username and project name
             res = self.get_reviews(
                 uname=user_name,
                 project=project,
                 age=age,
                 show_last_comment=show_last_comment,
+                image=(
+                    project.avatar_url
+                    or gl.groups.get(project.namespace["id"]).avatar_url
+                ),
             )
             # extend in case of a non empty result
             if res:
@@ -100,16 +105,20 @@ class GitlabService(BaseService):
 
             # get merge requests for all projects for specified group
             for group_project in group_projects:
-
                 project = gl.projects.get(group_project.id)
-                res = self.get_reviews(uname=user_name, project=project, age=age)
+                res = self.get_reviews(
+                    uname=user_name,
+                    project=project,
+                    age=age,
+                    image=project.avatar_url or group.avatar_url,
+                )
 
                 # extend in case of a non empty result
                 if res:
                     response.extend(res)
         return response
 
-    def get_reviews(self, uname, project, age=None, show_last_comment=None):
+    def get_reviews(self, uname, project, age=None, show_last_comment=None, image=None):
         """
         Fetches merge requests for specified username(groupname) and repo(project) name.
 
@@ -146,7 +155,6 @@ class GitlabService(BaseService):
             log.debug("No open merge requests found for %s/%s ", uname, project.name)
         res_ = []
         for mr in merge_requests:
-
             last_comment = self.get_last_comment(mr)
 
             try:
@@ -193,9 +201,7 @@ class GitlabService(BaseService):
                 time=mr_date,
                 updated_time=mr_updated_date,
                 comments=mr.user_notes_count,
-                # XXX - I don't know how to find gitlab avatars
-                # for now.  Can we figure this out later?
-                image=GitlabReview.logo,
+                image=image or GitlabReview.logo,
                 last_comment=last_comment,
                 project_name=project.name,
                 project_url=project.web_url,
@@ -216,7 +222,7 @@ class GitlabService(BaseService):
             last comment (LastComment): Returns namedtuple LastComment
             with data related to last comment
         """
-        for note in mr.notes.list():
+        for note in mr.notes.list(iterator=True):
             if not note.system:
                 return LastComment(
                     author=note.author["username"],

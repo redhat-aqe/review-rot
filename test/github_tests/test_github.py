@@ -370,3 +370,53 @@ class GithubTest(TestCase):
         mock_github_instance.get_user.assert_called_with("dummy_user")
         mock_github_patch.assert_called_with("dummy_token")
         self.assertEqual(["1"], response)
+
+    @patch(PATH + "GithubService.check_request_state")
+    @patch(PATH + "GithubService.get_last_comment")
+    def test_get_reviews_with_draft_status(
+        self,
+        mock_last_comment,
+        mock_check_request_state,
+    ):
+        """
+        Tests get_reviews() function.
+
+        Where getting the pull requests returns single PR flagged as draft.
+        """
+        # Set up mock return values and side effects
+        mock_uname = MagicMock()
+        mock_repo = MagicMock()
+        mock_pr = mock_github.MockPull()
+        mock_pr.draft = True
+        mock_repo.get_pulls.return_value = [mock_pr]
+        mock_uname.get_repo.return_value = mock_repo
+        mock_check_request_state.return_value = True
+
+        for title, expected_title in [
+            ("dummy_title", "WIP: dummy_title"),
+            ("WIP: dummy_title", "WIP: dummy_title"),
+            ("Draft: dummy_title", "Draft: dummy_title"),
+            ("draft: dummy_title", "draft: dummy_title"),
+            ("[WIP] dummy_title", "[WIP] dummy_title"),
+            ("[wip] dummy_title", "[wip] dummy_title"),
+        ]:
+            with self.subTest():
+                mock_pr.title = title
+
+                # Call function
+                response = GithubService().get_reviews(
+                    uname=mock_uname,
+                    repo_name="dummy_repo",
+                    age=None,
+                    show_last_comment=None,
+                )
+
+                # Validate function calls and response
+                mock_uname.get_repo.assert_called_with("dummy_repo")
+                mock_check_request_state.assert_called_with(
+                    "dummy_createdAt",
+                    None,
+                )
+                self.assertEqual(1, len(response))
+                actual_review = response[0]
+                self.assertEqual(expected_title, actual_review.title)

@@ -318,13 +318,14 @@ class GitlabTest(TestCase):
     def test_request_reviews_ssl_error_no_repo(self, mock_get_reviews, mock_gitlab):
         """Test 'request_reviews' function where there is an SSL error and no repos."""
         # Set up mock return values and side effects
+        mock_gitlab_project = MagicMock()
         mock_gitlab_group = MagicMock(name="mock_gitlab_group")
         mock_gitlab_group.id = 1
         mock_gitlab_group_projects = MagicMock()
         mock_gitlab_group_projects.projects.list.return_value = [mock_gitlab_group]
         mock_gitlab_instance = MagicMock(name="mock_gitlab_instance")
         mock_gitlab_instance.groups.get.return_value = mock_gitlab_group_projects
-        mock_gitlab_instance.projects.get.return_value = "dummy_project"
+        mock_gitlab_instance.projects.get.return_value = mock_gitlab_project
         mock_gitlab_instance.auth.side_effect = SSLError
         mock_get_reviews.return_value = "1"
         mock_gitlab.return_value = mock_gitlab_instance
@@ -343,7 +344,10 @@ class GitlabTest(TestCase):
         mock_gitlab_instance.groups.get.assert_called_with("dummy_user")
         mock_gitlab_instance.projects.get.assert_called_with(1)
         mock_get_reviews.assert_called_with(
-            uname="dummy_user", project="dummy_project", age=None
+            uname="dummy_user",
+            project=mock_gitlab_project,
+            age=None,
+            image=mock_gitlab_project.avatar_url,
         )
         self.assertEqual(["1"], response)
 
@@ -411,7 +415,9 @@ class GitlabTest(TestCase):
         """Tests 'request_reviews' function where we have repos and no errors."""
         # Set up mock return values and side effects
         mock_gitlab_instance = MagicMock(name="mock_gitlab_instance")
-        mock_gitlab_instance.projects.get.return_value = "dummy_project"
+        mock_gitlab_project = MagicMock()
+        mock_gitlab_instance.projects.get.return_value = mock_gitlab_project
+        mock_gitlab_instance.projects.namespace.return_value = {"id": 123}
         mock_gitlab.return_value = mock_gitlab_instance
         mock_get_reviews.return_value = "1"
 
@@ -431,8 +437,9 @@ class GitlabTest(TestCase):
         mock_gitlab_instance.projects.get.assert_called_with("dummy_user/dummy_repo")
         mock_get_reviews.assert_called_with(
             uname="dummy_user",
-            project="dummy_project",
+            project=mock_gitlab_project,
             age=None,
             show_last_comment=None,
+            image=mock_gitlab_project.avatar_url,
         )
         self.assertEqual(["1"], response)
